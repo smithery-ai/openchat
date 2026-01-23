@@ -2,11 +2,9 @@
 import Smithery, { AuthenticationError, NotFoundError } from "@smithery/api"
 import type { ServerListResponse } from "@smithery/api/resources/index.mjs"
 import { generateText, jsonSchema, stepCountIs, tool } from "ai"
-import {
-	type ConnectionConfig,
-	type MCPTool,
-	MCPAuthenticationRequiredError,
-	type ToolCallTemplate,
+import type {
+	ConnectionConfig,
+	MCPTool,
 } from "./types"
 
 // Helper to get Smithery client with provided or env API key
@@ -237,12 +235,23 @@ export const testConnection = async (
 
 export const searchTool = async (
 	prompt: string,
-	serverConfigs: ConnectionConfig[],
 	apiKey?: string | null,
-): Promise<{ output: ToolCallTemplate }> => {
+): Promise<void> => {
 	const client = getSmitheryClient(apiKey)
 	const namespace = await getDefaultNamespace(apiKey)
 
+	const tools = await client.beta.connect.tools.search(namespace, { q: prompt })
+	console.log("tools", tools)
+}
+
+// Alias for backward compatibility (planAction -> searchTool)
+export const planAction = async (
+	prompt: string,
+	serverConfigs: ConnectionConfig[],
+	apiKey?: string | null,
+) => {
+	const client = getSmitheryClient(apiKey)
+	const namespace = await getDefaultNamespace(apiKey)
 	// Get tools from all connections
 	const toolsWithConfigs = await Promise.all(
 		serverConfigs.map(async (config) => {
@@ -305,9 +314,6 @@ export const searchTool = async (
 		},
 	}
 }
-
-// Alias for backward compatibility (planAction -> searchTool)
-export const planAction = searchTool
 
 export const runTool = async (
 	configId: string,
