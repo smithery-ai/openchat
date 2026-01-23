@@ -34,7 +34,7 @@
         "@radix-ui/react-toggle-group": "^1.1.11",
         "@radix-ui/react-tooltip": "^1.2.8",
         "@radix-ui/react-use-controllable-state": "^1.2.2",
-        "@smithery/api": "^0.25.0",
+        "@smithery/api": "^0.26.0",
         "@tanstack/react-table": "^8.21.3",
         "@xyflow/react": "^12.10.0",
         "ai": "^6.0.41",
@@ -305,7 +305,7 @@
 
     "@shikijs/vscode-textmate": ["@shikijs/vscode-textmate@10.0.2", "", {}, "sha512-83yeghZ2xxin3Nj8z1NMd/NCuca+gsYXswywDy5bHvwlWL8tpTQmzGeUuHd9FC3E/SBEMvzJRwWEOz5gGes9Qg=="],
 
-    "@smithery/api": ["@smithery/api@0.25.0", "", { "peerDependencies": { "@modelcontextprotocol/sdk": ">=1.0.0" }, "optionalPeers": ["@modelcontextprotocol/sdk"] }, "sha512-pepTfrAb11dvwxQ/rn6cYEkSU/Cz6d0/E1pdUAfqAP1vEM+8AuD1B+dHhVcjfInS2Q6GpDBJfnOURwwjHNeh0w=="],
+    "@smithery/api": ["@smithery/api@0.26.0", "", { "peerDependencies": { "@modelcontextprotocol/sdk": ">=1.0.0" }, "optionalPeers": ["@modelcontextprotocol/sdk"] }, "sha512-JKh9iRaQSkdu4L9Zd6WmRbDCq2ICmcl6+UgA0KtzemtNy0u2yMatjazrr4PGk1HcY2HEhYzOQO2orbFqS8JdCA=="],
 
     "@standard-schema/spec": ["@standard-schema/spec@1.1.0", "", {}, "sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w=="],
 
