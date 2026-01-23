@@ -1,7 +1,6 @@
 "use client";
 
 import Smithery, { AuthenticationError } from "@smithery/api";
-import { SmitheryTransport } from "@smithery/api/mcp";
 import type { ServerListResponse } from "@smithery/api/resources/servers/servers.mjs";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link as LinkIcon } from "lucide-react";
@@ -26,7 +25,7 @@ function sanitizeConnectionId(str: string): string {
 }
 
 type ConnectionStatus =
-	| { status: "connected"; connection: any }
+	| { status: "connected"; connection: unknown }
 	| { status: "auth_required"; authorizationUrl?: string }
 	| { status: "error"; error: unknown };
 

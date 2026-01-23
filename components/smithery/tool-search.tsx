@@ -143,6 +143,7 @@ export const ServerSearch = ({
 		setError(null);
 
 		try {
+			// biome-ignore lint/correctness/useHookAtTopLevel: useServer is not a hook, it's an async function
 			const result = await useServer(server.qualifiedName, apiKey);
 
 			if (result.status === "connected") {
