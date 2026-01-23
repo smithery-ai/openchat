@@ -89,7 +89,6 @@ export const ToolSearch = ({token}: {token?: string}) => {
 	return (
 		<div className="max-w-md mx-auto">
 			<div className="mb-4">
-				<h2 className="text-lg font-semibold mb-2">Search Tools</h2>
 				<Input
 					type="text"
 					value={query}
@@ -147,7 +146,7 @@ export const ToolSearch = ({token}: {token?: string}) => {
 							{/* Server Search Section - shows automatically with same query */}
 							<div>
 								<div>
-									<h2 className="text-lg font-semibold">Add Servers</h2>
+									<h2 className="text-lg font-semibold">Explore Servers</h2>
 									<p className="text-sm text-muted-foreground mt-1">
 										If the tool you want isn't showing up, try adding another server
 									</p>
