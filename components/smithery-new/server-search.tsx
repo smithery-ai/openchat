@@ -275,9 +275,16 @@ export const ServerCard = ({
 	);
 };
 
-export const ServerSearch = ({ token }: { token?: string }) => {
-	const [query, setQuery] = useState("");
+export const ServerSearch = ({ token, initialQuery }: { token?: string; initialQuery?: string }) => {
+	const [query, setQuery] = useState(initialQuery || "");
 	const debouncedQuery = useDebounce(query, 300);
+
+	// Update query when initialQuery changes
+	useEffect(() => {
+		if (initialQuery !== undefined) {
+			setQuery(initialQuery);
+		}
+	}, [initialQuery]);
 
 	const { data: namespaceData } = useQuery({
 		queryKey: ["namespace", token],
@@ -311,17 +318,19 @@ export const ServerSearch = ({ token }: { token?: string }) => {
 	});
 
 	return (
-		<div className="max-w-md mx-auto">
-			<Input
-				type="text"
-				value={query}
-				onChange={(e) => setQuery(e.target.value)}
-				placeholder="Search for a server"
-			/>
+		<div className={initialQuery ? "" : "max-w-md mx-auto"}>
+			{!initialQuery && (
+				<Input
+					type="text"
+					value={query}
+					onChange={(e) => setQuery(e.target.value)}
+					placeholder="Search for a server"
+				/>
+			)}
 			{isLoading && <p className="text-muted-foreground">Loading...</p>}
 			{error && <p className="text-destructive">Error: {error.message}</p>}
 			{data && namespaceData && token && (
-				<div className="space-y-2 overflow-auto max-h-[500px]">
+				<div className={initialQuery ? "space-y-2" : "space-y-2 overflow-auto max-h-[500px]"}>
 					{data.servers.map((server: ServerListResponse) => (
 						<div key={server.qualifiedName}>
 							<ServerCard
