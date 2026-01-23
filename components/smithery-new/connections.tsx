@@ -1,12 +1,12 @@
 "use client";
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Smithery from "@smithery/api";
 import type { Connection } from "@smithery/api/resources/beta/connect/connections.mjs";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Trash2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Button } from "../ui/button";
 import { Card, CardContent } from "../ui/card";
-import { Trash2 } from "lucide-react";
 import { Separator } from "../ui/separator";
 
 async function getDefaultNamespace(client: Smithery) {

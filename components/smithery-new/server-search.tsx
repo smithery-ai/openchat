@@ -1,17 +1,17 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Smithery, { AuthenticationError } from "@smithery/api";
+import { SmitheryTransport } from "@smithery/api/mcp";
 import type { ServerListResponse } from "@smithery/api/resources/servers/servers.mjs";
-import { Input } from "../ui/input";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Link as LinkIcon } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useDebounce } from "../../hooks/use-debounce";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Button } from "../ui/button";
 import { Card, CardContent } from "../ui/card";
+import { Input } from "../ui/input";
 import { Separator } from "../ui/separator";
-import { Link as LinkIcon } from "lucide-react";
-import { useDebounce } from "../../hooks/use-debounce";
-import { SmitheryTransport } from "@smithery/api/mcp";
 
 async function getDefaultNamespace(client: Smithery) {
 	const namespaces = await client.namespaces.list();
@@ -102,7 +102,8 @@ export const ServerCard = ({
 }) => {
 	const queryClient = useQueryClient();
 	const [cleanupPoller, setCleanupPoller] = useState<(() => void) | null>(null);
-	const [localConnectionData, setLocalConnectionData] = useState<ConnectionStatus | null>(null);
+	const [localConnectionData, setLocalConnectionData] =
+		useState<ConnectionStatus | null>(null);
 
 	const {
 		mutate: connect,
@@ -251,7 +252,10 @@ export const ServerCard = ({
 									variant="outline"
 									size="sm"
 									onClick={() => {
-										window.open(displayConnectionData.authorizationUrl, "_blank");
+										window.open(
+											displayConnectionData.authorizationUrl,
+											"_blank",
+										);
 									}}
 								>
 									Authorize
@@ -275,7 +279,13 @@ export const ServerCard = ({
 	);
 };
 
-export const ServerSearch = ({ token, initialQuery }: { token?: string; initialQuery?: string }) => {
+export const ServerSearch = ({
+	token,
+	initialQuery,
+}: {
+	token?: string;
+	initialQuery?: string;
+}) => {
 	const [query, setQuery] = useState(initialQuery || "");
 	const debouncedQuery = useDebounce(query, 300);
 
@@ -330,7 +340,11 @@ export const ServerSearch = ({ token, initialQuery }: { token?: string; initialQ
 			{isLoading && <p className="text-muted-foreground">Loading...</p>}
 			{error && <p className="text-destructive">Error: {error.message}</p>}
 			{data && namespaceData && token && (
-				<div className={initialQuery ? "space-y-2" : "space-y-2 overflow-auto max-h-[500px]"}>
+				<div
+					className={
+						initialQuery ? "space-y-2" : "space-y-2 overflow-auto max-h-[500px]"
+					}
+				>
 					{data.servers.map((server: ServerListResponse) => (
 						<div key={server.qualifiedName}>
 							<ServerCard

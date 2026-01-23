@@ -1,23 +1,23 @@
-"use client"
+"use client";
 
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Button } from "@/components/ui/button"
+import Link from "next/link";
+import { useState } from "react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import {
 	Dialog,
 	DialogContent,
 	DialogDescription,
 	DialogHeader,
 	DialogTitle,
-} from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import Link from "next/link"
-import { useState } from "react"
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface ApiKeyConfigDialogProps {
-	error: string | null
-	onSubmit: (apiKey: string) => void
-	isValidating?: boolean
+	error: string | null;
+	onSubmit: (apiKey: string) => void;
+	isValidating?: boolean;
 }
 
 export function ApiKeyConfigDialog({
@@ -25,14 +25,14 @@ export function ApiKeyConfigDialog({
 	onSubmit,
 	isValidating = false,
 }: ApiKeyConfigDialogProps) {
-	const [apiKey, setApiKey] = useState("")
+	const [apiKey, setApiKey] = useState("");
 
 	const handleSubmit = (e: React.FormEvent) => {
-		e.preventDefault()
+		e.preventDefault();
 		if (apiKey.trim()) {
-			onSubmit(apiKey.trim())
+			onSubmit(apiKey.trim());
 		}
-	}
+	};
 
 	return (
 		<Dialog open={true}>
@@ -99,5 +99,5 @@ export function ApiKeyConfigDialog({
 				</form>
 			</DialogContent>
 		</Dialog>
-	)
+	);
 }

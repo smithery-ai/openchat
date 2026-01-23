@@ -1,15 +1,15 @@
-import type { ServerListResponse } from "@smithery/api/resources/servers/servers.mjs"
+import type { ServerListResponse } from "@smithery/api/resources/servers/servers.mjs";
 import {
-	ToolLoopAgent,
-	type UIMessage,
 	createAgentUIStreamResponse,
+	ToolLoopAgent,
 	tool,
-} from "ai"
-import type { ConnectionConfig } from "@/components/smithery/types"
-import { z } from "zod"
+	type UIMessage,
+} from "ai";
+import { z } from "zod";
+import type { ConnectionConfig } from "@/components/smithery/types";
 
 // Allow streaming responses up to 30 seconds
-export const maxDuration = 30
+export const maxDuration = 30;
 
 function createToolLoopAgent({
 	instructions = `You are a helpful assistant that can answer questions and help with tasks. 
@@ -18,12 +18,12 @@ function createToolLoopAgent({
 	model = "anthropic/claude-haiku-4.5",
 	servers = [],
 }: {
-	instructions?: string
-	model?: string
+	instructions?: string;
+	model?: string;
 	servers?: {
-		connectionConfig: ConnectionConfig
-		server?: ServerListResponse
-	}[]
+		connectionConfig: ConnectionConfig;
+		server?: ServerListResponse;
+	}[];
 }) {
 	return new ToolLoopAgent({
 		model,
@@ -51,59 +51,59 @@ function createToolLoopAgent({
 						.optional(),
 				}),
 				execute: async ({ addOrSubtract }) => {
-					const date = new Date()
+					const date = new Date();
 
 					if (addOrSubtract) {
 						// Parse format: [+/-][number][unit]
 						// Examples: '-3d', '+1w', '+2M', '-1y', '+5h'
-						const match = addOrSubtract.match(/^([+-]?)(\d+)([smhdwMy])$/i)
+						const match = addOrSubtract.match(/^([+-]?)(\d+)([smhdwMy])$/i);
 
 						if (!match) {
 							throw new Error(
 								`Invalid date format: "${addOrSubtract}". Expected format: [+/-][number][unit] (e.g., '-3d', '+1w', '+2M'). Units: s (seconds), m (minutes), h (hours), d (days), w (weeks), M (months), y (years)`,
-							)
+							);
 						}
 
-						const [, sign, amountStr, unit] = match
-						const amount = Number.parseInt(amountStr, 10)
-						const multiplier = sign === "-" ? -1 : 1
-						const value = amount * multiplier
+						const [, sign, amountStr, unit] = match;
+						const amount = Number.parseInt(amountStr, 10);
+						const multiplier = sign === "-" ? -1 : 1;
+						const value = amount * multiplier;
 
 						// Apply the offset based on the unit
 						// Note: 'M' (uppercase) is months, 'm' (lowercase) is minutes
-						const unitLower = unit.toLowerCase()
+						const unitLower = unit.toLowerCase();
 						if (unit === "M") {
 							// Months (uppercase M)
-							date.setMonth(date.getMonth() + value)
+							date.setMonth(date.getMonth() + value);
 						} else {
 							switch (unitLower) {
 								case "s": // seconds
-									date.setSeconds(date.getSeconds() + value)
-									break
+									date.setSeconds(date.getSeconds() + value);
+									break;
 								case "m": // minutes
-									date.setMinutes(date.getMinutes() + value)
-									break
+									date.setMinutes(date.getMinutes() + value);
+									break;
 								case "h": // hours
-									date.setHours(date.getHours() + value)
-									break
+									date.setHours(date.getHours() + value);
+									break;
 								case "d": // days
-									date.setDate(date.getDate() + value)
-									break
+									date.setDate(date.getDate() + value);
+									break;
 								case "w": // weeks
-									date.setDate(date.getDate() + value * 7)
-									break
+									date.setDate(date.getDate() + value * 7);
+									break;
 								case "y": // years
-									date.setFullYear(date.getFullYear() + value)
-									break
+									date.setFullYear(date.getFullYear() + value);
+									break;
 								default:
 									throw new Error(
 										`Unknown time unit: "${unit}". Supported units: s, m, h, d, w, M, y`,
-									)
+									);
 							}
 						}
 					}
 
-					return { date: date.toISOString() }
+					return { date: date.toISOString() };
 				},
 			}),
 			useServer: tool({
@@ -138,27 +138,27 @@ function createToolLoopAgent({
 				}),
 			}),
 		},
-	})
+	});
 }
 
 export async function POST(request: Request) {
-	const { messages, ...body }: { messages: UIMessage[] } = await request.json()
-	console.log("📦 Full request messages:", JSON.stringify(messages, null, 2))
-	console.log("📦 Full request body:", JSON.stringify(body, null, 2))
+	const { messages, ...body }: { messages: UIMessage[] } = await request.json();
+	console.log("📦 Full request messages:", JSON.stringify(messages, null, 2));
+	console.log("📦 Full request body:", JSON.stringify(body, null, 2));
 
 	// Extract API key from body or use env var
 	const { model, instructions, servers, apiKey } = body as {
-		model?: string
-		instructions?: string
-		apiKey?: string
+		model?: string;
+		instructions?: string;
+		apiKey?: string;
 		servers?: {
-			connectionConfig: ConnectionConfig
-			server?: ServerListResponse
-		}[]
-	}
+			connectionConfig: ConnectionConfig;
+			server?: ServerListResponse;
+		}[];
+	};
 
 	// Validate API key - accept from body or env
-	const effectiveApiKey = apiKey || process.env.SMITHERY_API_KEY
+	const effectiveApiKey = apiKey || process.env.SMITHERY_API_KEY;
 	if (!effectiveApiKey) {
 		return new Response(
 			JSON.stringify({
@@ -169,17 +169,17 @@ export async function POST(request: Request) {
 				status: 401,
 				headers: { "Content-Type": "application/json" },
 			},
-		)
+		);
 	}
 
 	// Optional: support cancellation (aborts on disconnect, etc.)
-	const abortController = new AbortController()
+	const abortController = new AbortController();
 
 	const params = {
 		...(model ? { model } : {}),
 		...(instructions ? { instructions } : {}),
 		...(servers ? { servers } : {}),
-	}
+	};
 
 	return createAgentUIStreamResponse({
 		agent: createToolLoopAgent(params),
@@ -187,5 +187,5 @@ export async function POST(request: Request) {
 		abortSignal: abortController.signal, // optional
 		sendSources: true,
 		sendReasoning: true,
-	})
+	});
 }

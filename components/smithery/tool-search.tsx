@@ -1,40 +1,40 @@
-"use client"
+"use client";
 
-import type { ServerListResponse } from "@smithery/api/resources/index.mjs"
-import type { ConnectionConfig } from "./types"
-import { useCallback, useEffect, useRef, useState } from "react"
-import { checkConnection, searchServers, useServer } from "./actions"
+import type { ServerListResponse } from "@smithery/api/resources/index.mjs";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { checkConnection, searchServers, useServer } from "./actions";
+import type { ConnectionConfig } from "./types";
 
-type ConnectionStatus = "connecting" | "connected" | "auth_required" | "error"
+type ConnectionStatus = "connecting" | "connected" | "auth_required" | "error";
 
 export const ServerSearch = ({
 	query,
 	onServerConnect,
 	apiKey,
 }: {
-	query: string
+	query: string;
 	onServerConnect: (
 		server: ServerListResponse,
 		connectionConfig: ConnectionConfig,
-	) => void
-	apiKey?: string | null
+	) => void;
+	apiKey?: string | null;
 }) => {
-	const [isEditing, setIsEditing] = useState(false)
-	const [currentQuery, setCurrentQuery] = useState(query)
-	const [servers, setServers] = useState<ServerListResponse[]>([])
-	const [isLoading, setIsLoading] = useState(false)
-	const [error, setError] = useState<string | null>(null)
+	const [isEditing, setIsEditing] = useState(false);
+	const [currentQuery, setCurrentQuery] = useState(query);
+	const [servers, setServers] = useState<ServerListResponse[]>([]);
+	const [isLoading, setIsLoading] = useState(false);
+	const [error, setError] = useState<string | null>(null);
 	const [selectedServer, setSelectedServer] =
-		useState<ServerListResponse | null>(null)
+		useState<ServerListResponse | null>(null);
 	const [connection, setConnection] = useState<{
-		status: ConnectionStatus
-		connectionConfig: ConnectionConfig
-	} | null>(null)
-	const [authUrl, setAuthUrl] = useState<string | null>(null)
-	const [statusMessage, setStatusMessage] = useState<string>("")
-	const hasSearchedRef = useRef(false)
-	const pollIntervalRef = useRef<NodeJS.Timeout | null>(null)
-	const connectedConfigIdRef = useRef<string | null>(null)
+		status: ConnectionStatus;
+		connectionConfig: ConnectionConfig;
+	} | null>(null);
+	const [authUrl, setAuthUrl] = useState<string | null>(null);
+	const [statusMessage, setStatusMessage] = useState<string>("");
+	const hasSearchedRef = useRef(false);
+	const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
+	const connectedConfigIdRef = useRef<string | null>(null);
 
 	useEffect(() => {
 		if (
@@ -43,115 +43,115 @@ export const ServerSearch = ({
 			selectedServer &&
 			connectedConfigIdRef.current !== connection.connectionConfig.configId
 		) {
-			connectedConfigIdRef.current = connection.connectionConfig.configId
-			onServerConnect(selectedServer, connection.connectionConfig)
+			connectedConfigIdRef.current = connection.connectionConfig.configId;
+			onServerConnect(selectedServer, connection.connectionConfig);
 		}
-	}, [connection, selectedServer, onServerConnect])
+	}, [connection, selectedServer, onServerConnect]);
 
 	const executeSearch = useCallback(
 		async (searchQuery: string) => {
-			setIsLoading(true)
-			setError(null)
+			setIsLoading(true);
+			setError(null);
 			try {
-				const results = await searchServers(searchQuery, 5, apiKey)
-				setServers(results)
+				const results = await searchServers(searchQuery, 5, apiKey);
+				setServers(results);
 			} catch (err) {
-				setError(err instanceof Error ? err.message : "Search failed")
+				setError(err instanceof Error ? err.message : "Search failed");
 			} finally {
-				setIsLoading(false)
+				setIsLoading(false);
 			}
 		},
 		[apiKey],
-	)
+	);
 
 	useEffect(() => {
-		if (!query || hasSearchedRef.current) return
-		hasSearchedRef.current = true
-		executeSearch(query)
-	}, [query, executeSearch])
+		if (!query || hasSearchedRef.current) return;
+		hasSearchedRef.current = true;
+		executeSearch(query);
+	}, [query, executeSearch]);
 
 	const startPolling = useCallback(
 		(serverName: string) => {
 			const poll = async () => {
 				try {
-					const result = await checkConnection(serverName, apiKey)
-					setStatusMessage(`Status: ${result.status}`)
+					const result = await checkConnection(serverName, apiKey);
+					setStatusMessage(`Status: ${result.status}`);
 
 					if (result.status === "success") {
 						setConnection({
 							status: "connected",
 							connectionConfig: { serverUrl: serverName, configId: serverName },
-						})
+						});
 						if (pollIntervalRef.current) {
-							clearInterval(pollIntervalRef.current)
-							pollIntervalRef.current = null
+							clearInterval(pollIntervalRef.current);
+							pollIntervalRef.current = null;
 						}
 					} else if (result.status === "needs_auth") {
 						setConnection({
 							status: "auth_required",
 							connectionConfig: { serverUrl: serverName, configId: serverName },
-						})
+						});
 					} else if (result.status === "error") {
 						setConnection({
 							status: "error",
 							connectionConfig: { serverUrl: serverName, configId: serverName },
-						})
+						});
 						if (pollIntervalRef.current) {
-							clearInterval(pollIntervalRef.current)
-							pollIntervalRef.current = null
+							clearInterval(pollIntervalRef.current);
+							pollIntervalRef.current = null;
 						}
 					}
 				} catch (err) {
 					setConnection({
 						status: "error",
 						connectionConfig: { serverUrl: serverName, configId: serverName },
-					})
+					});
 					setStatusMessage(
 						err instanceof Error ? err.message : "Connection check failed",
-					)
+					);
 					if (pollIntervalRef.current) {
-						clearInterval(pollIntervalRef.current)
-						pollIntervalRef.current = null
+						clearInterval(pollIntervalRef.current);
+						pollIntervalRef.current = null;
 					}
 				}
-			}
+			};
 
-			poll()
-			pollIntervalRef.current = setInterval(poll, 3000)
+			poll();
+			pollIntervalRef.current = setInterval(poll, 3000);
 		},
 		[apiKey],
-	)
+	);
 
 	useEffect(() => {
 		return () => {
 			if (pollIntervalRef.current) {
-				clearInterval(pollIntervalRef.current)
+				clearInterval(pollIntervalRef.current);
 			}
-		}
-	}, [])
+		};
+	}, []);
 
 	const handleUseServer = async (server: ServerListResponse) => {
-		setSelectedServer(server)
+		setSelectedServer(server);
 		setConnection({
 			status: "connecting",
 			connectionConfig: {
 				serverUrl: `https://server.smithery.ai/${server.qualifiedName}/mcp`,
 				configId: server.qualifiedName,
 			},
-		})
-		setStatusMessage("Connecting to server...")
-		setError(null)
+		});
+		setStatusMessage("Connecting to server...");
+		setError(null);
 
 		try {
-			const result = await useServer(server.qualifiedName, apiKey)
+			const result = await useServer(server.qualifiedName, apiKey);
 
 			if (result.status === "connected") {
 				setConnection({
 					status: "connected",
 					connectionConfig: result.connectionConfig,
-				})
-				setStatusMessage("Successfully connected")
-				startPolling(server.qualifiedName)
+				});
+				setStatusMessage("Successfully connected");
+				startPolling(server.qualifiedName);
 			} else if (result.status === "auth_required") {
 				setConnection({
 					status: "auth_required",
@@ -159,11 +159,11 @@ export const ServerSearch = ({
 						serverUrl: `https://server.smithery.ai/${server.qualifiedName}/mcp`,
 						configId: server.qualifiedName,
 					},
-				})
-				setAuthUrl(result.authorizationUrl)
-				setStatusMessage("Authentication required")
-				window.open(result.authorizationUrl, "_blank")
-				startPolling(server.qualifiedName)
+				});
+				setAuthUrl(result.authorizationUrl);
+				setStatusMessage("Authentication required");
+				window.open(result.authorizationUrl, "_blank");
+				startPolling(server.qualifiedName);
 			}
 		} catch (err) {
 			setConnection({
@@ -172,28 +172,30 @@ export const ServerSearch = ({
 					serverUrl: server.qualifiedName,
 					configId: server.qualifiedName,
 				},
-			})
-			setStatusMessage(err instanceof Error ? err.message : "Failed to connect")
+			});
+			setStatusMessage(
+				err instanceof Error ? err.message : "Failed to connect",
+			);
 		}
-	}
+	};
 
 	const handleBack = () => {
 		if (pollIntervalRef.current) {
-			clearInterval(pollIntervalRef.current)
-			pollIntervalRef.current = null
+			clearInterval(pollIntervalRef.current);
+			pollIntervalRef.current = null;
 		}
-		connectedConfigIdRef.current = null
-		setSelectedServer(null)
-		setConnection(null)
-		setAuthUrl(null)
-		setStatusMessage("")
-	}
+		connectedConfigIdRef.current = null;
+		setSelectedServer(null);
+		setConnection(null);
+		setAuthUrl(null);
+		setStatusMessage("");
+	};
 
 	const handleResubmit = () => {
-		if (!currentQuery.trim()) return
-		setIsEditing(false)
-		executeSearch(currentQuery)
-	}
+		if (!currentQuery.trim()) return;
+		setIsEditing(false);
+		executeSearch(currentQuery);
+	};
 
 	if (selectedServer) {
 		return (
@@ -281,7 +283,7 @@ export const ServerSearch = ({
 					)}
 				</div>
 			</div>
-		)
+		);
 	}
 
 	return (
@@ -307,8 +309,8 @@ export const ServerSearch = ({
 							<button
 								type="button"
 								onClick={() => {
-									setIsEditing(false)
-									setCurrentQuery(query)
+									setIsEditing(false);
+									setCurrentQuery(query);
 								}}
 								className="text-xs px-2 py-1 text-muted-foreground hover:text-foreground"
 							>
@@ -386,5 +388,5 @@ export const ServerSearch = ({
 				))
 			)}
 		</div>
-	)
-}
+	);
+};

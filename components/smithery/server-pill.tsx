@@ -1,29 +1,29 @@
-"use client"
+"use client";
 
-import { Badge } from "@/components/ui/badge"
-import { Spinner } from "@/components/ui/spinner"
+import type { ServerListResponse } from "@smithery/api/resources/index.mjs";
+import { AlertCircle, CheckCircle, X, XCircle } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Spinner } from "@/components/ui/spinner";
 import {
 	Tooltip,
 	TooltipContent,
 	TooltipTrigger,
-} from "@/components/ui/tooltip"
-import type { ServerListResponse } from "@smithery/api/resources/index.mjs"
-import type { ConnectionConfig } from "./types"
-import { AlertCircle, CheckCircle, X, XCircle } from "lucide-react"
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { checkConnection } from "./actions"
+} from "@/components/ui/tooltip";
+import { checkConnection } from "./actions";
+import type { ConnectionConfig } from "./types";
 
-type ConnectionStatus = "connecting" | "connected" | "auth_required" | "error"
+type ConnectionStatus = "connecting" | "connected" | "auth_required" | "error";
 
 type ServerPillProps = {
 	server: {
-		connectionConfig: ConnectionConfig
-		server?: ServerListResponse
-	}
-	onRemove?: (serverId: string) => void
-	enablePolling?: boolean
-	apiKey?: string | null
-}
+		connectionConfig: ConnectionConfig;
+		server?: ServerListResponse;
+	};
+	onRemove?: (serverId: string) => void;
+	enablePolling?: boolean;
+	apiKey?: string | null;
+};
 
 // Utility functions
 function getServerName(
@@ -31,12 +31,12 @@ function getServerName(
 	serverInfo?: ServerListResponse,
 ): string {
 	if (serverInfo) {
-		return serverInfo.displayName
+		return serverInfo.displayName;
 	}
 	try {
-		return new URL(connectionConfig.serverUrl).hostname
+		return new URL(connectionConfig.serverUrl).hostname;
 	} catch {
-		return connectionConfig.serverUrl
+		return connectionConfig.serverUrl;
 	}
 }
 
@@ -44,7 +44,7 @@ function getServerUrl(
 	connectionConfig: ConnectionConfig,
 	serverInfo?: ServerListResponse,
 ): string {
-	return serverInfo ? serverInfo.qualifiedName : connectionConfig.serverUrl
+	return serverInfo ? serverInfo.qualifiedName : connectionConfig.serverUrl;
 }
 
 export function ServerPill({
@@ -54,9 +54,9 @@ export function ServerPill({
 	enablePolling = true,
 }: ServerPillProps) {
 	const [connectionStatus, setConnectionStatus] =
-		useState<ConnectionStatus>("connecting")
-	const [errorMessage, setErrorMessage] = useState<string | null>(null)
-	const pollIntervalRef = useRef<NodeJS.Timeout | null>(null)
+		useState<ConnectionStatus>("connecting");
+	const [errorMessage, setErrorMessage] = useState<string | null>(null);
+	const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
 	const serverInfo = useMemo(
 		() => ({
@@ -68,59 +68,59 @@ export function ServerPill({
 			useCount: server.server?.useCount ?? null,
 		}),
 		[server],
-	)
+	);
 
 	const startPolling = useCallback(() => {
-		if (!enablePolling) return
+		if (!enablePolling) return;
 
 		const poll = async () => {
 			try {
-				const result = await checkConnection(serverInfo.url, apiKey)
+				const result = await checkConnection(serverInfo.url, apiKey);
 
 				if (result.status === "success") {
-					setConnectionStatus("connected")
-					setErrorMessage(null)
+					setConnectionStatus("connected");
+					setErrorMessage(null);
 					if (pollIntervalRef.current) {
-						clearInterval(pollIntervalRef.current)
-						pollIntervalRef.current = null
+						clearInterval(pollIntervalRef.current);
+						pollIntervalRef.current = null;
 					}
 				} else if (result.status === "needs_auth") {
-					setConnectionStatus("auth_required")
+					setConnectionStatus("auth_required");
 				} else if (result.status === "error") {
-					setConnectionStatus("error")
-					setErrorMessage("Connection failed")
+					setConnectionStatus("error");
+					setErrorMessage("Connection failed");
 					if (pollIntervalRef.current) {
-						clearInterval(pollIntervalRef.current)
-						pollIntervalRef.current = null
+						clearInterval(pollIntervalRef.current);
+						pollIntervalRef.current = null;
 					}
 				}
 			} catch (err) {
-				setConnectionStatus("error")
+				setConnectionStatus("error");
 				setErrorMessage(
 					err instanceof Error ? err.message : "Connection check failed",
-				)
+				);
 				if (pollIntervalRef.current) {
-					clearInterval(pollIntervalRef.current)
-					pollIntervalRef.current = null
+					clearInterval(pollIntervalRef.current);
+					pollIntervalRef.current = null;
 				}
 			}
-		}
+		};
 
-		poll()
-		pollIntervalRef.current = setInterval(poll, 3000)
-	}, [enablePolling, serverInfo.url, apiKey])
+		poll();
+		pollIntervalRef.current = setInterval(poll, 3000);
+	}, [enablePolling, serverInfo.url, apiKey]);
 
 	useEffect(() => {
 		if (enablePolling) {
-			startPolling()
+			startPolling();
 		}
 
 		return () => {
 			if (pollIntervalRef.current) {
-				clearInterval(pollIntervalRef.current)
+				clearInterval(pollIntervalRef.current);
 			}
-		}
-	}, [enablePolling, startPolling])
+		};
+	}, [enablePolling, startPolling]);
 
 	const { variant, statusIcon, statusText, statusColorClass } = useMemo(() => {
 		switch (connectionStatus) {
@@ -130,40 +130,40 @@ export function ServerPill({
 					statusIcon: <Spinner className="size-3" />,
 					statusText: "Connecting",
 					statusColorClass: "text-muted-foreground",
-				}
+				};
 			case "connected":
 				return {
 					variant: "default" as const,
 					statusIcon: <CheckCircle className="size-3" />,
 					statusText: "Connected",
 					statusColorClass: "text-green-600",
-				}
+				};
 			case "auth_required":
 				return {
 					variant: "outline" as const,
 					statusIcon: <AlertCircle className="size-3 text-amber-500" />,
 					statusText: "Auth Required",
 					statusColorClass: "text-amber-500",
-				}
+				};
 			case "error":
 				return {
 					variant: "destructive" as const,
 					statusIcon: <XCircle className="size-3" />,
 					statusText: "Error",
 					statusColorClass: "text-destructive",
-				}
+				};
 		}
-	}, [connectionStatus])
+	}, [connectionStatus]);
 
 	const handleRemove = useCallback(
 		(e: React.MouseEvent) => {
-			e.stopPropagation()
+			e.stopPropagation();
 			if (onRemove) {
-				onRemove(serverInfo.id)
+				onRemove(serverInfo.id);
 			}
 		},
 		[onRemove, serverInfo.id],
-	)
+	);
 
 	return (
 		<Tooltip delayDuration={200}>
@@ -215,5 +215,5 @@ export function ServerPill({
 				</div>
 			</TooltipContent>
 		</Tooltip>
-	)
+	);
 }
