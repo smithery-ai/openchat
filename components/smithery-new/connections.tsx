@@ -1,20 +1,20 @@
-"use client"
+"use client";
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import Smithery from "@smithery/api"
-import type { Connection } from "@smithery/api/resources/beta/connect/connections.mjs"
-import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar"
-import { Button } from "../ui/button"
-import { Card, CardContent } from "../ui/card"
-import { Trash2 } from "lucide-react"
-import { Separator } from "../ui/separator"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import Smithery from "@smithery/api";
+import type { Connection } from "@smithery/api/resources/beta/connect/connections.mjs";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { Button } from "../ui/button";
+import { Card, CardContent } from "../ui/card";
+import { Trash2 } from "lucide-react";
+import { Separator } from "../ui/separator";
 
 async function getDefaultNamespace(client: Smithery) {
-	const namespaces = await client.namespaces.list()
+	const namespaces = await client.namespaces.list();
 	if (namespaces.namespaces.length === 0) {
-		throw new Error("No namespaces found")
+		throw new Error("No namespaces found");
 	}
-	return namespaces.namespaces[0].name
+	return namespaces.namespaces[0].name;
 }
 
 export const ConnectionCard = ({
@@ -22,25 +22,25 @@ export const ConnectionCard = ({
 	token,
 	namespace,
 }: {
-	connection: Connection
-	token: string
-	namespace: string
+	connection: Connection;
+	token: string;
+	namespace: string;
 }) => {
-	const queryClient = useQueryClient()
+	const queryClient = useQueryClient();
 
 	const deleteMutation = useMutation({
 		mutationFn: async () => {
 			const client = new Smithery({
 				apiKey: token,
-			})
+			});
 			await client.beta.connect.connections.delete(connection.connectionId, {
 				namespace: namespace,
-			})
+			});
 		},
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ["connections"] })
+			queryClient.invalidateQueries({ queryKey: ["connections"] });
 		},
-	})
+	});
 
 	return (
 		<Card className="border-none shadow-none">
@@ -53,10 +53,19 @@ export const ConnectionCard = ({
 				</Avatar>
 				<div className="flex-1 min-w-0">
 					<h3 className="font-medium truncate">{connection.name}</h3>
-                    <p className="text-muted-foreground text-xs truncate">{connection.connectionId}</p>
-                    <p className="text-muted-foreground text-xs truncate">{connection.mcpUrl}</p>
-                    <p className="text-muted-foreground text-xs truncate">{new Date(connection.createdAt || "").toLocaleDateString()} {new Date(connection.createdAt || "").toLocaleTimeString()}</p>
-                    <p className="text-muted-foreground text-xs truncate">{connection.metadata && JSON.stringify(connection.metadata)}</p>
+					<p className="text-muted-foreground text-xs truncate">
+						{connection.connectionId}
+					</p>
+					<p className="text-muted-foreground text-xs truncate">
+						{connection.mcpUrl}
+					</p>
+					<p className="text-muted-foreground text-xs truncate">
+						{new Date(connection.createdAt || "").toLocaleDateString()}{" "}
+						{new Date(connection.createdAt || "").toLocaleTimeString()}
+					</p>
+					<p className="text-muted-foreground text-xs truncate">
+						{connection.metadata && JSON.stringify(connection.metadata)}
+					</p>
 				</div>
 				<Button
 					variant="ghost"
@@ -68,25 +77,25 @@ export const ConnectionCard = ({
 				</Button>
 			</CardContent>
 		</Card>
-	)
-}
+	);
+};
 
 export const Connections = ({ token }: { token: string }) => {
 	const { data, isLoading, error } = useQuery({
 		queryKey: ["connections"],
 		queryFn: async () => {
 			if (!token) {
-				throw new Error("API token is required")
+				throw new Error("API token is required");
 			}
 			const client = new Smithery({
 				apiKey: token,
-			})
-			const namespace = await getDefaultNamespace(client)
-			const connections = await client.beta.connect.connections.list(namespace)
-			return { connections, namespace }
+			});
+			const namespace = await getDefaultNamespace(client);
+			const connections = await client.beta.connect.connections.list(namespace);
+			return { connections, namespace };
 		},
 		enabled: !!token,
-	})
+	});
 
 	return (
 		<div className="max-w-md mx-auto">
@@ -95,18 +104,17 @@ export const Connections = ({ token }: { token: string }) => {
 			{data && (
 				<div className="space-y-2 overflow-auto max-h-[500px]">
 					{data.connections.connections.map((connection: Connection) => (
-                        <>
-						<ConnectionCard
-							key={connection.connectionId}
-							connection={connection}
-							token={token}
-							namespace={data.namespace}
-						/>
-                        <Separator />
-                        </>
+						<div key={connection.connectionId}>
+							<ConnectionCard
+								connection={connection}
+								token={token}
+								namespace={data.namespace}
+							/>
+							<Separator />
+						</div>
 					))}
 				</div>
 			)}
 		</div>
-	)
-}
+	);
+};
