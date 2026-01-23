@@ -21,7 +21,6 @@ import {
 	PromptInputAttachment,
 	PromptInputAttachments,
 	PromptInputBody,
-	PromptInputButton,
 	PromptInputFooter,
 	PromptInputHeader,
 	type PromptInputMessage,
@@ -47,6 +46,7 @@ import {
 } from "@/components/ai-elements/sources"
 import { ActToolApproval } from "@/components/smithery/act-tool-approval"
 import {
+	searchTool,
 	testConnection,
 	validateSmitheryApiKey,
 } from "@/components/smithery/actions"
@@ -132,17 +132,6 @@ const ChatBotDemo = () => {
 	const { messages, sendMessage, status, regenerate, addToolOutput } =
 		useChatContext()
 
-	// Load API key from localStorage on mount
-	useEffect(() => {
-		const storedApiKey = localStorage.getItem("smithery_api_key")
-		if (storedApiKey) {
-			setApiKey(storedApiKey)
-		} else {
-			// Check if env var is configured
-			checkApiKey(null)
-		}
-	}, [])
-
 	const checkApiKey = useCallback(async (keyToValidate: string | null) => {
 		setIsValidating(true)
 		setValidationError(null)
@@ -164,6 +153,17 @@ const ChatBotDemo = () => {
 			setIsValidating(false)
 		}
 	}, [])
+
+	// Load API key from localStorage on mount
+	useEffect(() => {
+		const storedApiKey = localStorage.getItem("smithery_api_key")
+		if (storedApiKey) {
+			setApiKey(storedApiKey)
+		} else {
+			// Check if env var is configured
+			checkApiKey(null)
+		}
+	}, [checkApiKey])
 
 	// Validate API key when it's loaded
 	useEffect(() => {
