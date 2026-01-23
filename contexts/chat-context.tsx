@@ -1,29 +1,29 @@
-"use client"
+"use client";
 
-import { type UseChatHelpers, useChat } from "@ai-sdk/react"
-import { lastAssistantMessageIsCompleteWithToolCalls } from "ai"
-import { type ReactNode, createContext, useContext } from "react"
+import { type UseChatHelpers, useChat } from "@ai-sdk/react";
+import { lastAssistantMessageIsCompleteWithToolCalls } from "ai";
+import { createContext, type ReactNode, useContext } from "react";
 
 const ChatContext = createContext<ReturnType<typeof useChat> | undefined>(
 	undefined,
-)
+);
 
 export const useChatContext = () => {
-	const context = useContext(ChatContext)
+	const context = useContext(ChatContext);
 	if (!context) {
-		throw new Error("useChatContext must be used within a ChatProvider")
+		throw new Error("useChatContext must be used within a ChatProvider");
 	}
-	return context
-}
+	return context;
+};
 
 interface ChatProviderProps {
-	children: ReactNode
+	children: ReactNode;
 }
 
 export const ChatProvider = ({ children }: ChatProviderProps) => {
-	const chatHelpers = useChat()
+	const chatHelpers = useChat();
 
 	return (
 		<ChatContext.Provider value={chatHelpers}>{children}</ChatContext.Provider>
-	)
-}
+	);
+};

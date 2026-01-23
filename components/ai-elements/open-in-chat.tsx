@@ -1,6 +1,12 @@
-"use client"
+"use client";
 
-import { Button } from "@/components/ui/button"
+import {
+	ChevronDownIcon,
+	ExternalLinkIcon,
+	MessageCircleIcon,
+} from "lucide-react";
+import { type ComponentProps, createContext, useContext } from "react";
+import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -8,14 +14,8 @@ import {
 	DropdownMenuLabel,
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { cn } from "@/lib/utils"
-import {
-	ChevronDownIcon,
-	ExternalLinkIcon,
-	MessageCircleIcon,
-} from "lucide-react"
-import { type ComponentProps, createContext, useContext } from "react"
+} from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
 
 const providers = {
 	github: {
@@ -163,9 +163,9 @@ const providers = {
 	cursor: {
 		title: "Open in Cursor",
 		createUrl: (text: string) => {
-			const url = new URL("https://cursor.com/link/prompt")
-			url.searchParams.set("text", text)
-			return url.toString()
+			const url = new URL("https://cursor.com/link/prompt");
+			url.searchParams.set("text", text);
+			return url.toString();
 		},
 		icon: (
 			<svg
@@ -181,29 +181,29 @@ const providers = {
 			</svg>
 		),
 	},
-}
+};
 
-const OpenInContext = createContext<{ query: string } | undefined>(undefined)
+const OpenInContext = createContext<{ query: string } | undefined>(undefined);
 
 const useOpenInContext = () => {
-	const context = useContext(OpenInContext)
+	const context = useContext(OpenInContext);
 	if (!context) {
-		throw new Error("OpenIn components must be used within an OpenIn provider")
+		throw new Error("OpenIn components must be used within an OpenIn provider");
 	}
-	return context
-}
+	return context;
+};
 
 export type OpenInProps = ComponentProps<typeof DropdownMenu> & {
-	query: string
-}
+	query: string;
+};
 
 export const OpenIn = ({ query, ...props }: OpenInProps) => (
 	<OpenInContext.Provider value={{ query }}>
 		<DropdownMenu {...props} />
 	</OpenInContext.Provider>
-)
+);
 
-export type OpenInContentProps = ComponentProps<typeof DropdownMenuContent>
+export type OpenInContentProps = ComponentProps<typeof DropdownMenuContent>;
 
 export const OpenInContent = ({ className, ...props }: OpenInContentProps) => (
 	<DropdownMenuContent
@@ -211,27 +211,27 @@ export const OpenInContent = ({ className, ...props }: OpenInContentProps) => (
 		className={cn("w-[240px]", className)}
 		{...props}
 	/>
-)
+);
 
-export type OpenInItemProps = ComponentProps<typeof DropdownMenuItem>
+export type OpenInItemProps = ComponentProps<typeof DropdownMenuItem>;
 
 export const OpenInItem = (props: OpenInItemProps) => (
 	<DropdownMenuItem {...props} />
-)
+);
 
-export type OpenInLabelProps = ComponentProps<typeof DropdownMenuLabel>
+export type OpenInLabelProps = ComponentProps<typeof DropdownMenuLabel>;
 
 export const OpenInLabel = (props: OpenInLabelProps) => (
 	<DropdownMenuLabel {...props} />
-)
+);
 
-export type OpenInSeparatorProps = ComponentProps<typeof DropdownMenuSeparator>
+export type OpenInSeparatorProps = ComponentProps<typeof DropdownMenuSeparator>;
 
 export const OpenInSeparator = (props: OpenInSeparatorProps) => (
 	<DropdownMenuSeparator {...props} />
-)
+);
 
-export type OpenInTriggerProps = ComponentProps<typeof DropdownMenuTrigger>
+export type OpenInTriggerProps = ComponentProps<typeof DropdownMenuTrigger>;
 
 export const OpenInTrigger = ({ children, ...props }: OpenInTriggerProps) => (
 	<DropdownMenuTrigger {...props} asChild>
@@ -242,12 +242,12 @@ export const OpenInTrigger = ({ children, ...props }: OpenInTriggerProps) => (
 			</Button>
 		)}
 	</DropdownMenuTrigger>
-)
+);
 
-export type OpenInChatGPTProps = ComponentProps<typeof DropdownMenuItem>
+export type OpenInChatGPTProps = ComponentProps<typeof DropdownMenuItem>;
 
 export const OpenInChatGPT = (props: OpenInChatGPTProps) => {
-	const { query } = useOpenInContext()
+	const { query } = useOpenInContext();
 	return (
 		<DropdownMenuItem asChild {...props}>
 			<a
@@ -261,13 +261,13 @@ export const OpenInChatGPT = (props: OpenInChatGPTProps) => {
 				<ExternalLinkIcon className="size-4 shrink-0" />
 			</a>
 		</DropdownMenuItem>
-	)
-}
+	);
+};
 
-export type OpenInClaudeProps = ComponentProps<typeof DropdownMenuItem>
+export type OpenInClaudeProps = ComponentProps<typeof DropdownMenuItem>;
 
 export const OpenInClaude = (props: OpenInClaudeProps) => {
-	const { query } = useOpenInContext()
+	const { query } = useOpenInContext();
 	return (
 		<DropdownMenuItem asChild {...props}>
 			<a
@@ -281,13 +281,13 @@ export const OpenInClaude = (props: OpenInClaudeProps) => {
 				<ExternalLinkIcon className="size-4 shrink-0" />
 			</a>
 		</DropdownMenuItem>
-	)
-}
+	);
+};
 
-export type OpenInT3Props = ComponentProps<typeof DropdownMenuItem>
+export type OpenInT3Props = ComponentProps<typeof DropdownMenuItem>;
 
 export const OpenInT3 = (props: OpenInT3Props) => {
-	const { query } = useOpenInContext()
+	const { query } = useOpenInContext();
 	return (
 		<DropdownMenuItem asChild {...props}>
 			<a
@@ -301,13 +301,13 @@ export const OpenInT3 = (props: OpenInT3Props) => {
 				<ExternalLinkIcon className="size-4 shrink-0" />
 			</a>
 		</DropdownMenuItem>
-	)
-}
+	);
+};
 
-export type OpenInSciraProps = ComponentProps<typeof DropdownMenuItem>
+export type OpenInSciraProps = ComponentProps<typeof DropdownMenuItem>;
 
 export const OpenInScira = (props: OpenInSciraProps) => {
-	const { query } = useOpenInContext()
+	const { query } = useOpenInContext();
 	return (
 		<DropdownMenuItem asChild {...props}>
 			<a
@@ -321,13 +321,13 @@ export const OpenInScira = (props: OpenInSciraProps) => {
 				<ExternalLinkIcon className="size-4 shrink-0" />
 			</a>
 		</DropdownMenuItem>
-	)
-}
+	);
+};
 
-export type OpenInv0Props = ComponentProps<typeof DropdownMenuItem>
+export type OpenInv0Props = ComponentProps<typeof DropdownMenuItem>;
 
 export const OpenInv0 = (props: OpenInv0Props) => {
-	const { query } = useOpenInContext()
+	const { query } = useOpenInContext();
 	return (
 		<DropdownMenuItem asChild {...props}>
 			<a
@@ -341,13 +341,13 @@ export const OpenInv0 = (props: OpenInv0Props) => {
 				<ExternalLinkIcon className="size-4 shrink-0" />
 			</a>
 		</DropdownMenuItem>
-	)
-}
+	);
+};
 
-export type OpenInCursorProps = ComponentProps<typeof DropdownMenuItem>
+export type OpenInCursorProps = ComponentProps<typeof DropdownMenuItem>;
 
 export const OpenInCursor = (props: OpenInCursorProps) => {
-	const { query } = useOpenInContext()
+	const { query } = useOpenInContext();
 	return (
 		<DropdownMenuItem asChild {...props}>
 			<a
@@ -361,5 +361,5 @@ export const OpenInCursor = (props: OpenInCursorProps) => {
 				<ExternalLinkIcon className="size-4 shrink-0" />
 			</a>
 		</DropdownMenuItem>
-	)
-}
+	);
+};

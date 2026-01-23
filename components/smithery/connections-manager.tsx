@@ -1,6 +1,23 @@
-"use client"
+"use client";
 
-import { Alert } from "@/components/ui/alert"
+import type { Connection } from "@smithery/api/resources/beta/connect/connections";
+import {
+	type ColumnDef,
+	type ColumnFiltersState,
+	flexRender,
+	getCoreRowModel,
+	getFilteredRowModel,
+	getPaginationRowModel,
+	getSortedRowModel,
+	type SortingState,
+	useReactTable,
+	type VisibilityState,
+} from "@tanstack/react-table";
+import { ArrowUpDown, Info, MoreHorizontal, Trash2 } from "lucide-react";
+import type * as React from "react";
+import { useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
+import { Alert } from "@/components/ui/alert";
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -11,10 +28,10 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 	AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
+} from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
 	Dialog,
 	DialogContent,
@@ -22,7 +39,7 @@ import {
 	DialogHeader,
 	DialogTitle,
 	DialogTrigger,
-} from "@/components/ui/dialog"
+} from "@/components/ui/dialog";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -30,23 +47,23 @@ import {
 	DropdownMenuItem,
 	DropdownMenuLabel,
 	DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@/components/ui/dropdown-menu";
 import {
 	Empty,
 	EmptyDescription,
 	EmptyHeader,
 	EmptyTitle,
-} from "@/components/ui/empty"
-import { Input } from "@/components/ui/input"
-import { ScrollArea } from "@/components/ui/scroll-area"
+} from "@/components/ui/empty";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
 	Select,
 	SelectContent,
 	SelectItem,
 	SelectTrigger,
 	SelectValue,
-} from "@/components/ui/select"
-import { Spinner } from "@/components/ui/spinner"
+} from "@/components/ui/select";
+import { Spinner } from "@/components/ui/spinner";
 import {
 	Table,
 	TableBody,
@@ -54,92 +71,78 @@ import {
 	TableHead,
 	TableHeader,
 	TableRow,
-} from "@/components/ui/table"
+} from "@/components/ui/table";
 import {
 	Tooltip,
 	TooltipContent,
 	TooltipProvider,
 	TooltipTrigger,
-} from "@/components/ui/tooltip"
-import type { Connection } from "@smithery/api/resources/beta/connect/connections"
-import {
-	type ColumnDef,
-	type ColumnFiltersState,
-	type SortingState,
-	type VisibilityState,
-	flexRender,
-	getCoreRowModel,
-	getFilteredRowModel,
-	getPaginationRowModel,
-	getSortedRowModel,
-	useReactTable,
-} from "@tanstack/react-table"
-import { ArrowUpDown, Info, MoreHorizontal, Trash2 } from "lucide-react"
-import type * as React from "react"
-import { useCallback, useEffect, useState } from "react"
-import { toast } from "sonner"
-import { deleteConnection, getConnections, listNamespaces } from "./actions"
+} from "@/components/ui/tooltip";
+import { deleteConnection, getConnections, listNamespaces } from "./actions";
 
 export type ConnectionActionContext = {
-	namespace: string
-}
+	namespace: string;
+};
 
 export type ConnectionAction = {
-	name: string
-	icon?: React.ReactNode
+	name: string;
+	icon?: React.ReactNode;
 	onClick: (
 		connection: Connection,
 		context: ConnectionActionContext,
-	) => void | Promise<void>
-	variant?: "default" | "destructive"
-}
+	) => void | Promise<void>;
+	variant?: "default" | "destructive";
+};
 
 type ConnectionsManagerProps = {
-	actions?: ConnectionAction[]
-	apiKey?: string | null
-}
+	actions?: ConnectionAction[];
+	apiKey?: string | null;
+};
 
 type ActionExecutionState = {
-	connectionId: string
-	actionName: string
-}
+	connectionId: string;
+	actionName: string;
+};
 
 function getStatusVariant(
 	status?: Connection["status"],
 ): "default" | "destructive" | "outline" {
-	if (!status) return "outline"
+	if (!status) return "outline";
 
 	switch (status.state) {
 		case "connected":
-			return "default"
+			return "default";
 		case "error":
-			return "destructive"
+			return "destructive";
 		case "auth_required":
-			return "outline"
+			return "outline";
 		default:
-			return "outline"
+			return "outline";
 	}
 }
 
 function formatDate(isoString?: string): string {
-	if (!isoString) return "Unknown"
+	if (!isoString) return "Unknown";
 
-	const date = new Date(isoString)
+	const date = new Date(isoString);
 	return new Intl.DateTimeFormat("en-US", {
 		month: "short",
 		day: "numeric",
 		year: "numeric",
 		hour: "2-digit",
 		minute: "2-digit",
-	}).format(date)
+	}).format(date);
 }
 
 type ActionMenuItemProps = {
-	action: ConnectionAction
-	connection: Connection
-	onExecute: (connection: Connection, action: ConnectionAction) => Promise<void>
-	isExecuting: boolean
-}
+	action: ConnectionAction;
+	connection: Connection;
+	onExecute: (
+		connection: Connection,
+		action: ConnectionAction,
+	) => Promise<void>;
+	isExecuting: boolean;
+};
 
 function ActionMenuItem({
 	action,
@@ -148,22 +151,22 @@ function ActionMenuItem({
 	isExecuting,
 }: ActionMenuItemProps) {
 	const handleClick = async () => {
-		await onExecute(connection, action)
-	}
+		await onExecute(connection, action);
+	};
 
 	return (
 		<DropdownMenuItem onClick={handleClick} disabled={isExecuting}>
 			{action.icon && <span className="mr-2">{action.icon}</span>}
 			{isExecuting ? `${action.name}...` : action.name}
 		</DropdownMenuItem>
-	)
+	);
 }
 
 type DeleteDialogProps = {
-	connection: Connection
-	onDelete: (id: string) => Promise<void>
-	isDeleting: boolean
-}
+	connection: Connection;
+	onDelete: (id: string) => Promise<void>;
+	isDeleting: boolean;
+};
 
 async function* deleteWithConcurrency(
 	connectionIds: string[],
@@ -175,32 +178,32 @@ async function* deleteWithConcurrency(
 	void,
 	unknown
 > {
-	let completed = 0
-	const total = connectionIds.length
-	const executing: Promise<string>[] = []
+	let completed = 0;
+	const total = connectionIds.length;
+	const executing: Promise<string>[] = [];
 
 	for (const id of connectionIds) {
 		// Wrap deletion in a promise that removes itself when done
 		const promise = deleteConnection(id, namespace, apiKey).then(() => {
-			executing.splice(executing.indexOf(promise), 1)
-			return id
-		})
+			executing.splice(executing.indexOf(promise), 1);
+			return id;
+		});
 
-		executing.push(promise)
+		executing.push(promise);
 
 		// Wait when pool is full
 		if (executing.length >= maxConcurrency) {
-			const completedId = await Promise.race(executing)
-			completed++
-			yield { completed, total, currentId: completedId }
+			const completedId = await Promise.race(executing);
+			completed++;
+			yield { completed, total, currentId: completedId };
 		}
 	}
 
 	// Process remaining
 	while (executing.length > 0) {
-		const completedId = await Promise.race(executing)
-		completed++
-		yield { completed, total, currentId: completedId }
+		const completedId = await Promise.race(executing);
+		completed++;
+		yield { completed, total, currentId: completedId };
 	}
 }
 
@@ -231,15 +234,15 @@ function DeleteDialog({ connection, onDelete, isDeleting }: DeleteDialogProps) {
 				</AlertDialogFooter>
 			</AlertDialogContent>
 		</AlertDialog>
-	)
+	);
 }
 
 type DeleteSelectedDialogProps = {
-	selectedCount: number
-	onConfirm: () => void
-	isDeleting: boolean
-	progress: { completed: number; total: number } | null
-}
+	selectedCount: number;
+	onConfirm: () => void;
+	isDeleting: boolean;
+	progress: { completed: number; total: number } | null;
+};
 
 function DeleteSelectedDialog({
 	selectedCount,
@@ -247,19 +250,19 @@ function DeleteSelectedDialog({
 	isDeleting,
 	progress,
 }: DeleteSelectedDialogProps) {
-	const [open, setOpen] = useState(false)
+	const [open, setOpen] = useState(false);
 
 	const handleConfirm = () => {
-		setOpen(false)
-		onConfirm()
-	}
+		setOpen(false);
+		onConfirm();
+	};
 
-	if (selectedCount === 0) return null
+	if (selectedCount === 0) return null;
 
 	const buttonText =
 		isDeleting && progress
 			? `Deleting ${progress.completed} of ${progress.total}...`
-			: `Delete ${selectedCount} selected`
+			: `Delete ${selectedCount} selected`;
 
 	return (
 		<AlertDialog open={open} onOpenChange={setOpen}>
@@ -283,87 +286,89 @@ function DeleteSelectedDialog({
 				</AlertDialogFooter>
 			</AlertDialogContent>
 		</AlertDialog>
-	)
+	);
 }
 
 export const ConnectionsManager = ({
 	actions,
 	apiKey,
 }: ConnectionsManagerProps = {}) => {
-	const [connections, setConnections] = useState<Connection[]>([])
+	const [connections, setConnections] = useState<Connection[]>([]);
 	const [namespaces, setNamespaces] = useState<
 		Array<{ name: string; createdAt: string }>
-	>([])
-	const [selectedNamespace, setSelectedNamespace] = useState<string>("")
-	const [isLoading, setIsLoading] = useState(true)
-	const [error, setError] = useState<string | null>(null)
-	const [deletingId, setDeletingId] = useState<string | null>(null)
+	>([]);
+	const [selectedNamespace, setSelectedNamespace] = useState<string>("");
+	const [isLoading, setIsLoading] = useState(true);
+	const [error, setError] = useState<string | null>(null);
+	const [deletingId, setDeletingId] = useState<string | null>(null);
 	const [bulkDeleteProgress, setBulkDeleteProgress] = useState<{
-		completed: number
-		total: number
-	} | null>(null)
+		completed: number;
+		total: number;
+	} | null>(null);
 	const [executingAction, setExecutingAction] =
-		useState<ActionExecutionState | null>(null)
+		useState<ActionExecutionState | null>(null);
 
-	const [sorting, setSorting] = useState<SortingState>([])
-	const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
-	const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
-	const [rowSelection, setRowSelection] = useState({})
+	const [sorting, setSorting] = useState<SortingState>([]);
+	const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+	const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+	const [rowSelection, setRowSelection] = useState({});
 
 	const loadNamespaces = useCallback(async () => {
 		try {
-			const data = await listNamespaces(apiKey)
-			setNamespaces(data)
+			const data = await listNamespaces(apiKey);
+			setNamespaces(data);
 			if (data.length > 0 && !selectedNamespace) {
-				setSelectedNamespace(data[0].name)
+				setSelectedNamespace(data[0].name);
 			}
 		} catch (err) {
-			setError(err instanceof Error ? err.message : "Failed to load namespaces")
+			setError(
+				err instanceof Error ? err.message : "Failed to load namespaces",
+			);
 		}
-	}, [selectedNamespace, apiKey])
+	}, [selectedNamespace, apiKey]);
 
 	const loadConnections = useCallback(async () => {
-		if (!selectedNamespace) return
+		if (!selectedNamespace) return;
 
-		setIsLoading(true)
-		setError(null)
+		setIsLoading(true);
+		setError(null);
 		try {
-			const data = await getConnections(selectedNamespace, apiKey)
-			setConnections(data)
+			const data = await getConnections(selectedNamespace, apiKey);
+			setConnections(data);
 		} catch (err) {
 			setError(
 				err instanceof Error ? err.message : "Failed to load connections",
-			)
+			);
 		} finally {
-			setIsLoading(false)
+			setIsLoading(false);
 		}
-	}, [selectedNamespace, apiKey])
+	}, [selectedNamespace, apiKey]);
 
 	useEffect(() => {
-		loadNamespaces()
-	}, [loadNamespaces])
+		loadNamespaces();
+	}, [loadNamespaces]);
 
 	useEffect(() => {
-		loadConnections()
-	}, [loadConnections])
+		loadConnections();
+	}, [loadConnections]);
 
 	const handleDelete = async (connectionId: string) => {
-		if (!selectedNamespace) return
+		if (!selectedNamespace) return;
 
-		setDeletingId(connectionId)
+		setDeletingId(connectionId);
 		try {
-			await deleteConnection(connectionId, selectedNamespace, apiKey)
+			await deleteConnection(connectionId, selectedNamespace, apiKey);
 			setConnections((prev) =>
 				prev.filter((conn) => conn.connectionId !== connectionId),
-			)
+			);
 		} catch (err) {
 			setError(
 				err instanceof Error ? err.message : "Failed to delete connection",
-			)
+			);
 		} finally {
-			setDeletingId(null)
+			setDeletingId(null);
 		}
-	}
+	};
 
 	const handleActionExecute = async (
 		connection: Connection,
@@ -372,30 +377,30 @@ export const ConnectionsManager = ({
 		setExecutingAction({
 			connectionId: connection.connectionId,
 			actionName: action.name,
-		})
+		});
 
 		try {
-			await action.onClick(connection, { namespace: selectedNamespace })
+			await action.onClick(connection, { namespace: selectedNamespace });
 		} catch (error) {
-			toast.error(error instanceof Error ? error.message : "Action failed")
+			toast.error(error instanceof Error ? error.message : "Action failed");
 		} finally {
-			setExecutingAction(null)
+			setExecutingAction(null);
 		}
-	}
+	};
 
 	const handleDeleteSelected = async () => {
-		if (!selectedNamespace) return
+		if (!selectedNamespace) return;
 
-		const selectedRows = table.getFilteredSelectedRowModel().rows
-		const idsToDelete = selectedRows.map((row) => row.original.connectionId)
+		const selectedRows = table.getFilteredSelectedRowModel().rows;
+		const idsToDelete = selectedRows.map((row) => row.original.connectionId);
 
-		if (idsToDelete.length === 0) return
+		if (idsToDelete.length === 0) return;
 
-		setBulkDeleteProgress({ completed: 0, total: idsToDelete.length })
-		setError(null)
+		setBulkDeleteProgress({ completed: 0, total: idsToDelete.length });
+		setError(null);
 
 		// Clear selection
-		table.resetRowSelection()
+		table.resetRowSelection();
 
 		try {
 			for await (const progress of deleteWithConcurrency(
@@ -404,22 +409,22 @@ export const ConnectionsManager = ({
 				apiKey,
 				3,
 			)) {
-				setBulkDeleteProgress(progress)
+				setBulkDeleteProgress(progress);
 				// Remove completed connection from UI
 				setConnections((prev) =>
 					prev.filter((conn) => conn.connectionId !== progress.currentId),
-				)
+				);
 			}
 		} catch (err) {
 			setError(
 				err instanceof Error ? err.message : "Failed to delete connections",
-			)
+			);
 			// Reload connections on error to restore actual state
-			await loadConnections()
+			await loadConnections();
 		} finally {
-			setBulkDeleteProgress(null)
+			setBulkDeleteProgress(null);
 		}
-	}
+	};
 
 	const columns: ColumnDef<Connection>[] = [
 		{
@@ -455,7 +460,7 @@ export const ConnectionsManager = ({
 						Name
 						<ArrowUpDown />
 					</Button>
-				)
+				);
 			},
 			cell: ({ row }) => (
 				<div className="flex items-center gap-2">
@@ -485,21 +490,21 @@ export const ConnectionsManager = ({
 			accessorKey: "status",
 			header: "Status",
 			cell: ({ row }) => {
-				const status = row.original.status
+				const status = row.original.status;
 				return (
 					<Badge variant={getStatusVariant(status)}>
 						{status?.state || "unknown"}
 					</Badge>
-				)
+				);
 			},
 		},
 		{
 			accessorKey: "metadata",
 			header: "Metadata",
 			cell: ({ row }) => {
-				const metadata = row.original.metadata
+				const metadata = row.original.metadata;
 				if (!metadata || Object.keys(metadata).length === 0) {
-					return <span className="text-muted-foreground text-xs">—</span>
+					return <span className="text-muted-foreground text-xs">—</span>;
 				}
 
 				return (
@@ -521,7 +526,7 @@ export const ConnectionsManager = ({
 							</TooltipContent>
 						</Tooltip>
 					</TooltipProvider>
-				)
+				);
 			},
 		},
 		{
@@ -535,7 +540,7 @@ export const ConnectionsManager = ({
 						Created
 						<ArrowUpDown />
 					</Button>
-				)
+				);
 			},
 			cell: ({ row }) => (
 				<div className="text-muted-foreground text-xs">
@@ -547,7 +552,7 @@ export const ConnectionsManager = ({
 			id: "actions",
 			enableHiding: false,
 			cell: ({ row }) => {
-				const connection = row.original
+				const connection = row.original;
 
 				return (
 					<DropdownMenu>
@@ -602,10 +607,10 @@ export const ConnectionsManager = ({
 							</DropdownMenuGroup>
 						</DropdownMenuContent>
 					</DropdownMenu>
-				)
+				);
 			},
 		},
-	]
+	];
 
 	const table = useReactTable({
 		data: connections,
@@ -624,14 +629,14 @@ export const ConnectionsManager = ({
 			columnVisibility,
 			rowSelection,
 		},
-	})
+	});
 
 	if (isLoading) {
 		return (
 			<div className="flex justify-center py-8">
 				<Spinner />
 			</div>
-		)
+		);
 	}
 
 	if (error) {
@@ -639,7 +644,7 @@ export const ConnectionsManager = ({
 			<Alert variant="destructive">
 				<div className="text-sm">{error}</div>
 			</Alert>
-		)
+		);
 	}
 
 	if (connections.length === 0) {
@@ -652,7 +657,7 @@ export const ConnectionsManager = ({
 					</EmptyDescription>
 				</EmptyHeader>
 			</Empty>
-		)
+		);
 	}
 
 	return (
@@ -694,7 +699,7 @@ export const ConnectionsManager = ({
 														header.getContext(),
 													)}
 										</TableHead>
-									)
+									);
 								})}
 							</TableRow>
 						))}
@@ -760,17 +765,17 @@ export const ConnectionsManager = ({
 				</div>
 			</div>
 		</div>
-	)
-}
+	);
+};
 
 export function ConnectionsDialog({
 	children,
 	actions,
 	apiKey,
 }: {
-	children: React.ReactNode
-	actions?: ConnectionAction[]
-	apiKey?: string | null
+	children: React.ReactNode;
+	actions?: ConnectionAction[];
+	apiKey?: string | null;
 }) {
 	return (
 		<Dialog>
@@ -789,5 +794,5 @@ export function ConnectionsDialog({
 				</div>
 			</DialogContent>
 		</Dialog>
-	)
+	);
 }

@@ -1,32 +1,6 @@
-"use client"
+"use client";
 
-import { Alert } from "@/components/ui/alert"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
-import {
-	Collapsible,
-	CollapsibleContent,
-	CollapsibleTrigger,
-} from "@/components/ui/collapsible"
-import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogHeader,
-	DialogTitle,
-} from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import {
-	Table,
-	TableBody,
-	TableCell,
-	TableHead,
-	TableHeader,
-	TableRow,
-} from "@/components/ui/table"
-import { Textarea } from "@/components/ui/textarea"
-import type { Connection } from "@smithery/api/resources/beta/connect/connections"
+import type { Connection } from "@smithery/api/resources/beta/connect/connections";
 import {
 	type ColumnDef,
 	type ColumnFiltersState,
@@ -34,30 +8,56 @@ import {
 	getCoreRowModel,
 	getFilteredRowModel,
 	useReactTable,
-} from "@tanstack/react-table"
-import type { ConnectionConfig, ToolCallTemplate } from "./types"
-import { Check, ChevronDown, Loader2, Plus, X, XCircle } from "lucide-react"
-import { useCallback, useEffect, useState } from "react"
-import { getConnections, listNamespaces, planAction, runTool } from "./actions"
+} from "@tanstack/react-table";
+import { Check, ChevronDown, Loader2, Plus, X, XCircle } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { Alert } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+	Collapsible,
+	CollapsibleContent,
+	CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogHeader,
+	DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import {
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from "@/components/ui/table";
+import { Textarea } from "@/components/ui/textarea";
+import { getConnections, listNamespaces, planAction, runTool } from "./actions";
+import type { ConnectionConfig, ToolCallTemplate } from "./types";
 
 export type ActToolApprovalProps = {
-	prompt: string
-	configId: string
-	namespace?: string
-	initialConnectionIds?: string[]
-	onExecute: (prompt: string, connectionIds: string[], result: unknown) => void
-	onReject: () => void
-	apiKey?: string | null
-}
+	prompt: string;
+	configId: string;
+	namespace?: string;
+	initialConnectionIds?: string[];
+	onExecute: (prompt: string, connectionIds: string[], result: unknown) => void;
+	onReject: () => void;
+	apiKey?: string | null;
+};
 
 type ConnectionPoolDialogProps = {
-	open: boolean
-	onOpenChange: (open: boolean) => void
-	namespace: string
-	selectedIds: string[]
-	onConfirm: (connectionIds: string[]) => void
-	apiKey?: string | null
-}
+	open: boolean;
+	onOpenChange: (open: boolean) => void;
+	namespace: string;
+	selectedIds: string[];
+	onConfirm: (connectionIds: string[]) => void;
+	apiKey?: string | null;
+};
 
 function ConnectionPoolDialog({
 	open,
@@ -67,56 +67,56 @@ function ConnectionPoolDialog({
 	onConfirm,
 	apiKey,
 }: ConnectionPoolDialogProps) {
-	const [connections, setConnections] = useState<Connection[]>([])
-	const [isLoading, setIsLoading] = useState(true)
-	const [error, setError] = useState<string | null>(null)
-	const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
-	const [rowSelection, setRowSelection] = useState({})
+	const [connections, setConnections] = useState<Connection[]>([]);
+	const [isLoading, setIsLoading] = useState(true);
+	const [error, setError] = useState<string | null>(null);
+	const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+	const [rowSelection, setRowSelection] = useState({});
 
 	const loadConnections = useCallback(async () => {
 		if (!namespace) {
-			console.warn("ConnectionPoolDialog: No namespace provided")
-			return
+			console.warn("ConnectionPoolDialog: No namespace provided");
+			return;
 		}
 
 		console.log(
 			"ConnectionPoolDialog: Loading connections for namespace:",
 			namespace,
-		)
-		setIsLoading(true)
-		setError(null)
+		);
+		setIsLoading(true);
+		setError(null);
 		try {
-			const data = await getConnections(namespace, apiKey)
-			console.log("ConnectionPoolDialog: Loaded connections:", data)
-			setConnections(data)
+			const data = await getConnections(namespace, apiKey);
+			console.log("ConnectionPoolDialog: Loaded connections:", data);
+			setConnections(data);
 		} catch (err) {
-			console.error("ConnectionPoolDialog: Failed to load connections:", err)
+			console.error("ConnectionPoolDialog: Failed to load connections:", err);
 			setError(
 				err instanceof Error ? err.message : "Failed to load connections",
-			)
+			);
 		} finally {
-			setIsLoading(false)
+			setIsLoading(false);
 		}
-	}, [namespace, apiKey])
+	}, [namespace, apiKey]);
 
 	useEffect(() => {
 		if (open) {
-			loadConnections()
+			loadConnections();
 		}
-	}, [open, loadConnections])
+	}, [open, loadConnections]);
 
 	// Set initial row selection based on selectedIds
 	useEffect(() => {
 		if (connections.length > 0 && selectedIds.length > 0) {
-			const selection: Record<string, boolean> = {}
+			const selection: Record<string, boolean> = {};
 			connections.forEach((conn, index) => {
 				if (selectedIds.includes(conn.connectionId)) {
-					selection[index.toString()] = true
+					selection[index.toString()] = true;
 				}
-			})
-			setRowSelection(selection)
+			});
+			setRowSelection(selection);
 		}
-	}, [connections, selectedIds])
+	}, [connections, selectedIds]);
 
 	const columns: ColumnDef<Connection>[] = [
 		{
@@ -172,17 +172,17 @@ function ConnectionPoolDialog({
 			accessorKey: "status",
 			header: "Status",
 			cell: ({ row }) => {
-				const status = row.original.status
+				const status = row.original.status;
 				const variant =
 					status?.state === "connected"
 						? "default"
 						: status?.state === "error"
 							? "destructive"
-							: "outline"
-				return <Badge variant={variant}>{status?.state || "unknown"}</Badge>
+							: "outline";
+				return <Badge variant={variant}>{status?.state || "unknown"}</Badge>;
 			},
 		},
-	]
+	];
 
 	const table = useReactTable({
 		data: connections,
@@ -195,16 +195,16 @@ function ConnectionPoolDialog({
 			columnFilters,
 			rowSelection,
 		},
-	})
+	});
 
 	const handleConfirm = () => {
-		const selectedRows = table.getFilteredSelectedRowModel().rows
+		const selectedRows = table.getFilteredSelectedRowModel().rows;
 		const selectedConnectionIds = selectedRows.map(
 			(row) => row.original.connectionId,
-		)
-		onConfirm(selectedConnectionIds)
-		onOpenChange(false)
-	}
+		);
+		onConfirm(selectedConnectionIds);
+		onOpenChange(false);
+	};
 
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
@@ -300,7 +300,7 @@ function ConnectionPoolDialog({
 				</div>
 			</DialogContent>
 		</Dialog>
-	)
+	);
 }
 
 export function ActToolApproval({
@@ -312,66 +312,66 @@ export function ActToolApproval({
 	onReject,
 	apiKey,
 }: ActToolApprovalProps) {
-	const [promptValue, setPromptValue] = useState(prompt)
+	const [promptValue, setPromptValue] = useState(prompt);
 	const [selectedConnectionIds, setSelectedConnectionIds] =
-		useState<string[]>(initialConnectionIds)
+		useState<string[]>(initialConnectionIds);
 	const [selectedConnections, setSelectedConnections] = useState<Connection[]>(
 		[],
-	)
-	const [isDialogOpen, setIsDialogOpen] = useState(false)
-	const [isLoadingConnections, setIsLoadingConnections] = useState(false)
+	);
+	const [isDialogOpen, setIsDialogOpen] = useState(false);
+	const [isLoadingConnections, setIsLoadingConnections] = useState(false);
 	const [isInitializing, setIsInitializing] = useState(
 		initialConnectionIds.length > 0,
-	)
-	const [namespace, setNamespace] = useState<string>("")
-	const [planResult, setPlanResult] = useState<ToolCallTemplate | null>(null)
-	const [isPlanLoading, setIsPlanLoading] = useState(false)
-	const [planError, setPlanError] = useState<string | null>(null)
-	const [isPlanStale, setIsPlanStale] = useState(true) // Track if plan needs refresh
+	);
+	const [namespace, setNamespace] = useState<string>("");
+	const [planResult, setPlanResult] = useState<ToolCallTemplate | null>(null);
+	const [isPlanLoading, setIsPlanLoading] = useState(false);
+	const [planError, setPlanError] = useState<string | null>(null);
+	const [isPlanStale, setIsPlanStale] = useState(true); // Track if plan needs refresh
 	const [finalState, setFinalState] = useState<"approved" | "rejected" | null>(
 		null,
-	)
-	const [isRunning, setIsRunning] = useState(false)
-	const [toolOutput, setToolOutput] = useState<unknown>(null)
+	);
+	const [isRunning, setIsRunning] = useState(false);
+	const [toolOutput, setToolOutput] = useState<unknown>(null);
 
 	// Load namespace if not provided
 	useEffect(() => {
 		const loadDefaultNamespace = async () => {
 			if (providedNamespace) {
-				console.log("Using provided namespace:", providedNamespace)
-				setNamespace(providedNamespace)
-				return
+				console.log("Using provided namespace:", providedNamespace);
+				setNamespace(providedNamespace);
+				return;
 			}
 
 			try {
-				const namespaces = await listNamespaces(apiKey)
-				console.log("Loaded namespaces:", namespaces)
+				const namespaces = await listNamespaces(apiKey);
+				console.log("Loaded namespaces:", namespaces);
 				if (namespaces.length > 0) {
-					console.log("Setting default namespace:", namespaces[0].name)
-					setNamespace(namespaces[0].name)
+					console.log("Setting default namespace:", namespaces[0].name);
+					setNamespace(namespaces[0].name);
 				} else {
-					console.warn("No namespaces found")
+					console.warn("No namespaces found");
 				}
 			} catch (err) {
-				console.error("Failed to load namespaces:", err)
+				console.error("Failed to load namespaces:", err);
 			}
-		}
+		};
 
-		loadDefaultNamespace()
-	}, [providedNamespace, apiKey])
+		loadDefaultNamespace();
+	}, [providedNamespace, apiKey]);
 
 	// Load full connection details when IDs change
 	useEffect(() => {
 		const loadSelectedConnections = async () => {
 			if (selectedConnectionIds.length === 0) {
-				setSelectedConnections([])
-				setIsInitializing(false)
-				return
+				setSelectedConnections([]);
+				setIsInitializing(false);
+				return;
 			}
 
 			if (!namespace) {
-				console.warn("Cannot load connections: namespace not set")
-				return
+				console.warn("Cannot load connections: namespace not set");
+				return;
 			}
 
 			console.log(
@@ -379,58 +379,58 @@ export function ActToolApproval({
 				namespace,
 				"IDs:",
 				selectedConnectionIds,
-			)
-			setIsLoadingConnections(true)
+			);
+			setIsLoadingConnections(true);
 			try {
-				const allConnections = await getConnections(namespace, apiKey)
-				console.log("All connections:", allConnections)
+				const allConnections = await getConnections(namespace, apiKey);
+				console.log("All connections:", allConnections);
 				const selected = allConnections.filter((conn) =>
 					selectedConnectionIds.includes(conn.connectionId),
-				)
-				console.log("Selected connections:", selected)
-				setSelectedConnections(selected)
+				);
+				console.log("Selected connections:", selected);
+				setSelectedConnections(selected);
 			} catch (err) {
-				console.error("Failed to load connection details:", err)
+				console.error("Failed to load connection details:", err);
 			} finally {
-				setIsLoadingConnections(false)
-				setIsInitializing(false)
+				setIsLoadingConnections(false);
+				setIsInitializing(false);
 			}
-		}
+		};
 
-		loadSelectedConnections()
-	}, [selectedConnectionIds, namespace, apiKey])
+		loadSelectedConnections();
+	}, [selectedConnectionIds, namespace, apiKey]);
 
 	// Function to run the plan
 	const runPlan = useCallback(async () => {
 		if (!promptValue.trim() || selectedConnections.length === 0) {
-			console.log("Skipping plan: missing prompt or connections")
-			return
+			console.log("Skipping plan: missing prompt or connections");
+			return;
 		}
 
 		console.log("Running plan with:", {
 			prompt: promptValue,
 			connections: selectedConnections,
-		})
-		setIsPlanLoading(true)
-		setPlanError(null)
+		});
+		setIsPlanLoading(true);
+		setPlanError(null);
 		try {
 			const connectionConfigs: ConnectionConfig[] = selectedConnections.map(
 				(conn) => ({
 					serverUrl: conn.mcpUrl,
 					configId: conn.connectionId,
 				}),
-			)
-			const result = await planAction(promptValue, connectionConfigs, apiKey)
-			console.log("Plan result:", result)
-			setPlanResult(result.output)
-			setIsPlanStale(false)
+			);
+			const result = await planAction(promptValue, connectionConfigs, apiKey);
+			console.log("Plan result:", result);
+			setPlanResult(result.output);
+			setIsPlanStale(false);
 		} catch (err) {
-			console.error("Failed to run plan:", err)
-			setPlanError(err instanceof Error ? err.message : "Failed to run plan")
+			console.error("Failed to run plan:", err);
+			setPlanError(err instanceof Error ? err.message : "Failed to run plan");
 		} finally {
-			setIsPlanLoading(false)
+			setIsPlanLoading(false);
 		}
-	}, [promptValue, selectedConnections, apiKey])
+	}, [promptValue, selectedConnections, apiKey]);
 
 	// Auto-run preview on mount once connections are loaded
 	useEffect(() => {
@@ -441,7 +441,7 @@ export function ActToolApproval({
 			!isPlanLoading &&
 			isPlanStale
 		) {
-			runPlan()
+			runPlan();
 		}
 	}, [
 		selectedConnections,
@@ -450,27 +450,29 @@ export function ActToolApproval({
 		isPlanLoading,
 		isPlanStale,
 		runPlan,
-	])
+	]);
 
 	const handleRemoveConnection = (connectionId: string) => {
-		setSelectedConnectionIds((prev) => prev.filter((id) => id !== connectionId))
-		setIsPlanStale(true)
-	}
+		setSelectedConnectionIds((prev) =>
+			prev.filter((id) => id !== connectionId),
+		);
+		setIsPlanStale(true);
+	};
 
 	const handlePromptChange = (value: string) => {
-		setPromptValue(value)
-		setIsPlanStale(true)
-	}
+		setPromptValue(value);
+		setIsPlanStale(true);
+	};
 
 	const handleConnectionsChange = (connectionIds: string[]) => {
-		setSelectedConnectionIds(connectionIds)
-		setIsPlanStale(true)
-	}
+		setSelectedConnectionIds(connectionIds);
+		setIsPlanStale(true);
+	};
 
 	const handleApprove = async () => {
 		if (!planResult || !namespace) {
-			console.error("Cannot execute: missing plan result or namespace")
-			return
+			console.error("Cannot execute: missing plan result or namespace");
+			return;
 		}
 
 		console.log("Executing tool", {
@@ -480,10 +482,10 @@ export function ActToolApproval({
 			namespace,
 			toolName: planResult.toolName,
 			args: planResult.argsTemplate,
-		})
+		});
 
-		setFinalState("approved")
-		setIsRunning(true)
+		setFinalState("approved");
+		setIsRunning(true);
 
 		try {
 			// Execute the tool using configId from the plan result
@@ -493,40 +495,40 @@ export function ActToolApproval({
 				planResult.toolName,
 				planResult.argsTemplate,
 				apiKey,
-			)
+			);
 
-			console.log("Tool execution result:", result)
-			setToolOutput(result)
-			setIsRunning(false)
-			onExecute(promptValue, selectedConnectionIds, result)
+			console.log("Tool execution result:", result);
+			setToolOutput(result);
+			setIsRunning(false);
+			onExecute(promptValue, selectedConnectionIds, result);
 		} catch (error) {
-			console.error("Tool execution failed:", error)
+			console.error("Tool execution failed:", error);
 			setToolOutput(
 				error instanceof Error ? error.message : "Tool execution failed",
-			)
-			setIsRunning(false)
+			);
+			setIsRunning(false);
 		}
-	}
+	};
 
 	const handleReject = () => {
-		console.log("Reject clicked", { configId, namespace })
-		setFinalState("rejected")
-		onReject()
-	}
+		console.log("Reject clicked", { configId, namespace });
+		setFinalState("rejected");
+		onReject();
+	};
 
 	// Final state view after approve/reject
 	if (finalState) {
 		const serverDisplay = (() => {
-			if (!planResult) return null
-			const url = planResult.server.serverUrl
-			const match = url.match(/server\.smithery\.ai\/([^/]+)/)
+			if (!planResult) return null;
+			const url = planResult.server.serverUrl;
+			const match = url.match(/server\.smithery\.ai\/([^/]+)/);
 			if (match) {
-				const serverName = match[1]
+				const serverName = match[1];
 				// Try to find connection by configId first, fall back to URL matching
 				const conn =
 					selectedConnections.find(
 						(c) => c.connectionId === planResult.server.configId,
-					) || selectedConnections.find((c) => c.mcpUrl.includes(serverName))
+					) || selectedConnections.find((c) => c.mcpUrl.includes(serverName));
 				return (
 					<Badge variant="secondary" className="gap-1">
 						{conn?.iconUrl && (
@@ -534,12 +536,12 @@ export function ActToolApproval({
 						)}
 						{serverName}
 					</Badge>
-				)
+				);
 			}
 			return (
 				<span className="text-xs text-muted-foreground font-mono">{url}</span>
-			)
-		})()
+			);
+		})();
 
 		return (
 			<div className="p-4 border rounded-lg space-y-3">
@@ -604,12 +606,12 @@ export function ActToolApproval({
 							<pre className="text-xs font-mono bg-muted/50 p-2 rounded border overflow-x-auto mt-1 max-h-60 overflow-y-auto">
 								{(() => {
 									if (typeof toolOutput === "string") {
-										return toolOutput
+										return toolOutput;
 									}
 									try {
-										return JSON.stringify(toolOutput, null, 2)
+										return JSON.stringify(toolOutput, null, 2);
 									} catch {
-										return String(toolOutput)
+										return String(toolOutput);
 									}
 								})()}
 							</pre>
@@ -617,7 +619,7 @@ export function ActToolApproval({
 					</Collapsible>
 				)}
 			</div>
-		)
+		);
 	}
 
 	// Show loading state while initializing with initial connections
@@ -629,7 +631,7 @@ export function ActToolApproval({
 					Loading connections...
 				</div>
 			</div>
-		)
+		);
 	}
 
 	return (
@@ -708,16 +710,18 @@ export function ActToolApproval({
 						<span className="text-muted-foreground">@</span>
 						{(() => {
 							// Extract server name from URL for known servers
-							const url = planResult.server.serverUrl
-							const match = url.match(/server\.smithery\.ai\/([^/]+)/)
+							const url = planResult.server.serverUrl;
+							const match = url.match(/server\.smithery\.ai\/([^/]+)/);
 							if (match) {
-								const serverName = match[1]
+								const serverName = match[1];
 								// Find matching connection by configId first, fall back to URL matching
 								const conn =
 									selectedConnections.find(
 										(c) => c.connectionId === planResult.server.configId,
 									) ||
-									selectedConnections.find((c) => c.mcpUrl.includes(serverName))
+									selectedConnections.find((c) =>
+										c.mcpUrl.includes(serverName),
+									);
 								return (
 									<Badge variant="secondary" className="gap-1">
 										{conn?.iconUrl && (
@@ -729,14 +733,14 @@ export function ActToolApproval({
 										)}
 										{serverName}
 									</Badge>
-								)
+								);
 							}
 							// Fallback to full URL
 							return (
 								<span className="text-xs text-muted-foreground font-mono truncate max-w-[200px]">
 									{url}
 								</span>
-							)
+							);
 						})()}
 					</div>
 					<Collapsible>
@@ -796,5 +800,5 @@ export function ActToolApproval({
 				apiKey={apiKey}
 			/>
 		</div>
-	)
+	);
 }

@@ -1,9 +1,8 @@
 "use server";
-import { ToolSearch } from "@/components/smithery-new/tool-search";
-import { ServerSearch } from "@/components/smithery-new/server-search";
-
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Connections } from "@/components/smithery-new/connections";
+import { ServerSearch } from "@/components/smithery-new/server-search";
+import { ToolSearch } from "@/components/smithery-new/tool-search";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default async function Home() {
 	const apiKey = process.env.SMITHERY_API_KEY;
