@@ -22,7 +22,7 @@ const getSmitheryClient = (token: string) => {
 	return new Smithery({
 		apiKey: token,
 		baseURL: process.env.NEXT_PUBLIC_SMITHERY_API_URL,
-	})
+	});
 };
 
 type ConnectionStatus =
@@ -83,7 +83,8 @@ export const ConnectionCard = ({
 	namespace: string;
 }) => {
 	const queryClient = useQueryClient();
-	const [testConnectionData, setTestConnectionData] = useState<ConnectionStatus | null>(null);
+	const [testConnectionData, setTestConnectionData] =
+		useState<ConnectionStatus | null>(null);
 
 	const deleteMutation = useMutation({
 		mutationFn: async () => {
@@ -152,10 +153,7 @@ export const ConnectionCard = ({
 									variant="outline"
 									size="sm"
 									onClick={() => {
-										window.open(
-											testConnectionData.authorizationUrl,
-											"_blank",
-										);
+										window.open(testConnectionData.authorizationUrl, "_blank");
 									}}
 								>
 									Authorize
@@ -193,7 +191,13 @@ export const ConnectionCard = ({
 	);
 };
 
-export const Connections = ({ token, namespace }: { token: string, namespace?: string }) => {
+export const Connections = ({
+	token,
+	namespace,
+}: {
+	token: string;
+	namespace?: string;
+}) => {
 	const { data, isLoading, error, refetch, isFetching } = useQuery({
 		queryKey: ["connections", token],
 		queryFn: async () => {
@@ -201,8 +205,9 @@ export const Connections = ({ token, namespace }: { token: string, namespace?: s
 				throw new Error("API token is required");
 			}
 			const client = getSmitheryClient(token);
-			const namespaceToUse = namespace || await getDefaultNamespace(client);
-			const connections = await client.beta.connect.connections.list(namespaceToUse);
+			const namespaceToUse = namespace || (await getDefaultNamespace(client));
+			const connections =
+				await client.beta.connect.connections.list(namespaceToUse);
 			return { connections, namespace: namespaceToUse };
 		},
 		enabled: !!token,
@@ -219,14 +224,18 @@ export const Connections = ({ token, namespace }: { token: string, namespace?: s
 					disabled={isFetching}
 					title="Refresh connections"
 				>
-					<RefreshCw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />
+					<RefreshCw
+						className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`}
+					/>
 				</Button>
 			</div>
 			{isLoading && <p className="text-muted-foreground">Loading...</p>}
 			{error && <p className="text-destructive">Error: {error.message}</p>}
 			{data && (
 				<div className="space-y-2 overflow-auto max-h-[500px]">
-					{data.connections.connections.length === 0 && <p className="text-muted-foreground">No connections found</p>}
+					{data.connections.connections.length === 0 && (
+						<p className="text-muted-foreground">No connections found</p>
+					)}
 					{data.connections.connections.map((connection: Connection) => (
 						<div key={connection.connectionId}>
 							<ConnectionCard

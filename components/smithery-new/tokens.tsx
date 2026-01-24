@@ -1,11 +1,12 @@
 "use client";
 
-import { Button } from "../ui/button";
+import type { CreateTokenResponse } from "@smithery/api/resources/tokens.mjs";
+import { useAtom } from "jotai";
+import { Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { createToken } from "@/lib/actions";
-import { useAtom } from "jotai";
-import type { CreateTokenResponse } from "@smithery/api/resources/tokens.mjs";
 import { selectedTokenAtom, tokensCreatedAtom } from "@/lib/atoms";
+import { Button } from "../ui/button";
 import {
 	Dialog,
 	DialogContent,
@@ -20,7 +21,6 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "../ui/select";
-import { Trash2 } from "lucide-react";
 
 export function Tokens({
 	initialTokenResponse,
@@ -84,7 +84,9 @@ export function Tokens({
 								<Select
 									value={selectedToken.token}
 									onValueChange={(tokenValue) => {
-										const token = tokensCreated.find((t) => t.token === tokenValue);
+										const token = tokensCreated.find(
+											(t) => t.token === tokenValue,
+										);
 										if (token) setSelectedToken(token);
 									}}
 								>
@@ -116,7 +118,8 @@ export function Tokens({
 									</div>
 									{selectedToken.expiresAt !== "never" && (
 										<div className="text-sm text-muted-foreground">
-											Expires: {new Date(selectedToken.expiresAt).toLocaleString()}
+											Expires:{" "}
+											{new Date(selectedToken.expiresAt).toLocaleString()}
 										</div>
 									)}
 								</div>
@@ -137,12 +140,13 @@ export function Tokens({
 						<div className="flex  gap-2">
 							<Button
 								onClick={() => {
-									createToken({ ttlSeconds: 60 * 60 * 24, userId: crypto.randomUUID() }).then(
-										(tokenResponse) => {
-											setTokensCreated([...tokensCreated, tokenResponse]);
-											setSelectedToken(tokenResponse);
-										},
-									);
+									createToken({
+										ttlSeconds: 60 * 60 * 24,
+										userId: crypto.randomUUID(),
+									}).then((tokenResponse) => {
+										setTokensCreated([...tokensCreated, tokenResponse]);
+										setSelectedToken(tokenResponse);
+									});
 								}}
 								variant="secondary"
 								className="flex-1"

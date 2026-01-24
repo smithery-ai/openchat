@@ -1,14 +1,11 @@
 "use client";
 import type { ServerListResponse } from "@smithery/api/resources/index.mjs";
 import {
-	BookIcon,
 	CopyIcon,
 	DatabaseIcon,
-	GlobeIcon,
 	MessageSquareIcon,
 	PlusIcon,
 	RefreshCcwIcon,
-	SearchIcon,
 	WrenchIcon,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
@@ -60,7 +57,6 @@ import {
 } from "@/components/ai-elements/sources";
 import { ActToolApproval } from "@/components/smithery/act-tool-approval";
 import {
-	searchTool,
 	testConnection,
 	validateSmitheryApiKey,
 } from "@/components/smithery/actions";
@@ -75,7 +71,6 @@ import type { ConnectionConfig } from "@/components/smithery/types";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
-	CardContent,
 	CardDescription,
 	CardHeader,
 	CardTitle,
@@ -296,7 +291,7 @@ const ChatBotDemo = () => {
 										</EmptyDescription>
 									</EmptyHeader>
 									<EmptyContent className="flex-row gap-4 justify-center">
-										{emptyStateCards.map((card, idx) => (
+										{emptyStateCards.map((card, _idx) => (
 											<Card
 												key={card.title}
 												className="cursor-pointer hover:bg-accent transition-colors min-w-[200px]"
@@ -650,7 +645,7 @@ const ChatBotDemo = () => {
 													server.connectionConfig.configId,
 											),
 									)
-									.map((server, i) => {
+									.map((server, _i) => {
 										const serverId = server.connectionConfig.configId;
 
 										return (

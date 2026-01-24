@@ -1,9 +1,10 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { useEffect, useState } from "react";
-import { useAtom } from "jotai";
 import type { CreateTokenResponse } from "@smithery/api/resources/tokens.mjs";
+import { atom, useAtom } from "jotai";
+import { Trash2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
 import {
 	Dialog,
 	DialogContent,
@@ -18,8 +19,6 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { Trash2 } from "lucide-react";
-import { atom } from "jotai";
 
 // Atoms for token state management
 export const tokensCreatedAtom = atom<CreateTokenResponse[]>([]);
@@ -89,7 +88,9 @@ export function Tokens({
 								<Select
 									value={selectedToken.token}
 									onValueChange={(tokenValue) => {
-										const token = tokensCreated.find((t) => t.token === tokenValue);
+										const token = tokensCreated.find(
+											(t) => t.token === tokenValue,
+										);
 										if (token) setSelectedToken(token);
 									}}
 								>
@@ -121,7 +122,8 @@ export function Tokens({
 									</div>
 									{selectedToken.expiresAt !== "never" && (
 										<div className="text-sm text-muted-foreground">
-											Expires: {new Date(selectedToken.expiresAt).toLocaleString()}
+											Expires:{" "}
+											{new Date(selectedToken.expiresAt).toLocaleString()}
 										</div>
 									)}
 								</div>

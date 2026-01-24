@@ -4,8 +4,8 @@ import Smithery, { AuthenticationError } from "@smithery/api";
 import type { Connection } from "@smithery/api/resources/beta/connect/connections.mjs";
 import type { ServerListResponse } from "@smithery/api/resources/servers/servers.mjs";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState, useEffect } from "react";
-import { useDebounce } from "@/hooks/use-debounce";
+import { ArrowRight, CheckCircle, Link, Loader2, Lock } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,7 +23,7 @@ import {
 	ItemMedia,
 	ItemTitle,
 } from "@/components/ui/item";
-import { ArrowRight, CheckCircle, Link, Loader2, Lock } from "lucide-react";
+import { useDebounce } from "@/hooks/use-debounce";
 
 interface AuthRequiredBannerProps {
 	serverName: string;
@@ -31,15 +31,21 @@ interface AuthRequiredBannerProps {
 	countdown: number | null;
 }
 
-const AuthRequiredBanner = ({ serverName, authorizationUrl, countdown }: AuthRequiredBannerProps) => (
+const AuthRequiredBanner = ({
+	serverName,
+	authorizationUrl,
+	countdown,
+}: AuthRequiredBannerProps) => (
 	<div className="flex items-start gap-3 rounded-md bg-muted p-3">
 		<div className="flex-1 min-w-0">
 			<p className="text-sm font-medium text-foreground flex items-center gap-1">
-				<Lock className="size-3.5 flex-shrink-0 font-bold" /> <span className="font-medium">Authorization required</span>
+				<Lock className="size-3.5 flex-shrink-0 font-bold" />{" "}
+				<span className="font-medium">Authorization required</span>
 			</p>
 			<p className="text-xs text-muted-foreground mt-1">
-				This server requires you to authorize access. You should be automatically redirected to complete authentication.
-				{" "}{countdown !== null && countdown > 0
+				This server requires you to authorize access. You should be
+				automatically redirected to complete authentication.{" "}
+				{countdown !== null && countdown > 0
 					? `Redirecting in ${countdown}...`
 					: "If not, click the link below."}
 			</p>
@@ -50,7 +56,8 @@ const AuthRequiredBanner = ({ serverName, authorizationUrl, countdown }: AuthReq
 					rel="noopener noreferrer"
 					className="text-sm font-bold text-blue-500 hover:text-blue-600 mt-4 flex items-center gap-1"
 				>
-					<span className="font-bold">Sign in to {serverName}</span> <ArrowRight className="size-4" />
+					<span className="font-bold">Sign in to {serverName}</span>{" "}
+					<ArrowRight className="size-4" />
 				</a>
 			)}
 		</div>
@@ -63,7 +70,11 @@ interface ConnectionButtonProps {
 	onConnect: () => void;
 }
 
-const ConnectionButton = ({ connectionStatus, isConnecting, onConnect }: ConnectionButtonProps) => {
+const ConnectionButton = ({
+	connectionStatus,
+	isConnecting,
+	onConnect,
+}: ConnectionButtonProps) => {
 	switch (connectionStatus) {
 		case "connected":
 			return (
@@ -142,7 +153,11 @@ const ServerDisplay = ({ server, token, namespace }: ServerDisplayProps) => {
 			queryClient.invalidateQueries({ queryKey: ["connections"] });
 		},
 		onError: (error) => {
-			console.error("error connecting to server", `connectionId: ${server.qualifiedName}, namespace: ${activeNamespace}`, error);
+			console.error(
+				"error connecting to server",
+				`connectionId: ${server.qualifiedName}, namespace: ${activeNamespace}`,
+				error,
+			);
 		},
 	});
 
@@ -165,7 +180,11 @@ const ServerDisplay = ({ server, token, namespace }: ServerDisplayProps) => {
 
 	// Poll connection status when auth_required
 	useEffect(() => {
-		if (connectionData?.status !== "auth_required" || !token || !activeNamespace) {
+		if (
+			connectionData?.status !== "auth_required" ||
+			!token ||
+			!activeNamespace
+		) {
 			return;
 		}
 
@@ -190,7 +209,13 @@ const ServerDisplay = ({ server, token, namespace }: ServerDisplayProps) => {
 		}, 2000); // Check every 2 seconds
 
 		return () => clearInterval(pollInterval);
-	}, [connectionData?.status, token, activeNamespace, server.qualifiedName, connectAsync]);
+	}, [
+		connectionData?.status,
+		token,
+		activeNamespace,
+		server.qualifiedName,
+		connectAsync,
+	]);
 
 	return (
 		<div className="mt-4 p-4 border rounded-md flex flex-col gap-4">
@@ -322,7 +347,11 @@ async function checkConnectionStatus(
 				authorizationUrl,
 			};
 		}
-		console.error("error connecting to server", `connectionId: ${connectionId}, namespace: ${namespace}`, error);
+		console.error(
+			"error connecting to server",
+			`connectionId: ${connectionId}, namespace: ${namespace}`,
+			error,
+		);
 		return {
 			status: "error",
 			error,
@@ -384,7 +413,7 @@ const isValidUrl = (str: string): boolean => {
 	if (!str.trim()) return false;
 	try {
 		const url = new URL(str.trim());
-		return url.protocol === 'http:' || url.protocol === 'https:';
+		return url.protocol === "http:" || url.protocol === "https:";
 	} catch {
 		return false;
 	}
@@ -396,7 +425,11 @@ interface ExternalURLDisplayProps {
 	namespace?: string;
 }
 
-const ExternalURLDisplay = ({ url, token, namespace }: ExternalURLDisplayProps) => {
+const ExternalURLDisplay = ({
+	url,
+	token,
+	namespace,
+}: ExternalURLDisplayProps) => {
 	const queryClient = useQueryClient();
 	const [countdown, setCountdown] = useState<number | null>(null);
 
@@ -432,15 +465,22 @@ const ExternalURLDisplay = ({ url, token, namespace }: ExternalURLDisplayProps) 
 				.catch(() => null);
 
 			if (existingConnection) {
-				return await checkConnectionStatus(client, connectionId, activeNamespace);
+				return await checkConnectionStatus(
+					client,
+					connectionId,
+					activeNamespace,
+				);
 			}
 
 			// Create new connection
-			const connection = await client.beta.connect.connections.set(connectionId, {
-				namespace: activeNamespace,
-				mcpUrl: url,
-				name: url,
-			});
+			const connection = await client.beta.connect.connections.set(
+				connectionId,
+				{
+					namespace: activeNamespace,
+					mcpUrl: url,
+					name: url,
+				},
+			);
 
 			if (connection.status?.state === "auth_required") {
 				return {
@@ -492,7 +532,11 @@ const ExternalURLDisplay = ({ url, token, namespace }: ExternalURLDisplayProps) 
 
 	// Poll connection status when auth_required
 	useEffect(() => {
-		if (connectionData?.status !== "auth_required" || !token || !activeNamespace) {
+		if (
+			connectionData?.status !== "auth_required" ||
+			!token ||
+			!activeNamespace
+		) {
 			return;
 		}
 
@@ -558,11 +602,19 @@ const ExternalURLDisplay = ({ url, token, namespace }: ExternalURLDisplayProps) 
 	);
 };
 
-export const ServerSearch = ({ token, namespace }: { token?: string, namespace?: string }) => {
+export const ServerSearch = ({
+	token,
+	namespace,
+}: {
+	token?: string;
+	namespace?: string;
+}) => {
 	const [query, setQuery] = useState("");
 	const [selectedServer, setSelectedServer] =
 		useState<ServerListResponse | null>(null);
-	const [selectedExternalUrl, setSelectedExternalUrl] = useState<string | null>(null);
+	const [selectedExternalUrl, setSelectedExternalUrl] = useState<string | null>(
+		null,
+	);
 	const debouncedQuery = useDebounce(query, 300);
 	const isUrl = isValidUrl(query);
 
@@ -690,7 +742,11 @@ export const ServerSearch = ({ token, namespace }: { token?: string, namespace?:
 			</Combobox>
 
 			{selectedServer && token && namespace && (
-				<ServerDisplay server={selectedServer} token={token} namespace={namespace} />
+				<ServerDisplay
+					server={selectedServer}
+					token={token}
+					namespace={namespace}
+				/>
 			)}
 
 			{selectedExternalUrl && token && (

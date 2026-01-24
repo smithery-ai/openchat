@@ -1,12 +1,12 @@
 "use client";
+import type { CreateTokenResponse } from "@smithery/api/resources/tokens.mjs";
+import { useAtomValue } from "jotai";
+import { selectedTokenAtom } from "@/lib/atoms";
 import { Connections } from "./smithery-new/connections";
 import { ServerSearch } from "./smithery-new/server-search";
+import { Tokens } from "./smithery-new/tokens";
 import { ToolSearch } from "./smithery-new/tool-search";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
-import type { CreateTokenResponse } from "@smithery/api/resources/tokens.mjs";
-import { Tokens } from "./smithery-new/tokens";
-import { useAtom, useAtomValue } from "jotai";
-import { selectedTokenAtom } from "@/lib/atoms";
 
 export function HomePage({
 	initialTokenResponse,
@@ -15,7 +15,7 @@ export function HomePage({
 	initialTokenResponse: CreateTokenResponse;
 	namespace?: string;
 }) {
-    const apiKey = useAtomValue(selectedTokenAtom);
+	const apiKey = useAtomValue(selectedTokenAtom);
 	return (
 		<div className="flex items-center justify-center h-screen">
 			<div className="flex flex-col gap-4">

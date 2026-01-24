@@ -66,7 +66,7 @@ export const searchServers = async (
 	return servers;
 };
 
-export const useServer = async (
+export const enableServer = async (
 	serverName: string,
 	apiKey?: string | null,
 ): Promise<
