@@ -155,7 +155,7 @@ export const ToolSearch = ({ token }: { token?: string }) => {
 								server
 							</p>
 						</div>
-						<ServerSearch token={token} initialQuery={debouncedQuery} />
+						<ServerSearch token={token} />
 					</div>
 				</div>
 			)}
