@@ -36,7 +36,7 @@ const ServerDisplay = ({ server, token, namespace }: ServerDisplayProps) => {
 	const [countdown, setCountdown] = useState<number | null>(null);
 
 	const { data: defaultNamespace } = useQuery({
-		queryKey: ["defaultNamespace"],
+		queryKey: ["defaultNamespace", token],
 		queryFn: async () => {
 			const client = getSmitheryClient(token);
 			return await getDefaultNamespace(client);
@@ -380,7 +380,7 @@ const ExternalURLDisplay = ({ url, token, namespace }: ExternalURLDisplayProps) 
 	const [countdown, setCountdown] = useState<number | null>(null);
 
 	const { data: defaultNamespace } = useQuery({
-		queryKey: ["defaultNamespace"],
+		queryKey: ["defaultNamespace", token],
 		queryFn: async () => {
 			const client = getSmitheryClient(token);
 			return await getDefaultNamespace(client);
@@ -607,7 +607,7 @@ export const ServerSearch = ({ token }: { token?: string }) => {
 	const isUrl = isValidUrl(query);
 
 	const { data, isLoading } = useQuery({
-		queryKey: ["servers", debouncedQuery],
+		queryKey: ["servers", token, debouncedQuery],
 		queryFn: async () => {
 			if (!token) {
 				throw new Error("API token is required");

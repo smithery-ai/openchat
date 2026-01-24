@@ -76,7 +76,7 @@ export const ToolSearch = ({ token }: { token?: string }) => {
 	const debouncedQuery = useDebounce(query, 300);
 
 	const { data, isLoading, error } = useQuery({
-		queryKey: ["tools", debouncedQuery],
+		queryKey: ["tools", token, debouncedQuery],
 		queryFn: async () => {
 			if (!token) {
 				throw new Error("API token is required");

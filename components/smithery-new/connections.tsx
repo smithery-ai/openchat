@@ -195,7 +195,7 @@ export const ConnectionCard = ({
 
 export const Connections = ({ token, namespace }: { token: string, namespace?: string }) => {
 	const { data, isLoading, error, refetch, isFetching } = useQuery({
-		queryKey: ["connections"],
+		queryKey: ["connections", token],
 		queryFn: async () => {
 			if (!token) {
 				throw new Error("API token is required");
