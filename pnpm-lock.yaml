@@ -102,8 +102,8 @@ importers:
         specifier: ^1.2.2
         version: 1.2.2(@types/react@19.2.9)(react@19.2.3)
       '@smithery/api':
-        specifier: ^0.26.0
-        version: 0.26.0(@modelcontextprotocol/sdk@1.25.3(hono@4.11.5)(zod@4.3.6))
+        specifier: ^0.27.0
+        version: 0.27.0(@modelcontextprotocol/sdk@1.25.3(hono@4.11.5)(zod@4.3.6))
       '@tanstack/react-query':
         specifier: ^5.90.20
         version: 5.90.20(react@19.2.3)
@@ -1225,8 +1225,8 @@ packages:
   '@shikijs/vscode-textmate@10.0.2':
     resolution: {integrity: sha512-83yeghZ2xxin3Nj8z1NMd/NCuca+gsYXswywDy5bHvwlWL8tpTQmzGeUuHd9FC3E/SBEMvzJRwWEOz5gGes9Qg==}
 
-  '@smithery/api@0.26.0':
-    resolution: {integrity: sha512-JKh9iRaQSkdu4L9Zd6WmRbDCq2ICmcl6+UgA0KtzemtNy0u2yMatjazrr4PGk1HcY2HEhYzOQO2orbFqS8JdCA==}
+  '@smithery/api@0.27.0':
+    resolution: {integrity: sha512-k8tIY/rDHBiyxsuuBRdF5uH8bcf/vxWNJfXifiRRekbbufteA6PH3jiEUUXCKhrmHVrq7dJwR2c/n7RBc0sJRw==}
     peerDependencies:
       '@modelcontextprotocol/sdk': '>=1.0.0'
     peerDependenciesMeta:
@@ -3700,7 +3700,7 @@ snapshots:
 
   '@shikijs/vscode-textmate@10.0.2': {}
 
-  '@smithery/api@0.26.0(@modelcontextprotocol/sdk@1.25.3(hono@4.11.5)(zod@4.3.6))':
+  '@smithery/api@0.27.0(@modelcontextprotocol/sdk@1.25.3(hono@4.11.5)(zod@4.3.6))':
     optionalDependencies:
       '@modelcontextprotocol/sdk': 1.25.3(hono@4.11.5)(zod@4.3.6)
 

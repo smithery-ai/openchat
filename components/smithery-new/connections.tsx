@@ -18,8 +18,15 @@ async function getDefaultNamespace(client: Smithery) {
 	return namespaces.namespaces[0].name;
 }
 
+const getSmitheryClient = (token: string) => {
+	return new Smithery({
+		apiKey: token,
+		baseURL: process.env.NEXT_PUBLIC_SMITHERY_API_URL,
+	})
+};
+
 type ConnectionStatus =
-	| { status: "connected"; connection: any }
+	| { status: "connected"; connection: Connection }
 	| { status: "auth_required"; authorizationUrl?: string }
 	| { status: "error"; error: unknown };
 
@@ -80,9 +87,7 @@ export const ConnectionCard = ({
 
 	const deleteMutation = useMutation({
 		mutationFn: async () => {
-			const client = new Smithery({
-				apiKey: token,
-			});
+			const client = getSmitheryClient(token);
 			await client.beta.connect.connections.delete(connection.connectionId, {
 				namespace: namespace,
 			});
@@ -94,9 +99,7 @@ export const ConnectionCard = ({
 
 	const testMutation = useMutation({
 		mutationFn: async () => {
-			const client = new Smithery({
-				apiKey: token,
-			});
+			const client = getSmitheryClient(token);
 			return await checkConnectionStatus(
 				client,
 				connection.connectionId,
@@ -197,9 +200,7 @@ export const Connections = ({ token }: { token: string }) => {
 			if (!token) {
 				throw new Error("API token is required");
 			}
-			const client = new Smithery({
-				apiKey: token,
-			});
+			const client = getSmitheryClient(token);
 			const namespace = await getDefaultNamespace(client);
 			const connections = await client.beta.connect.connections.list(namespace);
 			return { connections, namespace };

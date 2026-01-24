@@ -22,6 +22,13 @@ async function getDefaultNamespace(client: Smithery) {
 	return namespaces.namespaces[0].name;
 }
 
+const getSmitheryClient = (token: string) => {
+	return new Smithery({
+		apiKey: token,
+		baseURL: process.env.NEXT_PUBLIC_SMITHERY_API_URL,
+	})
+};
+
 type ToolCardProps = {
 	tool: ToolSearchResponse.Tool;
 };
@@ -74,18 +81,14 @@ export const ToolSearch = ({ token }: { token?: string }) => {
 			if (!token) {
 				throw new Error("API token is required");
 			}
-			const client = new Smithery({
-				apiKey: token,
-			});
+			const client = getSmitheryClient(token);
 			console.log("searching", debouncedQuery);
 			const namespace = await getDefaultNamespace(client);
-			const tools = await client.beta.connect.tools.search(namespace, {
-				q: debouncedQuery,
-			});
+			const tools = await client.beta.connect.tools.search(namespace, debouncedQuery.length > 0 ? { q: debouncedQuery } : {});
 			console.log(`tools for ${debouncedQuery}`, tools);
 			return tools;
 		},
-		enabled: debouncedQuery.length > 0 && !!token,
+		enabled: !!token,
 	});
 
 	return (
@@ -99,66 +102,62 @@ export const ToolSearch = ({ token }: { token?: string }) => {
 				/>
 			</div>
 
-			{debouncedQuery.length > 0 && (
-				<>
-					{/* Loading State */}
-					{isLoading && (
-						<div className="flex items-center gap-2 text-muted-foreground py-4">
-							<Spinner />
-							<span>Searching tools...</span>
-						</div>
-					)}
+			{/* Loading State */}
+			{isLoading && (
+				<div className="flex items-center gap-2 text-muted-foreground py-4">
+					<Spinner />
+					<span>Searching tools...</span>
+				</div>
+			)}
 
-					{/* Error State */}
-					{error && (
-						<div className="rounded-md bg-destructive/10 p-4">
-							<p className="text-destructive text-sm">Error: {error.message}</p>
-						</div>
-					)}
+			{/* Error State */}
+			{error && (
+				<div className="rounded-md bg-destructive/10 p-4">
+					<p className="text-destructive text-sm">Error: {error.message}</p>
+				</div>
+			)}
 
-					{/* Empty State */}
-					{!isLoading && !error && data?.tools && data.tools.length === 0 && (
-						<Empty>
-							<EmptyHeader>
-								<EmptyTitle>No tools found</EmptyTitle>
-								<EmptyDescription>
-									Try a different search term or add a server below
-								</EmptyDescription>
-							</EmptyHeader>
-						</Empty>
-					)}
+			{/* Empty State */}
+			{!isLoading && !error && data?.tools && data.tools.length === 0 && (
+				<Empty>
+					<EmptyHeader>
+						<EmptyTitle>No tools found</EmptyTitle>
+						<EmptyDescription>
+							Try a different search term or add a server below
+						</EmptyDescription>
+					</EmptyHeader>
+				</Empty>
+			)}
 
-					{/* Unified scrollable container for all results */}
-					{!isLoading && !error && (
-						<div className="space-y-4 overflow-auto max-h-[500px]">
-							{/* Tool Results */}
-							{data?.tools && data.tools.length > 0 && (
-								<div className="space-y-2">
-									{data.tools.map((tool: ToolSearchResponse.Tool) => (
-										<div
-											key={`${tool.serverUrl}-${tool.connectionId}-${tool.tool.name}`}
-										>
-											<ToolCard tool={tool} />
-											<Separator />
-										</div>
-									))}
+			{/* Unified scrollable container for all results */}
+			{!isLoading && !error && (
+				<div className="space-y-4 overflow-auto max-h-[500px]">
+					{/* Tool Results */}
+					{data?.tools && data.tools.length > 0 && (
+						<div className="space-y-2">
+							{data.tools.map((tool: ToolSearchResponse.Tool) => (
+								<div
+									key={`${tool.serverUrl}-${tool.connectionId}-${tool.tool.name}`}
+								>
+									<ToolCard tool={tool} />
+									<Separator />
 								</div>
-							)}
-
-							{/* Server Search Section - shows automatically with same query */}
-							<div>
-								<div>
-									<h2 className="text-lg font-semibold">Explore Servers</h2>
-									<p className="text-sm text-muted-foreground mt-1">
-										If the tool you want isn't showing up, try adding another
-										server
-									</p>
-								</div>
-								<ServerSearch token={token} initialQuery={debouncedQuery} />
-							</div>
+							))}
 						</div>
 					)}
-				</>
+
+					{/* Server Search Section - shows automatically with same query */}
+					<div>
+						<div>
+							<h2 className="text-lg font-semibold">Explore Servers</h2>
+							<p className="text-sm text-muted-foreground mt-1">
+								If the tool you want isn't showing up, try adding another
+								server
+							</p>
+						</div>
+						<ServerSearch token={token} initialQuery={debouncedQuery} />
+					</div>
+				</div>
 			)}
 		</div>
 	);

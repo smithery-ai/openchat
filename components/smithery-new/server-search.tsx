@@ -12,6 +12,7 @@ import { Button } from "../ui/button";
 import { Card, CardContent } from "../ui/card";
 import { Input } from "../ui/input";
 import { Separator } from "../ui/separator";
+import type { Connection } from "@smithery/api/resources/beta/connect/connections.mjs";
 
 async function getDefaultNamespace(client: Smithery) {
 	const namespaces = await client.namespaces.list();
@@ -21,12 +22,18 @@ async function getDefaultNamespace(client: Smithery) {
 	return namespaces.namespaces[0].name;
 }
 
+const getSmitheryClient = (token: string) => {
+	return new Smithery({
+		apiKey: token,
+	})
+};
+
 function sanitizeConnectionId(str: string): string {
 	return str.replace(/[^a-zA-Z0-9_-]/g, "_");
 }
 
 type ConnectionStatus =
-	| { status: "connected"; connection: any }
+	| { status: "connected"; connection: Connection }
 	| { status: "auth_required"; authorizationUrl?: string }
 	| { status: "error"; error: unknown };
 
@@ -112,9 +119,7 @@ export const ServerCard = ({
 		data: connectionData,
 	} = useMutation({
 		mutationFn: async () => {
-			const client = new Smithery({
-				apiKey: token,
-			});
+			const client = getSmitheryClient(token);
 
 			const connectionId = sanitizeConnectionId(server.qualifiedName);
 			const serverUrl =
@@ -302,9 +307,7 @@ export const ServerSearch = ({
 			if (!token) {
 				throw new Error("API token is required");
 			}
-			const client = new Smithery({
-				apiKey: token,
-			});
+			const client = getSmitheryClient(token);
 			return await getDefaultNamespace(client);
 		},
 		enabled: !!token,
@@ -316,9 +319,7 @@ export const ServerSearch = ({
 			if (!token) {
 				throw new Error("API token is required");
 			}
-			const client = new Smithery({
-				apiKey: token,
-			});
+			const client = getSmitheryClient(token);
 			console.log("searching", debouncedQuery);
 			const servers = await client.servers.list({ q: debouncedQuery });
 			console.log(`servers for ${debouncedQuery}`, servers);
