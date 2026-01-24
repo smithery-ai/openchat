@@ -193,7 +193,7 @@ export const ConnectionsList = ({
 	}, [activeConnectionId, onActiveConnectionIdChange]);
 
 	return (
-		<div className="max-w-md">
+		<div className="max-w-md flex flex-col h-full">
 			<div className="flex items-center justify-between px-6 py-3">
 				<h2 className="text-lg font-semibold">Connections</h2>
 				<div className="flex items-center gap-2">
@@ -220,6 +220,7 @@ export const ConnectionsList = ({
 					</Button>
 				</div>
 			</div>
+			<div className="flex-1 flex flex-col">
 			{showSearchServers && (
 				<div className="px-6 pb-4">
 					<ServerSearch token={token} namespace={data?.namespace} />
@@ -228,7 +229,7 @@ export const ConnectionsList = ({
 			{isLoading && <p className="text-muted-foreground">Loading...</p>}
 			{error && <p className="text-destructive">Error: {error.message}</p>}
 			{data && (
-				<div className="overflow-auto max-h-[500px]">
+				<div className="overflow-auto flex-1">
 					{data.connections.length === 0 && (
 						<p className="text-muted-foreground">No connections found</p>
 					)}
@@ -251,6 +252,7 @@ export const ConnectionsList = ({
 					))}
 				</div>
 			)}
+			</div>
 		</div>
 	);
 };
@@ -277,9 +279,6 @@ const ActiveConnection = ({
 	});
 	return (
 		<div className="w-full h-full">
-			<h2 className="text-lg font-semibold">
-				Active Connection: {connectionId}
-			</h2>
 			{isLoading && <p className="text-muted-foreground">Loading...</p>}
 			{error && <p className="text-destructive">Error: {error.message}</p>}
 			{data && (
@@ -314,7 +313,7 @@ export const Connections = ({
 	);
 	return (
 		<div className="w-full h-full flex">
-			<div className="w-full max-w-sm border-r-3">
+			<div className="w-full max-w-sm border-r-3 h-full overflow-auto">
 				<ConnectionsList
 					token={token}
 					namespace={namespace}
@@ -322,7 +321,7 @@ export const Connections = ({
 					defaultShowSearchServers={false}
 				/>
 			</div>
-			<div className="w-full flex-1 h-full">
+			<div className="w-full flex-1">
 				<ActiveConnection
 					token={token}
 					namespace={namespace}
