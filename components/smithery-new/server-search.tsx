@@ -166,11 +166,13 @@ export const ServerSearch = ({ token }: { token?: string }) => {
 			}
 			const client = getSmitheryClient(token);
 			console.log("searching", debouncedQuery);
-			const servers = await client.servers.list({ q: debouncedQuery });
+			const servers = debouncedQuery
+				? await client.servers.list({ q: debouncedQuery, pageSize: 3 })
+				: await client.servers.list();
 			console.log(`servers for ${debouncedQuery}`, servers);
 			return servers;
 		},
-		enabled: debouncedQuery.length > 0 && !!token,
+		enabled: !!token,
 	});
 
 	const {
