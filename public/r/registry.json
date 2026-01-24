@@ -1,184 +1,166 @@
 {
-  "$schema": "https://ui.shadcn.com/schema/registry.json",
-  "name": "smithery",
-  "homepage": "https://smithery.ai",
-  "items": [
-    {
-      "name": "use-debounce",
-      "type": "registry:hook",
-      "title": "useDebounce",
-      "description": "A hook that debounces a value by a specified delay.",
-      "files": [
-        {
-          "path": "registry/new-york/hooks/use-debounce.ts",
-          "type": "registry:hook",
-          "target": "hooks/use-debounce.ts"
-        }
-      ]
-    },
-    {
-      "name": "smithery-connections",
-      "type": "registry:block",
-      "title": "Smithery Connections",
-      "description": "A component for managing and displaying MCP server connections via Smithery.",
-      "dependencies": [
-        "@smithery/api",
-        "@tanstack/react-query",
-        "lucide-react"
-      ],
-      "registryDependencies": [
-        "avatar",
-        "button",
-        "card",
-        "separator"
-      ],
-      "files": [
-        {
-          "path": "registry/new-york/smithery/connections.tsx",
-          "type": "registry:component",
-          "target": "components/smithery/connections.tsx"
-        }
-      ]
-    },
-    {
-      "name": "smithery-server-search",
-      "type": "registry:block",
-      "title": "Smithery Server Search",
-      "description": "A searchable combobox for finding and connecting to MCP servers from the Smithery registry.",
-      "dependencies": [
-        "@smithery/api",
-        "@tanstack/react-query",
-        "lucide-react"
-      ],
-      "registryDependencies": [
-        "avatar",
-        "button",
-        "combobox",
-        "item"
-      ],
-      "files": [
-        {
-          "path": "registry/new-york/smithery/server-search.tsx",
-          "type": "registry:component",
-          "target": "components/smithery/server-search.tsx"
-        },
-        {
-          "path": "registry/new-york/hooks/use-debounce.ts",
-          "type": "registry:hook",
-          "target": "hooks/use-debounce.ts"
-        }
-      ]
-    },
-    {
-      "name": "smithery-tokens",
-      "type": "registry:block",
-      "title": "Smithery Tokens",
-      "description": "A component for managing Smithery API tokens with selection and creation capabilities.",
-      "dependencies": [
-        "@smithery/api",
-        "jotai",
-        "lucide-react"
-      ],
-      "registryDependencies": [
-        "button",
-        "dialog",
-        "select"
-      ],
-      "files": [
-        {
-          "path": "registry/new-york/smithery/tokens.tsx",
-          "type": "registry:component",
-          "target": "components/smithery/tokens.tsx"
-        }
-      ]
-    },
-    {
-      "name": "smithery-tool-search",
-      "type": "registry:block",
-      "title": "Smithery Tool Search",
-      "description": "A component for searching available tools across connected MCP servers.",
-      "dependencies": [
-        "@smithery/api",
-        "@tanstack/react-query",
-        "lucide-react"
-      ],
-      "registryDependencies": [
-        "avatar",
-        "card",
-        "empty",
-        "input",
-        "separator",
-        "spinner"
-      ],
-      "files": [
-        {
-          "path": "registry/new-york/smithery/tool-search.tsx",
-          "type": "registry:component",
-          "target": "components/smithery/tool-search.tsx"
-        },
-        {
-          "path": "registry/new-york/smithery/server-search.tsx",
-          "type": "registry:component",
-          "target": "components/smithery/server-search.tsx"
-        },
-        {
-          "path": "registry/new-york/hooks/use-debounce.ts",
-          "type": "registry:hook",
-          "target": "hooks/use-debounce.ts"
-        }
-      ]
-    },
-    {
-      "name": "smithery",
-      "type": "registry:block",
-      "title": "Smithery",
-      "description": "Complete Smithery integration for MCP server management - includes connections, server search, token management, and tool search.",
-      "dependencies": [
-        "@smithery/api",
-        "@tanstack/react-query",
-        "jotai",
-        "lucide-react"
-      ],
-      "registryDependencies": [
-        "avatar",
-        "button",
-        "card",
-        "combobox",
-        "dialog",
-        "empty",
-        "input",
-        "item",
-        "select",
-        "separator",
-        "spinner"
-      ],
-      "files": [
-        {
-          "path": "registry/new-york/smithery/connections.tsx",
-          "type": "registry:component",
-          "target": "components/smithery/connections.tsx"
-        },
-        {
-          "path": "registry/new-york/smithery/server-search.tsx",
-          "type": "registry:component",
-          "target": "components/smithery/server-search.tsx"
-        },
-        {
-          "path": "registry/new-york/smithery/tokens.tsx",
-          "type": "registry:component",
-          "target": "components/smithery/tokens.tsx"
-        },
-        {
-          "path": "registry/new-york/smithery/tool-search.tsx",
-          "type": "registry:component",
-          "target": "components/smithery/tool-search.tsx"
-        },
-        {
-          "path": "registry/new-york/hooks/use-debounce.ts",
-          "type": "registry:hook",
-          "target": "hooks/use-debounce.ts"
-        }
-      ]
-    }
-  ]
+	"$schema": "https://ui.shadcn.com/schema/registry.json",
+	"name": "smithery",
+	"homepage": "https://smithery.ai",
+	"items": [
+		{
+			"name": "use-debounce",
+			"type": "registry:hook",
+			"title": "useDebounce",
+			"description": "A hook that debounces a value by a specified delay.",
+			"files": [
+				{
+					"path": "registry/new-york/hooks/use-debounce.ts",
+					"type": "registry:hook",
+					"target": "hooks/use-debounce.ts"
+				}
+			]
+		},
+		{
+			"name": "smithery-connections",
+			"type": "registry:block",
+			"title": "Smithery Connections",
+			"description": "A component for managing and displaying MCP server connections via Smithery.",
+			"dependencies": [
+				"@smithery/api",
+				"@tanstack/react-query",
+				"lucide-react"
+			],
+			"registryDependencies": ["avatar", "button", "card", "separator"],
+			"files": [
+				{
+					"path": "registry/new-york/smithery/connections.tsx",
+					"type": "registry:component",
+					"target": "components/smithery/connections.tsx"
+				}
+			]
+		},
+		{
+			"name": "smithery-server-search",
+			"type": "registry:block",
+			"title": "Smithery Server Search",
+			"description": "A searchable combobox for finding and connecting to MCP servers from the Smithery registry.",
+			"dependencies": [
+				"@smithery/api",
+				"@tanstack/react-query",
+				"lucide-react"
+			],
+			"registryDependencies": ["avatar", "button", "combobox", "item"],
+			"files": [
+				{
+					"path": "registry/new-york/smithery/server-search.tsx",
+					"type": "registry:component",
+					"target": "components/smithery/server-search.tsx"
+				},
+				{
+					"path": "registry/new-york/hooks/use-debounce.ts",
+					"type": "registry:hook",
+					"target": "hooks/use-debounce.ts"
+				}
+			]
+		},
+		{
+			"name": "smithery-tokens",
+			"type": "registry:block",
+			"title": "Smithery Tokens",
+			"description": "A component for managing Smithery API tokens with selection and creation capabilities.",
+			"dependencies": ["@smithery/api", "jotai", "lucide-react"],
+			"registryDependencies": ["button", "dialog", "select"],
+			"files": [
+				{
+					"path": "registry/new-york/smithery/tokens.tsx",
+					"type": "registry:component",
+					"target": "components/smithery/tokens.tsx"
+				}
+			]
+		},
+		{
+			"name": "smithery-tool-search",
+			"type": "registry:block",
+			"title": "Smithery Tool Search",
+			"description": "A component for searching available tools across connected MCP servers.",
+			"dependencies": [
+				"@smithery/api",
+				"@tanstack/react-query",
+				"lucide-react"
+			],
+			"registryDependencies": [
+				"avatar",
+				"card",
+				"empty",
+				"input",
+				"separator",
+				"spinner"
+			],
+			"files": [
+				{
+					"path": "registry/new-york/smithery/tool-search.tsx",
+					"type": "registry:component",
+					"target": "components/smithery/tool-search.tsx"
+				},
+				{
+					"path": "registry/new-york/smithery/server-search.tsx",
+					"type": "registry:component",
+					"target": "components/smithery/server-search.tsx"
+				},
+				{
+					"path": "registry/new-york/hooks/use-debounce.ts",
+					"type": "registry:hook",
+					"target": "hooks/use-debounce.ts"
+				}
+			]
+		},
+		{
+			"name": "smithery",
+			"type": "registry:block",
+			"title": "Smithery",
+			"description": "Complete Smithery integration for MCP server management - includes connections, server search, token management, and tool search.",
+			"dependencies": [
+				"@smithery/api",
+				"@tanstack/react-query",
+				"jotai",
+				"lucide-react"
+			],
+			"registryDependencies": [
+				"avatar",
+				"button",
+				"card",
+				"combobox",
+				"dialog",
+				"empty",
+				"input",
+				"item",
+				"select",
+				"separator",
+				"spinner"
+			],
+			"files": [
+				{
+					"path": "registry/new-york/smithery/connections.tsx",
+					"type": "registry:component",
+					"target": "components/smithery/connections.tsx"
+				},
+				{
+					"path": "registry/new-york/smithery/server-search.tsx",
+					"type": "registry:component",
+					"target": "components/smithery/server-search.tsx"
+				},
+				{
+					"path": "registry/new-york/smithery/tokens.tsx",
+					"type": "registry:component",
+					"target": "components/smithery/tokens.tsx"
+				},
+				{
+					"path": "registry/new-york/smithery/tool-search.tsx",
+					"type": "registry:component",
+					"target": "components/smithery/tool-search.tsx"
+				},
+				{
+					"path": "registry/new-york/hooks/use-debounce.ts",
+					"type": "registry:hook",
+					"target": "hooks/use-debounce.ts"
+				}
+			]
+		}
+	]
 }

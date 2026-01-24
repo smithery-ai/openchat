@@ -1,7 +1,6 @@
 "use client";
 
-import { type UseChatHelpers, useChat } from "@ai-sdk/react";
-import { lastAssistantMessageIsCompleteWithToolCalls } from "ai";
+import { useChat } from "@ai-sdk/react";
 import { createContext, type ReactNode, useContext } from "react";
 
 const ChatContext = createContext<ReturnType<typeof useChat> | undefined>(

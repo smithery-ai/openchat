@@ -5,13 +5,18 @@ import type { ToolSearchResponse } from "@smithery/api/resources/beta/connect/to
 import { useQuery } from "@tanstack/react-query";
 import { WrenchIcon } from "lucide-react";
 import { useState } from "react";
-import { useDebounce } from "@/hooks/use-debounce";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
-import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
+import {
+	Empty,
+	EmptyDescription,
+	EmptyHeader,
+	EmptyTitle,
+} from "@/components/ui/empty";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Spinner } from "@/components/ui/spinner";
+import { useDebounce } from "@/hooks/use-debounce";
 import { ServerSearch } from "./server-search";
 
 async function getDefaultNamespace(client: Smithery) {
@@ -26,7 +31,7 @@ const getSmitheryClient = (token: string) => {
 	return new Smithery({
 		apiKey: token,
 		baseURL: process.env.NEXT_PUBLIC_SMITHERY_API_URL,
-	})
+	});
 };
 
 type ToolCardProps = {
@@ -84,7 +89,10 @@ export const ToolSearch = ({ token }: { token?: string }) => {
 			const client = getSmitheryClient(token);
 			console.log("searching", debouncedQuery);
 			const namespace = await getDefaultNamespace(client);
-			const tools = await client.beta.connect.tools.search(namespace, debouncedQuery.length > 0 ? { q: debouncedQuery } : {});
+			const tools = await client.beta.connect.tools.search(
+				namespace,
+				debouncedQuery.length > 0 ? { q: debouncedQuery } : {},
+			);
 			console.log(`tools for ${debouncedQuery}`, tools);
 			return tools;
 		},
@@ -151,8 +159,7 @@ export const ToolSearch = ({ token }: { token?: string }) => {
 						<div>
 							<h2 className="text-lg font-semibold">Explore Servers</h2>
 							<p className="text-sm text-muted-foreground mt-1">
-								If the tool you want isn't showing up, try adding another
-								server
+								If the tool you want isn't showing up, try adding another server
 							</p>
 						</div>
 						<ServerSearch token={token} />
