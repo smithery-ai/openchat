@@ -3,13 +3,15 @@
 import Smithery, { AuthenticationError } from "@smithery/api";
 import type { Connection } from "@smithery/api/resources/beta/connect/connections.mjs";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link as LinkIcon, RefreshCw, Trash2 } from "lucide-react";
+import { Link as LinkIcon, Plus, RefreshCw, Trash2, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Button } from "../ui/button";
 import { Card, CardContent } from "../ui/card";
 import { Separator } from "../ui/separator";
 import { cn } from "@/lib/utils";
+import { ServerSearch } from "./server-search";
+import { Toggle } from "../ui/toggle";
 
 async function getDefaultNamespace(client: Smithery) {
 	const namespaces = await client.namespaces.list();
@@ -200,15 +202,18 @@ export const ConnectionsList = ({
 	namespace,
 	defaultActiveConnectionId,
 	onActiveConnectionIdChange,
+	defaultShowSearchServers = true,
 }: {
 	token: string;
 	namespace?: string;
 	defaultActiveConnectionId?: string;
 	onActiveConnectionIdChange: (connectionId: string) => void;
+	defaultShowSearchServers?: boolean;
 }) => {
 	const [activeConnectionId, setActiveConnectionId] = useState<string | null>(
 		defaultActiveConnectionId || null,
 	);
+	const [showSearchServers, setShowSearchServers] = useState(defaultShowSearchServers || false);
 	const { data, isLoading, error, refetch, isFetching } = useQuery({
 		queryKey: ["connections", token],
 		queryFn: async () => {
@@ -240,18 +245,28 @@ export const ConnectionsList = ({
 		<div className="max-w-md">
 			<div className="flex items-center justify-between px-6 py-3">
 				<h2 className="text-lg font-semibold">Connections</h2>
-				<Button
-					variant="outline"
-					size="icon"
-					onClick={() => refetch()}
-					disabled={isFetching}
-					title="Refresh connections"
-				>
-					<RefreshCw
-						className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`}
-					/>
-				</Button>
+				<div className="flex items-center gap-2">
+					<Toggle defaultPressed={defaultShowSearchServers} onPressedChange={setShowSearchServers}>
+						{showSearchServers ? <X className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+					</Toggle>
+					<Button
+						variant="outline"
+						size="icon"
+						onClick={() => refetch()}
+						disabled={isFetching}
+						title="Refresh connections"
+					>
+						<RefreshCw
+							className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`}
+						/>
+					</Button>
+				</div>
 			</div>
+			{showSearchServers && (
+				<div className="px-6 pb-4">
+					<ServerSearch token={token} namespace={data?.namespace} />
+				</div>
+			)}
 			{isLoading && <p className="text-muted-foreground">Loading...</p>}
 			{error && <p className="text-destructive">Error: {error.message}</p>}
 			{data && (
@@ -285,7 +300,9 @@ export const ConnectionsList = ({
 const ActiveConnection = ({ connectionId }: { connectionId: string }) => {
 	return (
 		<div className="w-full h-full">
-			<h2 className="text-lg font-semibold">Active Connection: {connectionId}</h2>
+			<h2 className="text-lg font-semibold">
+				Active Connection: {connectionId}
+			</h2>
 		</div>
 	);
 };
@@ -307,6 +324,7 @@ export const Connections = ({
 					token={token}
 					namespace={namespace}
 					onActiveConnectionIdChange={setActiveConnectionId}
+					defaultShowSearchServers={false}
 				/>
 			</div>
 			<div className="w-full flex-1 h-full">

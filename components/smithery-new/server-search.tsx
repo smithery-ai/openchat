@@ -665,11 +665,13 @@ export const ServerSearch = ({
 				itemToStringLabel={(server) =>
 					server.displayName || server.qualifiedName
 				}
+				defaultOpen={true}
 			>
 				<ComboboxInput
 					placeholder="Search for a server or paste MCP URL..."
 					disabled={!token}
 					onKeyDown={handleKeyDown}
+					autoFocus={true}
 				/>
 				<ComboboxContent side="bottom" align="start">
 					{isUrl ? (
