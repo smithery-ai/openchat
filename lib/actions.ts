@@ -10,7 +10,7 @@ const client = new Smithery({
 });
 
 export async function createNamespace() {
-	const response = await client.namespaces.set(`sandbox-${uuidv4()}`);
+	const response = await client.namespaces.set(`sandbox-${crypto.randomUUID()}`);
 	return response.name;
 }
 
