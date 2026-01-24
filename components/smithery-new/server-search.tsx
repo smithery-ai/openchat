@@ -23,7 +23,7 @@ import {
 	ItemMedia,
 	ItemTitle,
 } from "../ui/item";
-import { ArrowRight, CheckCircle, Loader2 } from "lucide-react";
+import { ArrowRight, CheckCircle, Link, Loader2, Lock } from "lucide-react";
 
 interface ServerDisplayProps {
 	server: ServerListResponse;
@@ -33,6 +33,7 @@ interface ServerDisplayProps {
 
 const ServerDisplay = ({ server, token, namespace }: ServerDisplayProps) => {
 	const queryClient = useQueryClient();
+	const [countdown, setCountdown] = useState<number | null>(null);
 
 	const { data: defaultNamespace } = useQuery({
 		queryKey: ["defaultNamespace"],
@@ -49,6 +50,7 @@ const ServerDisplay = ({ server, token, namespace }: ServerDisplayProps) => {
 		mutate: connect,
 		isPending: isConnecting,
 		data: connectionData,
+		mutateAsync: connectAsync,
 	} = useMutation({
 		mutationFn: async () => {
 			if (!token || !activeNamespace) {
@@ -64,6 +66,52 @@ const ServerDisplay = ({ server, token, namespace }: ServerDisplayProps) => {
 			console.error("error connecting to server", error);
 		},
 	});
+
+	// Countdown timer for auth_required state
+	useEffect(() => {
+		if (connectionData?.status === "auth_required" && countdown === null) {
+			setCountdown(3);
+		}
+	}, [connectionData?.status, countdown]);
+
+	useEffect(() => {
+		if (countdown === null || countdown <= 0) return;
+
+		const timer = setTimeout(() => {
+			setCountdown(countdown - 1);
+		}, 1000);
+
+		return () => clearTimeout(timer);
+	}, [countdown]);
+
+	// Poll connection status when auth_required
+	useEffect(() => {
+		if (connectionData?.status !== "auth_required" || !token || !activeNamespace) {
+			return;
+		}
+
+		const pollInterval = setInterval(async () => {
+			try {
+				const client = getSmitheryClient(token);
+				const connectionId = sanitizeConnectionId(server.qualifiedName);
+				const status = await checkConnectionStatus(
+					client,
+					connectionId,
+					activeNamespace,
+				);
+
+				if (status.status === "connected") {
+					// Update mutation data to trigger re-render
+					await connectAsync();
+					setCountdown(null);
+				}
+			} catch (error) {
+				console.error("error checking connection status", error);
+			}
+		}, 2000); // Check every 2 seconds
+
+		return () => clearInterval(pollInterval);
+	}, [connectionData?.status, token, activeNamespace, server.qualifiedName, connectAsync]);
 
 	return (
 		<div className="mt-4 p-4 border rounded-md flex flex-col gap-4">
@@ -98,6 +146,32 @@ const ServerDisplay = ({ server, token, namespace }: ServerDisplayProps) => {
 				{server.description && <p>{server.description}</p>}
 			</div>
 
+			{connectionData?.status === "auth_required" && (
+				<div className="flex items-start gap-3 rounded-md bg-muted p-3">
+					<div className="flex-1 min-w-0">
+						<p className="text-sm font-medium text-foreground flex items-center gap-1">
+							<Lock className="size-3.5 flex-shrink-0 font-bold" /> <span className="font-medium">Authorization required</span>
+						</p>
+						<p className="text-xs text-muted-foreground mt-1">
+							This server requires you to authorize access. You should be automatically redirected to complete authentication.
+							{" "}{countdown !== null && countdown > 0
+								? `Redirecting in ${countdown}...`
+								: "If not, click the link below."}
+						</p>
+						{connectionData.authorizationUrl && (
+							<a
+								href={connectionData.authorizationUrl}
+								target="_blank"
+								rel="noopener noreferrer"
+								className="text-sm font-bold text-blue-500 hover:text-blue-600 mt-4 flex items-center gap-1"
+							>
+								<span className="font-bold">Sign in to {server.displayName}</span> <ArrowRight className="size-4" />
+							</a>
+						)}
+					</div>
+				</div>
+			)}
+
 			<div className="mt-2 flex justify-between gap-4">
 				<Button
 					variant="secondary"
@@ -109,54 +183,59 @@ const ServerDisplay = ({ server, token, namespace }: ServerDisplayProps) => {
 				>
 					View Details
 				</Button>
-				{connectionData?.status === "connected" ? (
-					<Button
-						variant="link"
-						size="sm"
-						className="flex-1 bg-green-50 text-green-700 hover:bg-green-100 dark:bg-green-950 dark:text-green-300"
-						disabled
-					>
-						<CheckCircle className="size-4" />
-						Connected
-					</Button>
-				) : (
-					<Button
-						variant="default"
-						size="sm"
-						className="flex-1"
-						onClick={() => {
-							connect();
-						}}
-						disabled={isConnecting}
-					>
-						{isConnecting ? (
-							<>
-								<Loader2 className="size-4 animate-spin" />
-								Connecting...
-							</>
-						) : (
-							<>
-								Connect <ArrowRight className="size-4" />
-							</>
-						)}
-					</Button>
-				)}
-			</div>
 
-			{connectionData?.status === "auth_required" &&
-				connectionData?.authorizationUrl && (
-					<div className="mt-2">
-						<Button
-							variant="outline"
-							size="sm"
-							onClick={() => {
-								window.open(connectionData.authorizationUrl, "_blank");
-							}}
-						>
-							Authorize
-						</Button>
-					</div>
-				)}
+				{(() => {
+					switch (connectionData?.status) {
+						case "connected":
+							return (
+								<Button
+									variant="secondary"
+									size="sm"
+									className="flex-1"
+									disabled
+								>
+									<CheckCircle className="size-4" />
+									Connected
+								</Button>
+							);
+						case "auth_required":
+							return (
+								<Button
+									variant="secondary"
+									size="sm"
+									className="flex-1"
+									disabled
+								>
+									<Loader2 className="size-4 animate-spin" />
+									Pending authorization...
+								</Button>
+							);
+						default:
+							return (
+								<Button
+									variant="default"
+									size="sm"
+									className="flex-1"
+									onClick={() => {
+										connect();
+									}}
+									disabled={isConnecting}
+								>
+									{isConnecting ? (
+										<>
+											<Loader2 className="size-4 animate-spin" />
+											Connecting...
+										</>
+									) : (
+										<>
+											Connect <ArrowRight className="size-4" />
+										</>
+									)}
+								</Button>
+							);
+					}
+				})()}
+			</div>
 
 			{connectionData?.status === "error" && (
 				<p className="text-destructive text-sm mt-2">
@@ -304,6 +383,14 @@ export const ServerSearch = ({ token }: { token?: string }) => {
 
 	const servers = data?.servers ?? [];
 
+	const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+		if (e.key === "Enter" && servers.length > 0) {
+			e.preventDefault();
+			setSelectedServer(servers[0]);
+			setQuery("");
+		}
+	};
+
 	return (
 		<div className="max-w-md mx-auto">
 			<Combobox<ServerListResponse>
@@ -316,7 +403,11 @@ export const ServerSearch = ({ token }: { token?: string }) => {
 					server.displayName || server.qualifiedName
 				}
 			>
-				<ComboboxInput placeholder="Search for a server..." disabled={!token} />
+				<ComboboxInput
+					placeholder="Search for a server..."
+					disabled={!token}
+					onKeyDown={handleKeyDown}
+				/>
 				<ComboboxContent side="bottom" align="start">
 					{servers.length === 0 && (
 						<ComboboxEmpty>
@@ -352,7 +443,9 @@ export const ServerSearch = ({ token }: { token?: string }) => {
 				</ComboboxContent>
 			</Combobox>
 
-			{selectedServer && token && <ServerDisplay server={selectedServer} token={token} />}
+			{selectedServer && token && (
+				<ServerDisplay server={selectedServer} token={token} />
+			)}
 		</div>
 	);
 };
