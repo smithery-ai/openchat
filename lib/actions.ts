@@ -2,7 +2,7 @@
 
 import Smithery from "@smithery/api";
 import { CreateTokenResponse } from "@smithery/api/resources/tokens.mjs";
-import { v4 as uuidv4 } from "uuid";
+import { randomUUID } from "node:crypto";
 
 const client = new Smithery({
 	apiKey: process.env.SMITHERY_API_KEY,
@@ -48,5 +48,5 @@ export async function createToken({ttlSeconds, userId}: {ttlSeconds: number, use
 }
 
 export async function getApiKey(): Promise<CreateTokenResponse> {
-	return await createToken({ttlSeconds: 60 * 60 * 24, userId: uuidv4().slice(0, 100)});
+	return await createToken({ttlSeconds: 60 * 60 * 24, userId: randomUUID()});
 }

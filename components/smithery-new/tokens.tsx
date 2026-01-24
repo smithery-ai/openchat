@@ -137,7 +137,7 @@ export function Tokens({
 						<div className="flex  gap-2">
 							<Button
 								onClick={() => {
-									createToken({ ttlSeconds: 60 * 60 * 24, userId: "123" }).then(
+									createToken({ ttlSeconds: 60 * 60 * 24, userId: crypto.randomUUID() }).then(
 										(tokenResponse) => {
 											setTokensCreated([...tokensCreated, tokenResponse]);
 											setSelectedToken(tokenResponse);
