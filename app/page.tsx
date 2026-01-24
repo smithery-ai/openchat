@@ -5,7 +5,6 @@ import { Spinner } from "@/components/ui/spinner";
 import { getApiKey, getDefaultNamespace } from "@/lib/actions";
 
 async function HomePageWrapper() {
-	await new Promise((resolve) => setTimeout(resolve, 5_000));
 	const initialTokenResponse = await getApiKey();
 	const namespace = await getDefaultNamespace();
 	return (

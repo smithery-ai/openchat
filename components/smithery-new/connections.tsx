@@ -4,11 +4,12 @@ import Smithery, { AuthenticationError } from "@smithery/api";
 import type { Connection } from "@smithery/api/resources/beta/connect/connections.mjs";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link as LinkIcon, RefreshCw, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Button } from "../ui/button";
 import { Card, CardContent } from "../ui/card";
 import { Separator } from "../ui/separator";
+import { cn } from "@/lib/utils";
 
 async function getDefaultNamespace(client: Smithery) {
 	const namespaces = await client.namespaces.list();
@@ -77,11 +78,14 @@ export const ConnectionCard = ({
 	connection,
 	token,
 	namespace,
+	className,
+	...rest
 }: {
 	connection: Connection;
 	token: string;
 	namespace: string;
-}) => {
+	className?: string;
+} & React.HTMLAttributes<HTMLDivElement>) => {
 	const queryClient = useQueryClient();
 	const [testConnectionData, setTestConnectionData] =
 		useState<ConnectionStatus | null>(null);
@@ -120,7 +124,7 @@ export const ConnectionCard = ({
 	});
 
 	return (
-		<Card className="border-none shadow-none">
+		<Card className={cn("border-none shadow-none", className || "")} {...rest}>
 			<CardContent className="flex items-center gap-4">
 				<Avatar className="h-10 w-10 rounded-md">
 					<AvatarImage src={connection.iconUrl || ""} />
@@ -191,13 +195,16 @@ export const ConnectionCard = ({
 	);
 };
 
-export const Connections = ({
+export const ConnectionsList = ({
 	token,
 	namespace,
+	defaultActiveConnectionId,
 }: {
 	token: string;
 	namespace?: string;
+	defaultActiveConnectionId?: string;
 }) => {
+	const [activeConnectionId, setActiveConnectionId] = useState<string | null>(defaultActiveConnectionId || null);
 	const { data, isLoading, error, refetch, isFetching } = useQuery({
 		queryKey: ["connections", token],
 		queryFn: async () => {
@@ -206,16 +213,22 @@ export const Connections = ({
 			}
 			const client = getSmitheryClient(token);
 			const namespaceToUse = namespace || (await getDefaultNamespace(client));
-			const connections =
+			const {connections} =
 				await client.beta.connect.connections.list(namespaceToUse);
 			return { connections, namespace: namespaceToUse };
 		},
 		enabled: !!token,
 	});
 
+	useEffect(() => {
+		if (data?.connections && !defaultActiveConnectionId) {
+			setActiveConnectionId(data?.connections[0]?.connectionId || null);
+		}
+	}, [data?.connections, defaultActiveConnectionId]);
+
 	return (
-		<div className="max-w-md mx-auto">
-			<div className="flex items-center justify-between mb-4">
+		<div className="max-w-md">
+			<div className="flex items-center justify-between px-6 py-3">
 				<h2 className="text-lg font-semibold">Connections</h2>
 				<Button
 					variant="outline"
@@ -232,22 +245,42 @@ export const Connections = ({
 			{isLoading && <p className="text-muted-foreground">Loading...</p>}
 			{error && <p className="text-destructive">Error: {error.message}</p>}
 			{data && (
-				<div className="space-y-2 overflow-auto max-h-[500px]">
-					{data.connections.connections.length === 0 && (
+				<div className="overflow-auto max-h-[500px]">
+					{data.connections.length === 0 && (
 						<p className="text-muted-foreground">No connections found</p>
 					)}
-					{data.connections.connections.map((connection: Connection) => (
-						<div key={connection.connectionId}>
+					{data.connections.map((connection: Connection) => (
+						<div key={`${connection.connectionId}-${data.namespace}`}>
+							<Separator />
 							<ConnectionCard
 								connection={connection}
 								token={token}
 								namespace={data.namespace}
+								className={cn("rounded-none", activeConnectionId === connection.connectionId ? "bg-muted" : "hover:bg-muted/50 hover:cursor-pointer")}
+								onClick={() => setActiveConnectionId(connection.connectionId)}
 							/>
-							<Separator />
 						</div>
 					))}
 				</div>
 			)}
+		</div>
+	);
+};
+
+export const Connections = ({
+	token,
+	namespace,
+}: {
+	token: string;
+	namespace?: string;
+}) => {
+	return (
+		<div className="w-full h-full flex">
+			<div className="w-full max-w-sm border-r-3">
+				<ConnectionsList token={token} namespace={namespace} />
+			</div>
+			<div className="w-full flex-1 h-full">
+			</div>
 		</div>
 	);
 };

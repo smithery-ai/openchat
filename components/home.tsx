@@ -1,12 +1,28 @@
 "use client";
 import type { CreateTokenResponse } from "@smithery/api/resources/tokens.mjs";
 import { useAtomValue } from "jotai";
+import { useState } from "react";
+import { Server, Link2, Wrench } from "lucide-react";
 import { selectedTokenAtom } from "@/lib/atoms";
 import { Connections } from "./smithery-new/connections";
 import { ServerSearch } from "./smithery-new/server-search";
 import { Tokens } from "./smithery-new/tokens";
 import { ToolSearch } from "./smithery-new/tool-search";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
+import {
+	Sidebar,
+	SidebarContent,
+	SidebarGroup,
+	SidebarGroupContent,
+	SidebarGroupLabel,
+	SidebarMenu,
+	SidebarMenuButton,
+	SidebarMenuItem,
+	SidebarProvider,
+	SidebarTrigger,
+} from "./ui/sidebar";
+import { SidebarInset } from "./ui/sidebar";
+
+type Section = "servers" | "connections" | "tools";
 
 export function HomePage({
 	initialTokenResponse,
@@ -16,36 +32,75 @@ export function HomePage({
 	namespace?: string;
 }) {
 	const apiKey = useAtomValue(selectedTokenAtom);
+	const [activeSection, setActiveSection] = useState<Section>("servers");
+
+	const menuItems = [
+		{
+			title: "Servers",
+			value: "servers" as Section,
+			icon: Server,
+		},
+		{
+			title: "Connections",
+			value: "connections" as Section,
+			icon: Link2,
+		},
+		{
+			title: "Tools",
+			value: "tools" as Section,
+			icon: Wrench,
+		},
+	];
+
 	return (
-		<div className="flex items-center justify-center h-screen">
-			<div className="flex flex-col gap-4">
-				{apiKey ? (
-					<>
+		<SidebarProvider>
+			<Sidebar>
+				<SidebarContent>
+					<SidebarGroup>
+						<SidebarGroupLabel>Navigation</SidebarGroupLabel>
+						<SidebarGroupContent>
+							<SidebarMenu>
+								{menuItems.map((item) => (
+									<SidebarMenuItem key={item.value}>
+										<SidebarMenuButton
+											onClick={() => setActiveSection(item.value)}
+											isActive={activeSection === item.value}
+										>
+											<item.icon />
+											<span>{item.title}</span>
+										</SidebarMenuButton>
+									</SidebarMenuItem>
+								))}
+							</SidebarMenu>
+						</SidebarGroupContent>
+					</SidebarGroup>
+				</SidebarContent>
+			</Sidebar>
+			<SidebarInset>
+				<div className="flex flex-col h-screen">
+					<header className="flex h-16 shrink-0 items-center gap-2 border-b-3 px-4">
+						<SidebarTrigger />
 						<Tokens initialTokenResponse={initialTokenResponse} />
-						<Tabs defaultValue="servers" className="w-[400px]">
-							<TabsList>
-								<TabsTrigger value="servers">Servers</TabsTrigger>
-								<TabsTrigger value="connections">Connections</TabsTrigger>
-								<TabsTrigger value="tools">Tools</TabsTrigger>
-							</TabsList>
-							<TabsContent value="servers">
-								<ServerSearch token={apiKey.token} namespace={namespace} />
-							</TabsContent>
-							<TabsContent value="connections">
-								<Connections token={apiKey.token} namespace={namespace} />
-							</TabsContent>
-							<TabsContent value="tools">
-								<ToolSearch token={apiKey.token} />
-							</TabsContent>
-						</Tabs>
-					</>
-				) : (
-					<>
-						<Tokens initialTokenResponse={initialTokenResponse} />
-						<div>No token selected. Please create a token.</div>
-					</>
-				)}
-			</div>
-		</div>
+					</header>
+					<div className="flex-1 overflow-auto">
+						{apiKey ? (
+							<div className="w-full h-full">
+								{activeSection === "servers" && (
+									<ServerSearch token={apiKey.token} namespace={namespace} />
+								)}
+								{activeSection === "connections" && (
+									<Connections token={apiKey.token} namespace={namespace} />
+								)}
+								{activeSection === "tools" && (
+									<ToolSearch token={apiKey.token} />
+								)}
+							</div>
+						) : (
+							<div>No token selected. Please create a token.</div>
+						)}
+					</div>
+				</div>
+			</SidebarInset>
+		</SidebarProvider>
 	);
 }
