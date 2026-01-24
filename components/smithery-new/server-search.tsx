@@ -216,11 +216,11 @@ export const ServerSearch = ({ token }: { token?: string }) => {
 					placeholder="Search for a server..."
 					disabled={!token}
 				/>
-				<ComboboxContent>
+				<ComboboxContent side="bottom" align="start">
 					{servers.length === 0 && <ComboboxEmpty>
 						{isLoading ? "Loading..." : "No servers found."}
 					</ComboboxEmpty>}
-					<ComboboxList>
+					<ComboboxList className="max-h-[200px] overflow-y-auto">
 						{servers.map((server) => (
 							<ComboboxItem key={server.qualifiedName} value={server}>
 								<Item size="sm" className="p-0 min-w-0">
