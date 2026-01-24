@@ -3,7 +3,7 @@
 import Smithery, { AuthenticationError } from "@smithery/api";
 import type { Connection } from "@smithery/api/resources/beta/connect/connections.mjs";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link as LinkIcon, Trash2 } from "lucide-react";
+import { Link as LinkIcon, RefreshCw, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Button } from "../ui/button";
@@ -193,27 +193,40 @@ export const ConnectionCard = ({
 	);
 };
 
-export const Connections = ({ token }: { token: string }) => {
-	const { data, isLoading, error } = useQuery({
+export const Connections = ({ token, namespace }: { token: string, namespace?: string }) => {
+	const { data, isLoading, error, refetch, isFetching } = useQuery({
 		queryKey: ["connections"],
 		queryFn: async () => {
 			if (!token) {
 				throw new Error("API token is required");
 			}
 			const client = getSmitheryClient(token);
-			const namespace = await getDefaultNamespace(client);
-			const connections = await client.beta.connect.connections.list(namespace);
-			return { connections, namespace };
+			const namespaceToUse = namespace || await getDefaultNamespace(client);
+			const connections = await client.beta.connect.connections.list(namespaceToUse);
+			return { connections, namespace: namespaceToUse };
 		},
 		enabled: !!token,
 	});
 
 	return (
 		<div className="max-w-md mx-auto">
+			<div className="flex items-center justify-between mb-4">
+				<h2 className="text-lg font-semibold">Connections</h2>
+				<Button
+					variant="outline"
+					size="icon"
+					onClick={() => refetch()}
+					disabled={isFetching}
+					title="Refresh connections"
+				>
+					<RefreshCw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />
+				</Button>
+			</div>
 			{isLoading && <p className="text-muted-foreground">Loading...</p>}
 			{error && <p className="text-destructive">Error: {error.message}</p>}
 			{data && (
 				<div className="space-y-2 overflow-auto max-h-[500px]">
+					{data.connections.connections.length === 0 && <p className="text-muted-foreground">No connections found</p>}
 					{data.connections.connections.map((connection: Connection) => (
 						<div key={connection.connectionId}>
 							<ConnectionCard

@@ -1,32 +1,21 @@
 "use server";
 import { Connections } from "@/components/smithery-new/connections";
+import { Tokens } from "@/components/smithery-new/tokens";
 import { ServerSearch } from "@/components/smithery-new/server-search";
 import { ToolSearch } from "@/components/smithery-new/tool-search";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { getApiKey, getDefaultNamespace } from "@/lib/actions";
+import { useQuery } from "@tanstack/react-query";
+import { HomePage } from "@/components/home";
+import { Suspense } from "react";
+import Smithery from "@smithery/api";
 
 export default async function Home() {
-	const apiKey = process.env.SMITHERY_API_KEY;
-	if (!apiKey) {
-		throw new Error("SMITHERY_API_KEY is not set");
-	}
+	const initialTokenResponse = await getApiKey();
+	const namespace = await getDefaultNamespace();
 	return (
-		<div className="flex items-center justify-center h-screen">
-			<Tabs defaultValue="servers" className="w-[400px]">
-				<TabsList>
-					<TabsTrigger value="servers">Servers</TabsTrigger>
-					<TabsTrigger value="connections">Connections</TabsTrigger>
-					<TabsTrigger value="tools">Tools</TabsTrigger>
-				</TabsList>
-				<TabsContent value="servers">
-					<ServerSearch token={apiKey} />
-				</TabsContent>
-				<TabsContent value="connections">
-					<Connections token={apiKey} />
-				</TabsContent>
-				<TabsContent value="tools">
-					<ToolSearch token={apiKey} />
-				</TabsContent>
-			</Tabs>
-		</div>
+		<Suspense fallback={<div>Loading...</div>}>
+			<HomePage initialTokenResponse={initialTokenResponse} namespace={namespace} />
+		</Suspense>
 	);
 }
