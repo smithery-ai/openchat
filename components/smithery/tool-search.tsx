@@ -2,7 +2,7 @@
 
 import type { ServerListResponse } from "@smithery/api/resources/index.mjs";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { checkConnection, searchServers, useServer } from "./actions";
+import { checkConnection, enableServer, searchServers } from "./actions";
 import type { ConnectionConfig } from "./types";
 
 type ConnectionStatus = "connecting" | "connected" | "auth_required" | "error";
@@ -143,7 +143,7 @@ export const ServerSearch = ({
 		setError(null);
 
 		try {
-			const result = await useServer(server.qualifiedName, apiKey);
+			const result = await enableServer(server.qualifiedName, apiKey);
 
 			if (result.status === "connected") {
 				setConnection({
