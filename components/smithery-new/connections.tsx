@@ -89,9 +89,6 @@ export const ConnectionCard = ({
 	className?: string;
 } & React.HTMLAttributes<HTMLDivElement>) => {
 	const queryClient = useQueryClient();
-	const [testConnectionData, setTestConnectionData] =
-		useState<ConnectionStatus | null>(null);
-
 	const deleteMutation = useMutation({
 		mutationFn: async () => {
 			const client = getSmitheryClient(token);
@@ -101,27 +98,6 @@ export const ConnectionCard = ({
 		},
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ["connections"] });
-		},
-	});
-
-	const testMutation = useMutation({
-		mutationFn: async () => {
-			const client = getSmitheryClient(token);
-			return await checkConnectionStatus(
-				client,
-				connection.connectionId,
-				namespace,
-			);
-		},
-		onSuccess: (data) => {
-			setTestConnectionData(data);
-		},
-		onError: (error) => {
-			console.error("error testing connection", error);
-			setTestConnectionData({
-				status: "error",
-				error,
-			});
 		},
 	});
 
@@ -135,10 +111,17 @@ export const ConnectionCard = ({
 					</AvatarFallback>
 				</Avatar>
 				<div className="flex-1 min-w-0">
-					<h3 className="font-medium truncate">{connection.name}</h3>
-					<p className="text-muted-foreground text-xs truncate">
-						{connection.connectionId}
-					</p>
+					<h3 className="font-medium truncate flex items-center gap-2">
+						{connection.name}
+						{connection.connectionId && (
+							<span className="ml-2 text-xs font-mono text-muted-foreground bg-muted px-2 py-0.5 rounded">
+								{"•".repeat(
+									Math.min(connection.connectionId.length - 10, 4)
+								)}
+								{connection.connectionId.slice(-10)}
+							</span>
+						)}
+					</h3>
 					<p className="text-muted-foreground text-xs truncate">
 						{connection.mcpUrl}
 					</p>
@@ -149,41 +132,7 @@ export const ConnectionCard = ({
 					<p className="text-muted-foreground text-xs truncate">
 						{connection.metadata && JSON.stringify(connection.metadata)}
 					</p>
-					{testConnectionData?.status === "connected" && (
-						<p className="text-green-600 text-xs">Connected</p>
-					)}
-					{testConnectionData?.status === "auth_required" &&
-						testConnectionData?.authorizationUrl && (
-							<div className="mt-2">
-								<Button
-									variant="outline"
-									size="sm"
-									onClick={() => {
-										window.open(testConnectionData.authorizationUrl, "_blank");
-									}}
-								>
-									Authorize
-								</Button>
-							</div>
-						)}
-					{testConnectionData?.status === "error" && (
-						<p className="text-destructive text-xs">
-							Error:{" "}
-							{testConnectionData.error instanceof Error
-								? testConnectionData.error.message
-								: "Unknown error"}
-						</p>
-					)}
 				</div>
-				<Button
-					variant="ghost"
-					size="icon"
-					onClick={() => testMutation.mutate()}
-					disabled={testMutation.isPending}
-					title="Test connection"
-				>
-					<LinkIcon className="h-4 w-4" />
-				</Button>
 				<Button
 					variant="ghost"
 					size="icon"
@@ -213,7 +162,9 @@ export const ConnectionsList = ({
 	const [activeConnectionId, setActiveConnectionId] = useState<string | null>(
 		defaultActiveConnectionId || null,
 	);
-	const [showSearchServers, setShowSearchServers] = useState(defaultShowSearchServers || false);
+	const [showSearchServers, setShowSearchServers] = useState(
+		defaultShowSearchServers || false,
+	);
 	const { data, isLoading, error, refetch, isFetching } = useQuery({
 		queryKey: ["connections", token],
 		queryFn: async () => {
@@ -246,8 +197,15 @@ export const ConnectionsList = ({
 			<div className="flex items-center justify-between px-6 py-3">
 				<h2 className="text-lg font-semibold">Connections</h2>
 				<div className="flex items-center gap-2">
-					<Toggle defaultPressed={defaultShowSearchServers} onPressedChange={setShowSearchServers}>
-						{showSearchServers ? <X className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+					<Toggle
+						defaultPressed={defaultShowSearchServers}
+						onPressedChange={setShowSearchServers}
+					>
+						{showSearchServers ? (
+							<X className="h-4 w-4" />
+						) : (
+							<Plus className="h-4 w-4" />
+						)}
 					</Toggle>
 					<Button
 						variant="outline"
@@ -297,12 +255,49 @@ export const ConnectionsList = ({
 	);
 };
 
-const ActiveConnection = ({ connectionId }: { connectionId: string }) => {
+const ActiveConnection = ({
+	token,
+	namespace,
+	connectionId,
+}: {
+	token: string;
+	namespace?: string;
+	connectionId: string;
+}) => {
+	const { data, isLoading, error, refetch, isFetching } = useQuery({
+		queryKey: ["connection", connectionId],
+		queryFn: async () => {
+			const client = getSmitheryClient(token);
+			const namespaceToUse = namespace || (await getDefaultNamespace(client));
+			const data = await client.beta.connect.connections.get(connectionId, {
+				namespace: namespaceToUse,
+			});
+			return { namespace: namespaceToUse, ...data };
+		},
+	});
 	return (
 		<div className="w-full h-full">
 			<h2 className="text-lg font-semibold">
 				Active Connection: {connectionId}
 			</h2>
+			{isLoading && <p className="text-muted-foreground">Loading...</p>}
+			{error && <p className="text-destructive">Error: {error.message}</p>}
+			{data && (
+				<div className="w-full h-full">
+					<p className="text-muted-foreground">Connection: {data.name}</p>
+					<p className="text-muted-foreground">
+						Connection ID: {data.connectionId}
+					</p>
+					<p className="text-muted-foreground">Namespace: {namespace}</p>
+					<p className="text-muted-foreground">
+						Created At: {new Date(data.createdAt || "").toLocaleDateString()}{" "}
+						{new Date(data.createdAt || "").toLocaleTimeString()}
+					</p>
+					<p className="text-muted-foreground">
+						Metadata: {data.metadata && JSON.stringify(data.metadata)}
+					</p>
+				</div>
+			)}
 		</div>
 	);
 };
@@ -328,7 +323,11 @@ export const Connections = ({
 				/>
 			</div>
 			<div className="w-full flex-1 h-full">
-				<ActiveConnection connectionId={activeConnectionId || ""} />
+				<ActiveConnection
+					token={token}
+					namespace={namespace}
+					connectionId={activeConnectionId || ""}
+				/>
 			</div>
 		</div>
 	);
