@@ -25,6 +25,84 @@ import {
 } from "../ui/item";
 import { ArrowRight, CheckCircle, Link, Loader2, Lock } from "lucide-react";
 
+interface AuthRequiredBannerProps {
+	serverName: string;
+	authorizationUrl?: string;
+	countdown: number | null;
+}
+
+const AuthRequiredBanner = ({ serverName, authorizationUrl, countdown }: AuthRequiredBannerProps) => (
+	<div className="flex items-start gap-3 rounded-md bg-muted p-3">
+		<div className="flex-1 min-w-0">
+			<p className="text-sm font-medium text-foreground flex items-center gap-1">
+				<Lock className="size-3.5 flex-shrink-0 font-bold" /> <span className="font-medium">Authorization required</span>
+			</p>
+			<p className="text-xs text-muted-foreground mt-1">
+				This server requires you to authorize access. You should be automatically redirected to complete authentication.
+				{" "}{countdown !== null && countdown > 0
+					? `Redirecting in ${countdown}...`
+					: "If not, click the link below."}
+			</p>
+			{authorizationUrl && (
+				<a
+					href={authorizationUrl}
+					target="_blank"
+					rel="noopener noreferrer"
+					className="text-sm font-bold text-blue-500 hover:text-blue-600 mt-4 flex items-center gap-1"
+				>
+					<span className="font-bold">Sign in to {serverName}</span> <ArrowRight className="size-4" />
+				</a>
+			)}
+		</div>
+	</div>
+);
+
+interface ConnectionButtonProps {
+	connectionStatus?: "connected" | "auth_required" | "error";
+	isConnecting: boolean;
+	onConnect: () => void;
+}
+
+const ConnectionButton = ({ connectionStatus, isConnecting, onConnect }: ConnectionButtonProps) => {
+	switch (connectionStatus) {
+		case "connected":
+			return (
+				<Button variant="secondary" size="sm" className="flex-1" disabled>
+					<CheckCircle className="size-4" />
+					Connected
+				</Button>
+			);
+		case "auth_required":
+			return (
+				<Button variant="secondary" size="sm" className="flex-1" disabled>
+					<Loader2 className="size-4 animate-spin" />
+					Pending authorization...
+				</Button>
+			);
+		default:
+			return (
+				<Button
+					variant="default"
+					size="sm"
+					className="flex-1"
+					onClick={onConnect}
+					disabled={isConnecting}
+				>
+					{isConnecting ? (
+						<>
+							<Loader2 className="size-4 animate-spin" />
+							Connecting...
+						</>
+					) : (
+						<>
+							Connect <ArrowRight className="size-4" />
+						</>
+					)}
+				</Button>
+			);
+	}
+};
+
 interface ServerDisplayProps {
 	server: ServerListResponse;
 	token: string;
@@ -94,7 +172,7 @@ const ServerDisplay = ({ server, token, namespace }: ServerDisplayProps) => {
 		const pollInterval = setInterval(async () => {
 			try {
 				const client = getSmitheryClient(token);
-				const connectionId = `${token}__${sanitizeConnectionId(server.qualifiedName)}`;
+				const connectionId = generateConnectionId(token, server.qualifiedName);
 				const status = await checkConnectionStatus(
 					client,
 					connectionId,
@@ -148,29 +226,11 @@ const ServerDisplay = ({ server, token, namespace }: ServerDisplayProps) => {
 			</div>
 
 			{connectionData?.status === "auth_required" && (
-				<div className="flex items-start gap-3 rounded-md bg-muted p-3">
-					<div className="flex-1 min-w-0">
-						<p className="text-sm font-medium text-foreground flex items-center gap-1">
-							<Lock className="size-3.5 flex-shrink-0 font-bold" /> <span className="font-medium">Authorization required</span>
-						</p>
-						<p className="text-xs text-muted-foreground mt-1">
-							This server requires you to authorize access. You should be automatically redirected to complete authentication.
-							{" "}{countdown !== null && countdown > 0
-								? `Redirecting in ${countdown}...`
-								: "If not, click the link below."}
-						</p>
-						{connectionData.authorizationUrl && (
-							<a
-								href={connectionData.authorizationUrl}
-								target="_blank"
-								rel="noopener noreferrer"
-								className="text-sm font-bold text-blue-500 hover:text-blue-600 mt-4 flex items-center gap-1"
-							>
-								<span className="font-bold">Sign in to {server.displayName}</span> <ArrowRight className="size-4" />
-							</a>
-						)}
-					</div>
-				</div>
+				<AuthRequiredBanner
+					serverName={server.displayName || server.qualifiedName}
+					authorizationUrl={connectionData.authorizationUrl}
+					countdown={countdown}
+				/>
 			)}
 
 			<div className="mt-2 flex justify-between gap-4">
@@ -184,58 +244,11 @@ const ServerDisplay = ({ server, token, namespace }: ServerDisplayProps) => {
 				>
 					View Details
 				</Button>
-
-				{(() => {
-					switch (connectionData?.status) {
-						case "connected":
-							return (
-								<Button
-									variant="secondary"
-									size="sm"
-									className="flex-1"
-									disabled
-								>
-									<CheckCircle className="size-4" />
-									Connected
-								</Button>
-							);
-						case "auth_required":
-							return (
-								<Button
-									variant="secondary"
-									size="sm"
-									className="flex-1"
-									disabled
-								>
-									<Loader2 className="size-4 animate-spin" />
-									Pending authorization...
-								</Button>
-							);
-						default:
-							return (
-								<Button
-									variant="default"
-									size="sm"
-									className="flex-1"
-									onClick={() => {
-										connect();
-									}}
-									disabled={isConnecting}
-								>
-									{isConnecting ? (
-										<>
-											<Loader2 className="size-4 animate-spin" />
-											Connecting...
-										</>
-									) : (
-										<>
-											Connect <ArrowRight className="size-4" />
-										</>
-									)}
-								</Button>
-							);
-					}
-				})()}
+				<ConnectionButton
+					connectionStatus={connectionData?.status}
+					isConnecting={isConnecting}
+					onConnect={connect}
+				/>
 			</div>
 
 			{connectionData?.status === "error" && (
@@ -263,6 +276,10 @@ const getSmitheryClient = (token: string) => {
 
 function sanitizeConnectionId(str: string): string {
 	return str.replace(/[^a-zA-Z0-9_-]/g, "_");
+}
+
+function generateConnectionId(token: string, identifier: string): string {
+	return `${token.slice(-100)}__${sanitizeConnectionId(identifier)}`;
 }
 
 type ConnectionStatus =
@@ -319,13 +336,14 @@ async function connectToServer(
 	namespace: string,
 	token: string,
 ): Promise<ConnectionStatus> {
-	const connectionId = `${token}__${sanitizeConnectionId(server.qualifiedName)}`;
+	const connectionId = generateConnectionId(token, server.qualifiedName);
 	const serverUrl =
 		server.qualifiedName.startsWith("http://") ||
 		server.qualifiedName.startsWith("https://")
 			? server.qualifiedName
 			: `https://server.smithery.ai/${server.qualifiedName}/mcp`;
 
+	console.log("checking for existing connection", connectionId);
 	// Avoid re-creating an existing connection
 	const existingConnection = await client.beta.connect.connections
 		.get(connectionId, {
@@ -340,6 +358,7 @@ async function connectToServer(
 		return await checkConnectionStatus(client, connectionId, namespace);
 	}
 
+	console.log("creating connection", connectionId);
 	const connection = await client.beta.connect.connections.set(connectionId, {
 		namespace,
 		mcpUrl: serverUrl,
@@ -403,7 +422,7 @@ const ExternalURLDisplay = ({ url, token, namespace }: ExternalURLDisplayProps) 
 				throw new Error("Token and namespace are required");
 			}
 			const client = getSmitheryClient(token);
-			const connectionId = `${token}__${sanitizeConnectionId(url)}`;
+			const connectionId = generateConnectionId(token, url);
 
 			// Check for existing connection
 			const existingConnection = await client.beta.connect.connections
@@ -480,7 +499,7 @@ const ExternalURLDisplay = ({ url, token, namespace }: ExternalURLDisplayProps) 
 		const pollInterval = setInterval(async () => {
 			try {
 				const client = getSmitheryClient(token);
-				const connectionId = sanitizeConnectionId(url);
+				const connectionId = generateConnectionId(token, url);
 				const status = await checkConnectionStatus(
 					client,
 					connectionId,
@@ -515,80 +534,19 @@ const ExternalURLDisplay = ({ url, token, namespace }: ExternalURLDisplayProps) 
 			</div>
 
 			{connectionData?.status === "auth_required" && (
-				<div className="flex items-start gap-3 rounded-md bg-muted p-3">
-					<div className="flex-1 min-w-0">
-						<p className="text-sm font-medium text-foreground flex items-center gap-1">
-							<Lock className="size-3.5 flex-shrink-0 font-bold" /> <span className="font-medium">Authorization required</span>
-						</p>
-						<p className="text-xs text-muted-foreground mt-1">
-							This server requires you to authorize access. You should be automatically redirected to complete authentication.
-							{" "}{countdown !== null && countdown > 0
-								? `Redirecting in ${countdown}...`
-								: "If not, click the link below."}
-						</p>
-						{connectionData.authorizationUrl && (
-							<a
-								href={connectionData.authorizationUrl}
-								target="_blank"
-								rel="noopener noreferrer"
-								className="text-sm font-bold text-blue-500 hover:text-blue-600 mt-4 flex items-center gap-1"
-							>
-								<span className="font-bold">Authorize access</span> <ArrowRight className="size-4" />
-							</a>
-						)}
-					</div>
-				</div>
+				<AuthRequiredBanner
+					serverName="this server"
+					authorizationUrl={connectionData.authorizationUrl}
+					countdown={countdown}
+				/>
 			)}
 
 			<div className="mt-2 flex justify-end gap-4">
-				{(() => {
-					switch (connectionData?.status) {
-						case "connected":
-							return (
-								<Button
-									variant="secondary"
-									size="sm"
-									disabled
-								>
-									<CheckCircle className="size-4" />
-									Connected
-								</Button>
-							);
-						case "auth_required":
-							return (
-								<Button
-									variant="secondary"
-									size="sm"
-									disabled
-								>
-									<Loader2 className="size-4 animate-spin" />
-									Pending authorization...
-								</Button>
-							);
-						default:
-							return (
-								<Button
-									variant="default"
-									size="sm"
-									onClick={() => {
-										connect();
-									}}
-									disabled={isConnecting}
-								>
-									{isConnecting ? (
-										<>
-											<Loader2 className="size-4 animate-spin" />
-											Connecting...
-										</>
-									) : (
-										<>
-											Connect <ArrowRight className="size-4" />
-										</>
-									)}
-								</Button>
-							);
-					}
-				})()}
+				<ConnectionButton
+					connectionStatus={connectionData?.status}
+					isConnecting={isConnecting}
+					onConnect={connect}
+				/>
 			</div>
 
 			{connectionData?.status === "error" && (

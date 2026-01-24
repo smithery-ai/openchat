@@ -48,12 +48,5 @@ export async function createToken({ttlSeconds, userId}: {ttlSeconds: number, use
 }
 
 export async function getApiKey(): Promise<CreateTokenResponse> {
-	const apiKey = process.env.SMITHERY_API_KEY;
-	if (!apiKey) {
-		throw new Error("SMITHERY_API_KEY is not set");
-	}
-	return {
-		token: apiKey,
-		expiresAt: "never",
-	};
+	return await createToken({ttlSeconds: 60 * 60 * 24, userId: uuidv4().slice(0, 100)});
 }

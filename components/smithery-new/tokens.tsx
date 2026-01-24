@@ -134,19 +134,25 @@ export function Tokens({
 							</div>
 						</div>
 
-						<Button
-							onClick={() => {
-								createToken({ ttlSeconds: 60 * 60 * 24, userId: "123" }).then(
-									(tokenResponse) => {
-										setTokensCreated([...tokensCreated, tokenResponse]);
-										setSelectedToken(tokenResponse);
-									},
-								);
-							}}
-							className="w-full"
-						>
-							Create Token
-						</Button>
+						<div className="flex  gap-2">
+							<Button
+								onClick={() => {
+									createToken({ ttlSeconds: 60 * 60 * 24, userId: "123" }).then(
+										(tokenResponse) => {
+											setTokensCreated([...tokensCreated, tokenResponse]);
+											setSelectedToken(tokenResponse);
+										},
+									);
+								}}
+								variant="secondary"
+								className="flex-1"
+							>
+								Create New Token
+							</Button>
+							<Button onClick={() => setIsOpen(false)} className="flex-1">
+								Done
+							</Button>
+						</div>
 					</div>
 				</DialogContent>
 			</Dialog>
