@@ -1,18 +1,28 @@
 "use client";
 
 import Smithery, { AuthenticationError } from "@smithery/api";
-import { SmitheryTransport } from "@smithery/api/mcp";
+import type { Connection } from "@smithery/api/resources/beta/connect/connections.mjs";
 import type { ServerListResponse } from "@smithery/api/resources/servers/servers.mjs";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link as LinkIcon } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useDebounce } from "../../hooks/use-debounce";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Button } from "../ui/button";
-import { Card, CardContent } from "../ui/card";
-import { Input } from "../ui/input";
-import { Separator } from "../ui/separator";
-import type { Connection } from "@smithery/api/resources/beta/connect/connections.mjs";
+import {
+	Combobox,
+	ComboboxContent,
+	ComboboxEmpty,
+	ComboboxInput,
+	ComboboxItem,
+	ComboboxList,
+} from "../ui/combobox";
+import {
+	Item,
+	ItemContent,
+	ItemDescription,
+	ItemMedia,
+	ItemTitle,
+} from "../ui/item";
 
 async function getDefaultNamespace(client: Smithery) {
 	const namespaces = await client.namespaces.list();
@@ -25,7 +35,7 @@ async function getDefaultNamespace(client: Smithery) {
 const getSmitheryClient = (token: string) => {
 	return new Smithery({
 		apiKey: token,
-	})
+	});
 };
 
 function sanitizeConnectionId(str: string): string {
@@ -50,9 +60,12 @@ async function checkConnectionStatus(
 		});
 		console.log("jsonRpcResponse", jsonRpcResponse);
 
-		const connection = await client.beta.connect.connections.get(connectionId, {
-			namespace: namespace,
-		});
+		const connection = await client.beta.connect.connections.get(
+			connectionId,
+			{
+				namespace: namespace,
+			},
+		);
 
 		return {
 			status: "connected",
@@ -80,226 +93,58 @@ async function checkConnectionStatus(
 	}
 }
 
-async function pollConnectionStatus(
+async function connectToServer(
 	client: Smithery,
-	connectionId: string,
+	server: ServerListResponse,
 	namespace: string,
-	onStatusChange: (status: ConnectionStatus) => void,
-	pollInterval = 3000,
-): Promise<() => void> {
-	const intervalId = setInterval(async () => {
-		const status = await checkConnectionStatus(client, connectionId, namespace);
-		if (status.status !== "auth_required") {
-			clearInterval(intervalId);
-			onStatusChange(status);
-		}
-	}, pollInterval);
+): Promise<ConnectionStatus> {
+	const connectionId = sanitizeConnectionId(server.qualifiedName);
+	const serverUrl =
+		server.qualifiedName.startsWith("http://") ||
+		server.qualifiedName.startsWith("https://")
+			? server.qualifiedName
+			: `https://server.smithery.ai/${server.qualifiedName}/mcp`;
 
-	return () => clearInterval(intervalId);
+	// Avoid re-creating an existing connection
+	const existingConnection = await client.beta.connect.connections
+		.get(connectionId, {
+			namespace: namespace,
+		})
+		.catch(() => {
+			return null;
+		});
+	console.log("existingConnection", existingConnection);
+
+	if (existingConnection) {
+		return await checkConnectionStatus(client, connectionId, namespace);
+	}
+
+	const connection = await client.beta.connect.connections.set(connectionId, {
+		namespace: namespace,
+		mcpUrl: serverUrl,
+		name: server.displayName || server.qualifiedName,
+	});
+	console.log("connection", connection);
+
+	if (connection.status?.state === "auth_required") {
+		return {
+			status: "auth_required",
+			authorizationUrl: connection.status?.authorizationUrl,
+		};
+	}
+
+	return {
+		status: "connected",
+		connection,
+	};
 }
 
-export const ServerCard = ({
-	server,
-	token,
-	namespace,
-}: {
-	server: ServerListResponse;
-	token: string;
-	namespace: string;
-}) => {
+export const ServerSearch = ({ token }: { token?: string }) => {
 	const queryClient = useQueryClient();
-	const [cleanupPoller, setCleanupPoller] = useState<(() => void) | null>(null);
-	const [localConnectionData, setLocalConnectionData] =
-		useState<ConnectionStatus | null>(null);
-
-	const {
-		mutate: connect,
-		isPending: isConnecting,
-		error: connectionError,
-		data: connectionData,
-	} = useMutation({
-		mutationFn: async () => {
-			const client = getSmitheryClient(token);
-
-			const connectionId = sanitizeConnectionId(server.qualifiedName);
-			const serverUrl =
-				server.qualifiedName.startsWith("http://") ||
-				server.qualifiedName.startsWith("https://")
-					? server.qualifiedName
-					: `https://server.smithery.ai/${server.qualifiedName}/mcp`;
-
-			// Avoid re-creating an existing connection
-			const existingConnection = await client.beta.connect.connections
-				.get(connectionId, {
-					namespace: namespace,
-				})
-				.catch(() => {
-					return null;
-				});
-			console.log("existingConnection", existingConnection);
-
-			if (existingConnection) {
-				const status = await checkConnectionStatus(
-					client,
-					connectionId,
-					namespace,
-				);
-
-				if (status.status === "auth_required") {
-					// Start polling for auth status change
-					const cleanup = await pollConnectionStatus(
-						client,
-						connectionId,
-						namespace,
-						(newStatus) => {
-							setLocalConnectionData(newStatus);
-							if (newStatus.status === "connected") {
-								queryClient.invalidateQueries({ queryKey: ["connections"] });
-							}
-						},
-					);
-					setCleanupPoller(() => cleanup);
-				}
-
-				return status;
-			}
-
-			const connection = await client.beta.connect.connections.set(
-				connectionId,
-				{
-					namespace: namespace,
-					mcpUrl: serverUrl,
-					name: server.displayName || server.qualifiedName,
-				},
-			);
-			console.log("connection", connection);
-
-			if (connection.status?.state === "auth_required") {
-				const authStatus = {
-					status: "auth_required" as const,
-					authorizationUrl: connection.status?.authorizationUrl,
-				};
-
-				// Start polling for auth status change
-				const cleanup = await pollConnectionStatus(
-					client,
-					connectionId,
-					namespace,
-					(newStatus) => {
-						setLocalConnectionData(newStatus);
-						if (newStatus.status === "connected") {
-							queryClient.invalidateQueries({ queryKey: ["connections"] });
-						}
-					},
-				);
-				setCleanupPoller(() => cleanup);
-
-				return authStatus;
-			}
-
-			return {
-				status: "connected" as const,
-				connection,
-			};
-		},
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ["connections"] });
-		},
-		onError: (error) => {
-			console.error("error connecting to server", error);
-		},
-	});
-
-	// Cleanup poller on unmount
-	useEffect(() => {
-		return () => {
-			if (cleanupPoller) {
-				cleanupPoller();
-			}
-		};
-	}, [cleanupPoller]);
-
-	// Use local connection data if available (updated by polling), otherwise use mutation data
-	const displayConnectionData = localConnectionData || connectionData;
-
-	return (
-		<Card className="border-none shadow-none">
-			<CardContent className="flex items-center gap-4">
-				<Avatar className="h-10 w-10 rounded-md">
-					<AvatarImage src={server.iconUrl || ""} />
-					<AvatarFallback className="rounded-md bg-muted">
-						{server.displayName?.charAt(0) ||
-							server.qualifiedName?.charAt(0) ||
-							"S"}
-					</AvatarFallback>
-				</Avatar>
-				<div className="flex-1 min-w-0">
-					<h3 className="font-medium truncate">
-						{server.displayName || server.qualifiedName}
-					</h3>
-					<p className="text-muted-foreground text-xs truncate">
-						{server.qualifiedName}
-					</p>
-					{server.description && (
-						<p className="text-muted-foreground text-xs truncate">
-							{server.description}
-						</p>
-					)}
-					{connectionError && (
-						<p className="text-destructive text-xs">
-							Error: {connectionError.message}
-						</p>
-					)}
-					{displayConnectionData?.status === "auth_required" &&
-						displayConnectionData?.authorizationUrl && (
-							<div className="mt-2">
-								<Button
-									variant="outline"
-									size="sm"
-									onClick={() => {
-										window.open(
-											displayConnectionData.authorizationUrl,
-											"_blank",
-										);
-									}}
-								>
-									Authorize
-								</Button>
-							</div>
-						)}
-					{displayConnectionData?.status === "connected" && (
-						<p className="text-green-600 text-xs">Connected</p>
-					)}
-				</div>
-				<Button
-					variant="ghost"
-					size="icon"
-					onClick={() => connect()}
-					disabled={isConnecting}
-				>
-					<LinkIcon className="h-4 w-4" />
-				</Button>
-			</CardContent>
-		</Card>
-	);
-};
-
-export const ServerSearch = ({
-	token,
-	initialQuery,
-}: {
-	token?: string;
-	initialQuery?: string;
-}) => {
-	const [query, setQuery] = useState(initialQuery || "");
+	const [query, setQuery] = useState("");
+	const [selectedServer, setSelectedServer] =
+		useState<ServerListResponse | null>(null);
 	const debouncedQuery = useDebounce(query, 300);
-
-	// Update query when initialQuery changes
-	useEffect(() => {
-		if (initialQuery !== undefined) {
-			setQuery(initialQuery);
-		}
-	}, [initialQuery]);
 
 	const { data: namespaceData } = useQuery({
 		queryKey: ["namespace", token],
@@ -313,7 +158,7 @@ export const ServerSearch = ({
 		enabled: !!token,
 	});
 
-	const { data, isLoading, error } = useQuery({
+	const { data, isLoading } = useQuery({
 		queryKey: ["servers", debouncedQuery],
 		queryFn: async () => {
 			if (!token) {
@@ -328,34 +173,129 @@ export const ServerSearch = ({
 		enabled: debouncedQuery.length > 0 && !!token,
 	});
 
+	const {
+		mutate: connect,
+		isPending: isConnecting,
+		data: connectionData,
+	} = useMutation({
+		mutationFn: async (server: ServerListResponse) => {
+			if (!token || !namespaceData) {
+				throw new Error("Token and namespace are required");
+			}
+			const client = getSmitheryClient(token);
+			return await connectToServer(client, server, namespaceData);
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["connections"] });
+		},
+		onError: (error) => {
+			console.error("error connecting to server", error);
+		},
+	});
+
+	const servers = data?.servers ?? [];
+
 	return (
-		<div className={initialQuery ? "" : "max-w-md mx-auto"}>
-			{!initialQuery && (
-				<Input
-					type="text"
-					value={query}
-					onChange={(e) => setQuery(e.target.value)}
-					placeholder="Search for a server"
-				/>
-			)}
-			{isLoading && <p className="text-muted-foreground">Loading...</p>}
-			{error && <p className="text-destructive">Error: {error.message}</p>}
-			{data && namespaceData && token && (
-				<div
-					className={
-						initialQuery ? "space-y-2" : "space-y-2 overflow-auto max-h-[500px]"
+		<div className="max-w-md mx-auto">
+			<Combobox<ServerListResponse>
+				value={selectedServer}
+				onValueChange={(server) => {
+					setSelectedServer(server);
+					if (server) {
+						connect(server);
 					}
-				>
-					{data.servers.map((server: ServerListResponse) => (
-						<div key={server.qualifiedName}>
-							<ServerCard
-								server={server}
-								token={token}
-								namespace={namespaceData}
-							/>
-							<Separator />
+				}}
+				onInputValueChange={(value) => setQuery(value)}
+				itemToStringLabel={(server) =>
+					server.displayName || server.qualifiedName
+				}
+			>
+				<ComboboxInput
+					placeholder="Search for a server..."
+					disabled={!token}
+				/>
+				<ComboboxContent>
+					{servers.length === 0 && <ComboboxEmpty>
+						{isLoading ? "Loading..." : "No servers found."}
+					</ComboboxEmpty>}
+					<ComboboxList>
+						{servers.map((server) => (
+							<ComboboxItem key={server.qualifiedName} value={server}>
+								<Item size="sm" className="p-0 min-w-0">
+									<ItemMedia>
+										<Avatar className="h-8 w-8 rounded-md">
+											<AvatarImage src={server.iconUrl || ""} />
+											<AvatarFallback className="rounded-md bg-muted text-xs">
+												{server.displayName?.charAt(0) ||
+													server.qualifiedName?.charAt(0) ||
+													"S"}
+											</AvatarFallback>
+										</Avatar>
+									</ItemMedia>
+									<ItemContent className="min-w-0">
+										<ItemTitle className="w-full truncate">
+											{server.displayName || server.qualifiedName}
+										</ItemTitle>
+										<ItemDescription className="line-clamp-1">
+											{server.description || server.qualifiedName}
+										</ItemDescription>
+									</ItemContent>
+								</Item>
+							</ComboboxItem>
+						))}
+					</ComboboxList>
+				</ComboboxContent>
+			</Combobox>
+
+			{selectedServer && (
+				<div className="mt-4 p-4 border rounded-md">
+					<div className="flex items-center gap-3">
+						<Avatar className="h-10 w-10 rounded-md">
+							<AvatarImage src={selectedServer.iconUrl || ""} />
+							<AvatarFallback className="rounded-md bg-muted">
+								{selectedServer.displayName?.charAt(0) ||
+									selectedServer.qualifiedName?.charAt(0) ||
+									"S"}
+							</AvatarFallback>
+						</Avatar>
+						<div className="flex-1 min-w-0">
+							<h3 className="font-medium truncate">
+								{selectedServer.displayName || selectedServer.qualifiedName}
+							</h3>
+							<p className="text-muted-foreground text-xs truncate">
+								{selectedServer.qualifiedName}
+							</p>
 						</div>
-					))}
+					</div>
+
+					{isConnecting && (
+						<p className="text-muted-foreground text-sm mt-2">Connecting...</p>
+					)}
+
+					{connectionData?.status === "connected" && (
+						<p className="text-green-600 text-sm mt-2">Connected</p>
+					)}
+
+					{connectionData?.status === "auth_required" &&
+						connectionData?.authorizationUrl && (
+							<div className="mt-2">
+								<Button
+									variant="outline"
+									size="sm"
+									onClick={() => {
+										window.open(connectionData.authorizationUrl, "_blank");
+									}}
+								>
+									Authorize
+								</Button>
+							</div>
+						)}
+
+					{connectionData?.status === "error" && (
+						<p className="text-destructive text-sm mt-2">
+							Error connecting to server
+						</p>
+					)}
 				</div>
 			)}
 		</div>
