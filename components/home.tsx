@@ -29,7 +29,7 @@ export function HomePage({
 								<TabsTrigger value="tools">Tools</TabsTrigger>
 							</TabsList>
 							<TabsContent value="servers">
-								<ServerSearch token={apiKey.token} />
+								<ServerSearch token={apiKey.token} namespace={namespace} />
 							</TabsContent>
 							<TabsContent value="connections">
 								<Connections token={apiKey.token} namespace={namespace} />

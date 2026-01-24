@@ -35,16 +35,17 @@ const ServerDisplay = ({ server, token, namespace }: ServerDisplayProps) => {
 	const queryClient = useQueryClient();
 	const [countdown, setCountdown] = useState<number | null>(null);
 
-	const { data: defaultNamespace } = useQuery({
+	const { data: activeNamespace } = useQuery({
 		queryKey: ["defaultNamespace", token],
 		queryFn: async () => {
+			if (namespace) {
+				return namespace;
+			}
 			const client = getSmitheryClient(token);
 			return await getDefaultNamespace(client);
 		},
 		enabled: !!token,
 	});
-
-	const activeNamespace = namespace || defaultNamespace;
 
 	const {
 		mutate: connect,
@@ -57,13 +58,13 @@ const ServerDisplay = ({ server, token, namespace }: ServerDisplayProps) => {
 				throw new Error("Token and namespace are required");
 			}
 			const client = getSmitheryClient(token);
-			return await connectToServer(client, server, activeNamespace);
+			return await connectToServer(client, server, activeNamespace, token);
 		},
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ["connections"] });
 		},
 		onError: (error) => {
-			console.error("error connecting to server", error);
+			console.error("error connecting to server", `connectionId: ${server.qualifiedName}, namespace: ${activeNamespace}`, error);
 		},
 	});
 
@@ -93,7 +94,7 @@ const ServerDisplay = ({ server, token, namespace }: ServerDisplayProps) => {
 		const pollInterval = setInterval(async () => {
 			try {
 				const client = getSmitheryClient(token);
-				const connectionId = sanitizeConnectionId(server.qualifiedName);
+				const connectionId = `${token}__${sanitizeConnectionId(server.qualifiedName)}`;
 				const status = await checkConnectionStatus(
 					client,
 					connectionId,
@@ -304,7 +305,7 @@ async function checkConnectionStatus(
 				authorizationUrl,
 			};
 		}
-		console.error("error connecting to server", error);
+		console.error("error connecting to server", `connectionId: ${connectionId}, namespace: ${namespace}`, error);
 		return {
 			status: "error",
 			error,
@@ -316,8 +317,9 @@ async function connectToServer(
 	client: Smithery,
 	server: ServerListResponse,
 	namespace: string,
+	token: string,
 ): Promise<ConnectionStatus> {
-	const connectionId = sanitizeConnectionId(server.qualifiedName);
+	const connectionId = `${token}__${sanitizeConnectionId(server.qualifiedName)}`;
 	const serverUrl =
 		server.qualifiedName.startsWith("http://") ||
 		server.qualifiedName.startsWith("https://")
@@ -339,7 +341,7 @@ async function connectToServer(
 	}
 
 	const connection = await client.beta.connect.connections.set(connectionId, {
-		namespace: namespace,
+		namespace,
 		mcpUrl: serverUrl,
 		name: server.displayName || server.qualifiedName,
 	});
@@ -401,7 +403,7 @@ const ExternalURLDisplay = ({ url, token, namespace }: ExternalURLDisplayProps) 
 				throw new Error("Token and namespace are required");
 			}
 			const client = getSmitheryClient(token);
-			const connectionId = sanitizeConnectionId(url);
+			const connectionId = `${token}__${sanitizeConnectionId(url)}`;
 
 			// Check for existing connection
 			const existingConnection = await client.beta.connect.connections
