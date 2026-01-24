@@ -1,17 +1,264 @@
 "use client";
 
 import Smithery, { AuthenticationError } from "@smithery/api";
-import { SmitheryTransport } from "@smithery/api/mcp";
+import type { Connection } from "@smithery/api/resources/beta/connect/connections.mjs";
 import type { ServerListResponse } from "@smithery/api/resources/servers/servers.mjs";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link as LinkIcon } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useDebounce } from "../../hooks/use-debounce";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Button } from "../ui/button";
-import { Card, CardContent } from "../ui/card";
-import { Input } from "../ui/input";
-import { Separator } from "../ui/separator";
+import {
+	Combobox,
+	ComboboxContent,
+	ComboboxEmpty,
+	ComboboxInput,
+	ComboboxItem,
+	ComboboxList,
+} from "../ui/combobox";
+import {
+	Item,
+	ItemContent,
+	ItemDescription,
+	ItemMedia,
+	ItemTitle,
+} from "../ui/item";
+import { ArrowRight, CheckCircle, Link, Loader2, Lock } from "lucide-react";
+
+interface AuthRequiredBannerProps {
+	serverName: string;
+	authorizationUrl?: string;
+	countdown: number | null;
+}
+
+const AuthRequiredBanner = ({ serverName, authorizationUrl, countdown }: AuthRequiredBannerProps) => (
+	<div className="flex items-start gap-3 rounded-md bg-muted p-3">
+		<div className="flex-1 min-w-0">
+			<p className="text-sm font-medium text-foreground flex items-center gap-1">
+				<Lock className="size-3.5 flex-shrink-0 font-bold" /> <span className="font-medium">Authorization required</span>
+			</p>
+			<p className="text-xs text-muted-foreground mt-1">
+				This server requires you to authorize access. You should be automatically redirected to complete authentication.
+				{" "}{countdown !== null && countdown > 0
+					? `Redirecting in ${countdown}...`
+					: "If not, click the link below."}
+			</p>
+			{authorizationUrl && (
+				<a
+					href={authorizationUrl}
+					target="_blank"
+					rel="noopener noreferrer"
+					className="text-sm font-bold text-blue-500 hover:text-blue-600 mt-4 flex items-center gap-1"
+				>
+					<span className="font-bold">Sign in to {serverName}</span> <ArrowRight className="size-4" />
+				</a>
+			)}
+		</div>
+	</div>
+);
+
+interface ConnectionButtonProps {
+	connectionStatus?: "connected" | "auth_required" | "error";
+	isConnecting: boolean;
+	onConnect: () => void;
+}
+
+const ConnectionButton = ({ connectionStatus, isConnecting, onConnect }: ConnectionButtonProps) => {
+	switch (connectionStatus) {
+		case "connected":
+			return (
+				<Button variant="secondary" size="sm" className="flex-1" disabled>
+					<CheckCircle className="size-4" />
+					Connected
+				</Button>
+			);
+		case "auth_required":
+			return (
+				<Button variant="secondary" size="sm" className="flex-1" disabled>
+					<Loader2 className="size-4 animate-spin" />
+					Pending authorization...
+				</Button>
+			);
+		default:
+			return (
+				<Button
+					variant="default"
+					size="sm"
+					className="flex-1"
+					onClick={onConnect}
+					disabled={isConnecting}
+				>
+					{isConnecting ? (
+						<>
+							<Loader2 className="size-4 animate-spin" />
+							Connecting...
+						</>
+					) : (
+						<>
+							Connect <ArrowRight className="size-4" />
+						</>
+					)}
+				</Button>
+			);
+	}
+};
+
+interface ServerDisplayProps {
+	server: ServerListResponse;
+	token: string;
+	namespace?: string;
+}
+
+const ServerDisplay = ({ server, token, namespace }: ServerDisplayProps) => {
+	const queryClient = useQueryClient();
+	const [countdown, setCountdown] = useState<number | null>(null);
+
+	const { data: activeNamespace } = useQuery({
+		queryKey: ["defaultNamespace", token],
+		queryFn: async () => {
+			if (namespace) {
+				return namespace;
+			}
+			const client = getSmitheryClient(token);
+			return await getDefaultNamespace(client);
+		},
+		enabled: !!token,
+	});
+
+	const {
+		mutate: connect,
+		isPending: isConnecting,
+		data: connectionData,
+		mutateAsync: connectAsync,
+	} = useMutation({
+		mutationFn: async () => {
+			if (!token || !activeNamespace) {
+				throw new Error("Token and namespace are required");
+			}
+			const client = getSmitheryClient(token);
+			return await connectToServer(client, server, activeNamespace, token);
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["connections"] });
+		},
+		onError: (error) => {
+			console.error("error connecting to server", `connectionId: ${server.qualifiedName}, namespace: ${activeNamespace}`, error);
+		},
+	});
+
+	// Countdown timer for auth_required state
+	useEffect(() => {
+		if (connectionData?.status === "auth_required" && countdown === null) {
+			setCountdown(3);
+		}
+	}, [connectionData?.status, countdown]);
+
+	useEffect(() => {
+		if (countdown === null || countdown <= 0) return;
+
+		const timer = setTimeout(() => {
+			setCountdown(countdown - 1);
+		}, 1000);
+
+		return () => clearTimeout(timer);
+	}, [countdown]);
+
+	// Poll connection status when auth_required
+	useEffect(() => {
+		if (connectionData?.status !== "auth_required" || !token || !activeNamespace) {
+			return;
+		}
+
+		const pollInterval = setInterval(async () => {
+			try {
+				const client = getSmitheryClient(token);
+				const connectionId = generateConnectionId(token, server.qualifiedName);
+				const status = await checkConnectionStatus(
+					client,
+					connectionId,
+					activeNamespace,
+				);
+
+				if (status.status === "connected") {
+					// Update mutation data to trigger re-render
+					await connectAsync();
+					setCountdown(null);
+				}
+			} catch (error) {
+				console.error("error checking connection status", error);
+			}
+		}, 2000); // Check every 2 seconds
+
+		return () => clearInterval(pollInterval);
+	}, [connectionData?.status, token, activeNamespace, server.qualifiedName, connectAsync]);
+
+	return (
+		<div className="mt-4 p-4 border rounded-md flex flex-col gap-4">
+			<div className="flex items-center gap-3">
+				<Avatar className="h-10 w-10 rounded-md">
+					<AvatarImage src={server.iconUrl || ""} />
+					<AvatarFallback className="rounded-md bg-muted">
+						{server.displayName?.charAt(0) ||
+							server.qualifiedName?.charAt(0) ||
+							"S"}
+					</AvatarFallback>
+				</Avatar>
+				<div className="flex-1 min-w-0">
+					<h3 className="font-medium truncate flex items-center">
+						{server.displayName || server.qualifiedName}
+						{server.verified && (
+							<span
+								className="text-accent-foreground text-xs ml-2"
+								title="Verified"
+							>
+								<CheckCircle className="size-4" />
+							</span>
+						)}
+					</h3>
+					<p className="text-muted-foreground text-xs truncate">
+						{server.qualifiedName}
+					</p>
+				</div>
+			</div>
+
+			<div className="line-clamp-2 text-muted-foreground text-sm">
+				{server.description && <p>{server.description}</p>}
+			</div>
+
+			{connectionData?.status === "auth_required" && (
+				<AuthRequiredBanner
+					serverName={server.displayName || server.qualifiedName}
+					authorizationUrl={connectionData.authorizationUrl}
+					countdown={countdown}
+				/>
+			)}
+
+			<div className="mt-2 flex justify-between gap-4">
+				<Button
+					variant="secondary"
+					size="sm"
+					className="flex-1"
+					onClick={() => {
+						window.open(server.homepage, "_blank");
+					}}
+				>
+					View Details
+				</Button>
+				<ConnectionButton
+					connectionStatus={connectionData?.status}
+					isConnecting={isConnecting}
+					onConnect={connect}
+				/>
+			</div>
+
+			{connectionData?.status === "error" && (
+				<p className="text-destructive text-sm mt-2">
+					Error connecting to server
+				</p>
+			)}
+		</div>
+	);
+};
 
 async function getDefaultNamespace(client: Smithery) {
 	const namespaces = await client.namespaces.list();
@@ -21,12 +268,22 @@ async function getDefaultNamespace(client: Smithery) {
 	return namespaces.namespaces[0].name;
 }
 
+const getSmitheryClient = (token: string) => {
+	return new Smithery({
+		apiKey: token,
+	});
+};
+
 function sanitizeConnectionId(str: string): string {
 	return str.replace(/[^a-zA-Z0-9_-]/g, "_");
 }
 
+function generateConnectionId(token: string, identifier: string): string {
+	return `${token.slice(-100)}__${sanitizeConnectionId(identifier)}`;
+}
+
 type ConnectionStatus =
-	| { status: "connected"; connection: any }
+	| { status: "connected"; connection: Connection }
 	| { status: "auth_required"; authorizationUrl?: string }
 	| { status: "error"; error: unknown };
 
@@ -65,7 +322,7 @@ async function checkConnectionStatus(
 				authorizationUrl,
 			};
 		}
-		console.error("error connecting to server", error);
+		console.error("error connecting to server", `connectionId: ${connectionId}, namespace: ${namespace}`, error);
 		return {
 			status: "error",
 			error,
@@ -73,123 +330,123 @@ async function checkConnectionStatus(
 	}
 }
 
-async function pollConnectionStatus(
+async function connectToServer(
 	client: Smithery,
-	connectionId: string,
+	server: ServerListResponse,
 	namespace: string,
-	onStatusChange: (status: ConnectionStatus) => void,
-	pollInterval = 3000,
-): Promise<() => void> {
-	const intervalId = setInterval(async () => {
-		const status = await checkConnectionStatus(client, connectionId, namespace);
-		if (status.status !== "auth_required") {
-			clearInterval(intervalId);
-			onStatusChange(status);
-		}
-	}, pollInterval);
+	token: string,
+): Promise<ConnectionStatus> {
+	const connectionId = generateConnectionId(token, server.qualifiedName);
+	const serverUrl =
+		server.qualifiedName.startsWith("http://") ||
+		server.qualifiedName.startsWith("https://")
+			? server.qualifiedName
+			: `https://server.smithery.ai/${server.qualifiedName}/mcp`;
 
-	return () => clearInterval(intervalId);
+	console.log("checking for existing connection", connectionId);
+	// Avoid re-creating an existing connection
+	const existingConnection = await client.beta.connect.connections
+		.get(connectionId, {
+			namespace: namespace,
+		})
+		.catch(() => {
+			return null;
+		});
+	console.log("existingConnection", existingConnection);
+
+	if (existingConnection) {
+		return await checkConnectionStatus(client, connectionId, namespace);
+	}
+
+	console.log("creating connection", connectionId);
+	const connection = await client.beta.connect.connections.set(connectionId, {
+		namespace,
+		mcpUrl: serverUrl,
+		name: server.displayName || server.qualifiedName,
+	});
+	console.log("connection", connection);
+
+	if (connection.status?.state === "auth_required") {
+		return {
+			status: "auth_required",
+			authorizationUrl: connection.status?.authorizationUrl,
+		};
+	}
+
+	return {
+		status: "connected",
+		connection,
+	};
 }
 
-export const ServerCard = ({
-	server,
-	token,
-	namespace,
-}: {
-	server: ServerListResponse;
+// Helper function to detect if input is a URL
+const isValidUrl = (str: string): boolean => {
+	if (!str.trim()) return false;
+	try {
+		const url = new URL(str.trim());
+		return url.protocol === 'http:' || url.protocol === 'https:';
+	} catch {
+		return false;
+	}
+};
+
+interface ExternalURLDisplayProps {
+	url: string;
 	token: string;
-	namespace: string;
-}) => {
+	namespace?: string;
+}
+
+const ExternalURLDisplay = ({ url, token, namespace }: ExternalURLDisplayProps) => {
 	const queryClient = useQueryClient();
-	const [cleanupPoller, setCleanupPoller] = useState<(() => void) | null>(null);
-	const [localConnectionData, setLocalConnectionData] =
-		useState<ConnectionStatus | null>(null);
+	const [countdown, setCountdown] = useState<number | null>(null);
+
+	const { data: defaultNamespace } = useQuery({
+		queryKey: ["defaultNamespace", token],
+		queryFn: async () => {
+			const client = getSmitheryClient(token);
+			return await getDefaultNamespace(client);
+		},
+		enabled: !!token,
+	});
+
+	const activeNamespace = namespace || defaultNamespace;
 
 	const {
 		mutate: connect,
 		isPending: isConnecting,
-		error: connectionError,
 		data: connectionData,
+		mutateAsync: connectAsync,
 	} = useMutation({
 		mutationFn: async () => {
-			const client = new Smithery({
-				apiKey: token,
-			});
+			if (!token || !activeNamespace) {
+				throw new Error("Token and namespace are required");
+			}
+			const client = getSmitheryClient(token);
+			const connectionId = generateConnectionId(token, url);
 
-			const connectionId = sanitizeConnectionId(server.qualifiedName);
-			const serverUrl =
-				server.qualifiedName.startsWith("http://") ||
-				server.qualifiedName.startsWith("https://")
-					? server.qualifiedName
-					: `https://server.smithery.ai/${server.qualifiedName}/mcp`;
-
-			// Avoid re-creating an existing connection
+			// Check for existing connection
 			const existingConnection = await client.beta.connect.connections
 				.get(connectionId, {
-					namespace: namespace,
+					namespace: activeNamespace,
 				})
-				.catch(() => {
-					return null;
-				});
-			console.log("existingConnection", existingConnection);
+				.catch(() => null);
 
 			if (existingConnection) {
-				const status = await checkConnectionStatus(
-					client,
-					connectionId,
-					namespace,
-				);
-
-				if (status.status === "auth_required") {
-					// Start polling for auth status change
-					const cleanup = await pollConnectionStatus(
-						client,
-						connectionId,
-						namespace,
-						(newStatus) => {
-							setLocalConnectionData(newStatus);
-							if (newStatus.status === "connected") {
-								queryClient.invalidateQueries({ queryKey: ["connections"] });
-							}
-						},
-					);
-					setCleanupPoller(() => cleanup);
-				}
-
-				return status;
+				return await checkConnectionStatus(client, connectionId, activeNamespace);
 			}
 
-			const connection = await client.beta.connect.connections.set(
-				connectionId,
-				{
-					namespace: namespace,
-					mcpUrl: serverUrl,
-					name: server.displayName || server.qualifiedName,
-				},
-			);
-			console.log("connection", connection);
+			// Create new connection
+			const connection = await client.beta.connect.connections.set(connectionId, {
+				namespace: activeNamespace,
+				mcpUrl: url,
+				name: url,
+			});
 
 			if (connection.status?.state === "auth_required") {
-				const authStatus = {
+				return {
 					status: "auth_required" as const,
 					authorizationUrl: connection.status?.authorizationUrl,
 				};
-
-				// Start polling for auth status change
-				const cleanup = await pollConnectionStatus(
-					client,
-					connectionId,
-					namespace,
-					(newStatus) => {
-						setLocalConnectionData(newStatus);
-						if (newStatus.status === "connected") {
-							queryClient.invalidateQueries({ queryKey: ["connections"] });
-						}
-					},
-				);
-				setCleanupPoller(() => cleanup);
-
-				return authStatus;
 			}
 
 			return {
@@ -201,161 +458,243 @@ export const ServerCard = ({
 			queryClient.invalidateQueries({ queryKey: ["connections"] });
 		},
 		onError: (error) => {
-			console.error("error connecting to server", error);
+			console.error("error connecting to external URL", error);
 		},
 	});
 
-	// Cleanup poller on unmount
+	// Countdown timer for auth_required state
 	useEffect(() => {
-		return () => {
-			if (cleanupPoller) {
-				cleanupPoller();
-			}
-		};
-	}, [cleanupPoller]);
+		if (connectionData?.status === "auth_required" && countdown === null) {
+			setCountdown(3);
+		}
+	}, [connectionData?.status, countdown]);
 
-	// Use local connection data if available (updated by polling), otherwise use mutation data
-	const displayConnectionData = localConnectionData || connectionData;
+	useEffect(() => {
+		if (countdown === null || countdown <= 0) return;
+
+		const timer = setTimeout(() => {
+			setCountdown(countdown - 1);
+		}, 1000);
+
+		return () => clearTimeout(timer);
+	}, [countdown]);
+
+	// Auto-redirect when auth is required
+	useEffect(() => {
+		if (
+			connectionData?.status === "auth_required" &&
+			connectionData.authorizationUrl &&
+			countdown === 0
+		) {
+			window.open(connectionData.authorizationUrl, "_blank");
+		}
+	}, [connectionData, countdown]);
+
+	// Poll connection status when auth_required
+	useEffect(() => {
+		if (connectionData?.status !== "auth_required" || !token || !activeNamespace) {
+			return;
+		}
+
+		const pollInterval = setInterval(async () => {
+			try {
+				const client = getSmitheryClient(token);
+				const connectionId = generateConnectionId(token, url);
+				const status = await checkConnectionStatus(
+					client,
+					connectionId,
+					activeNamespace,
+				);
+
+				if (status.status === "connected") {
+					// Update mutation data to trigger re-render
+					await connectAsync();
+					setCountdown(null);
+				}
+			} catch (error) {
+				console.error("error checking connection status", error);
+			}
+		}, 2000); // Check every 2 seconds
+
+		return () => clearInterval(pollInterval);
+	}, [connectionData?.status, token, activeNamespace, url, connectAsync]);
 
 	return (
-		<Card className="border-none shadow-none">
-			<CardContent className="flex items-center gap-4">
+		<div className="mt-4 p-4 border rounded-md flex flex-col gap-4">
+			<div className="flex items-center gap-3">
 				<Avatar className="h-10 w-10 rounded-md">
-					<AvatarImage src={server.iconUrl || ""} />
 					<AvatarFallback className="rounded-md bg-muted">
-						{server.displayName?.charAt(0) ||
-							server.qualifiedName?.charAt(0) ||
-							"S"}
+						<Link className="size-5" />
 					</AvatarFallback>
 				</Avatar>
 				<div className="flex-1 min-w-0">
-					<h3 className="font-medium truncate">
-						{server.displayName || server.qualifiedName}
-					</h3>
-					<p className="text-muted-foreground text-xs truncate">
-						{server.qualifiedName}
-					</p>
-					{server.description && (
-						<p className="text-muted-foreground text-xs truncate">
-							{server.description}
-						</p>
-					)}
-					{connectionError && (
-						<p className="text-destructive text-xs">
-							Error: {connectionError.message}
-						</p>
-					)}
-					{displayConnectionData?.status === "auth_required" &&
-						displayConnectionData?.authorizationUrl && (
-							<div className="mt-2">
-								<Button
-									variant="outline"
-									size="sm"
-									onClick={() => {
-										window.open(
-											displayConnectionData.authorizationUrl,
-											"_blank",
-										);
-									}}
-								>
-									Authorize
-								</Button>
-							</div>
-						)}
-					{displayConnectionData?.status === "connected" && (
-						<p className="text-green-600 text-xs">Connected</p>
-					)}
+					<h3 className="font-medium truncate">External MCP Server</h3>
+					<p className="text-muted-foreground text-xs truncate">{url}</p>
 				</div>
-				<Button
-					variant="ghost"
-					size="icon"
-					onClick={() => connect()}
-					disabled={isConnecting}
-				>
-					<LinkIcon className="h-4 w-4" />
-				</Button>
-			</CardContent>
-		</Card>
+			</div>
+
+			{connectionData?.status === "auth_required" && (
+				<AuthRequiredBanner
+					serverName="this server"
+					authorizationUrl={connectionData.authorizationUrl}
+					countdown={countdown}
+				/>
+			)}
+
+			<div className="mt-2 flex justify-end gap-4">
+				<ConnectionButton
+					connectionStatus={connectionData?.status}
+					isConnecting={isConnecting}
+					onConnect={connect}
+				/>
+			</div>
+
+			{connectionData?.status === "error" && (
+				<p className="text-destructive text-sm mt-2">
+					Error connecting to server
+				</p>
+			)}
+		</div>
 	);
 };
 
-export const ServerSearch = ({
-	token,
-	initialQuery,
-}: {
-	token?: string;
-	initialQuery?: string;
-}) => {
-	const [query, setQuery] = useState(initialQuery || "");
+export const ServerSearch = ({ token, namespace }: { token?: string, namespace?: string }) => {
+	const [query, setQuery] = useState("");
+	const [selectedServer, setSelectedServer] =
+		useState<ServerListResponse | null>(null);
+	const [selectedExternalUrl, setSelectedExternalUrl] = useState<string | null>(null);
 	const debouncedQuery = useDebounce(query, 300);
+	const isUrl = isValidUrl(query);
 
-	// Update query when initialQuery changes
-	useEffect(() => {
-		if (initialQuery !== undefined) {
-			setQuery(initialQuery);
-		}
-	}, [initialQuery]);
-
-	const { data: namespaceData } = useQuery({
-		queryKey: ["namespace", token],
+	const { data, isLoading } = useQuery({
+		queryKey: ["servers", token, debouncedQuery],
 		queryFn: async () => {
 			if (!token) {
 				throw new Error("API token is required");
 			}
-			const client = new Smithery({
-				apiKey: token,
-			});
-			return await getDefaultNamespace(client);
+			const client = getSmitheryClient(token);
+			console.log("searching", debouncedQuery);
+			const servers = debouncedQuery
+				? await client.servers.list({ q: debouncedQuery, pageSize: 3 })
+				: await client.servers.list();
+			console.log(`servers for ${debouncedQuery}`, servers);
+			return servers;
 		},
 		enabled: !!token,
 	});
 
-	const { data, isLoading, error } = useQuery({
-		queryKey: ["servers", debouncedQuery],
-		queryFn: async () => {
-			if (!token) {
-				throw new Error("API token is required");
+	const servers = data?.servers ?? [];
+
+	const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+		if (e.key === "Enter") {
+			e.preventDefault();
+			if (isUrl) {
+				const urlToConnect = query.trim();
+				setSelectedExternalUrl(urlToConnect);
+				setSelectedServer(null);
+				setTimeout(() => setQuery(""), 0);
+			} else if (servers.length > 0) {
+				setSelectedServer(servers[0]);
+				setSelectedExternalUrl(null);
+				setTimeout(() => setQuery(""), 0);
 			}
-			const client = new Smithery({
-				apiKey: token,
-			});
-			console.log("searching", debouncedQuery);
-			const servers = await client.servers.list({ q: debouncedQuery });
-			console.log(`servers for ${debouncedQuery}`, servers);
-			return servers;
-		},
-		enabled: debouncedQuery.length > 0 && !!token,
-	});
+		}
+	};
 
 	return (
-		<div className={initialQuery ? "" : "max-w-md mx-auto"}>
-			{!initialQuery && (
-				<Input
-					type="text"
-					value={query}
-					onChange={(e) => setQuery(e.target.value)}
-					placeholder="Search for a server"
+		<div className="max-w-md mx-auto">
+			<Combobox<ServerListResponse>
+				value={selectedServer}
+				onValueChange={(server) => {
+					setSelectedServer(server);
+					setSelectedExternalUrl(null);
+				}}
+				onInputValueChange={(value) => setQuery(value)}
+				itemToStringLabel={(server) =>
+					server.displayName || server.qualifiedName
+				}
+			>
+				<ComboboxInput
+					placeholder="Search for a server or paste MCP URL..."
+					disabled={!token}
+					onKeyDown={handleKeyDown}
 				/>
-			)}
-			{isLoading && <p className="text-muted-foreground">Loading...</p>}
-			{error && <p className="text-destructive">Error: {error.message}</p>}
-			{data && namespaceData && token && (
-				<div
-					className={
-						initialQuery ? "space-y-2" : "space-y-2 overflow-auto max-h-[500px]"
-					}
-				>
-					{data.servers.map((server: ServerListResponse) => (
-						<div key={server.qualifiedName}>
-							<ServerCard
-								server={server}
-								token={token}
-								namespace={namespaceData}
-							/>
-							<Separator />
+				<ComboboxContent side="bottom" align="start">
+					{isUrl ? (
+						<div className="p-1">
+							<button
+								type="button"
+								className="data-highlighted:bg-accent data-highlighted:text-accent-foreground relative flex w-full cursor-pointer items-center gap-2 rounded-sm py-1.5 pr-2 pl-2 text-sm outline-hidden select-none hover:bg-accent hover:text-accent-foreground"
+								onClick={() => {
+									const urlToConnect = query.trim();
+									setSelectedExternalUrl(urlToConnect);
+									setSelectedServer(null);
+									setTimeout(() => setQuery(""), 0);
+								}}
+							>
+								<Item size="sm" className="p-0 min-w-0">
+									<ItemMedia>
+										<Avatar className="h-8 w-8 rounded-md">
+											<AvatarFallback className="rounded-md bg-muted">
+												<Link className="size-4" />
+											</AvatarFallback>
+										</Avatar>
+									</ItemMedia>
+									<ItemContent className="min-w-0">
+										<ItemTitle className="w-full truncate">
+											Connect to external MCP URL
+										</ItemTitle>
+										<ItemDescription className="line-clamp-1 font-mono text-xs">
+											{query.trim()}
+										</ItemDescription>
+									</ItemContent>
+								</Item>
+							</button>
 						</div>
-					))}
-				</div>
+					) : (
+						<>
+							{servers.length === 0 && (
+								<ComboboxEmpty>
+									{isLoading ? "Loading..." : "No servers found."}
+								</ComboboxEmpty>
+							)}
+							<ComboboxList className="max-h-[200px] overflow-y-auto">
+								{servers.map((server) => (
+									<ComboboxItem key={server.qualifiedName} value={server}>
+										<Item size="sm" className="p-0 min-w-0">
+											<ItemMedia>
+												<Avatar className="h-8 w-8 rounded-md">
+													<AvatarImage src={server.iconUrl || ""} />
+													<AvatarFallback className="rounded-md bg-muted text-xs">
+														{server.displayName?.charAt(0) ||
+															server.qualifiedName?.charAt(0) ||
+															"S"}
+													</AvatarFallback>
+												</Avatar>
+											</ItemMedia>
+											<ItemContent className="min-w-0">
+												<ItemTitle className="w-full truncate">
+													{server.displayName || server.qualifiedName}
+												</ItemTitle>
+												<ItemDescription className="line-clamp-1">
+													{server.description || server.qualifiedName}
+												</ItemDescription>
+											</ItemContent>
+										</Item>
+									</ComboboxItem>
+								))}
+							</ComboboxList>
+						</>
+					)}
+				</ComboboxContent>
+			</Combobox>
+
+			{selectedServer && token && namespace && (
+				<ServerDisplay server={selectedServer} token={token} namespace={namespace} />
+			)}
+
+			{selectedExternalUrl && token && (
+				<ExternalURLDisplay url={selectedExternalUrl} token={token} />
 			)}
 		</div>
 	);
