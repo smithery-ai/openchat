@@ -19,23 +19,32 @@ export function HomePage({
 	return (
 		<div className="flex items-center justify-center h-screen">
 			<div className="flex flex-col gap-4">
-				<Tokens initialTokenResponse={initialTokenResponse} />
-				{apiKey ? <Tabs defaultValue="servers" className="w-[400px]">
-					<TabsList>
-						<TabsTrigger value="servers">Servers</TabsTrigger>
-						<TabsTrigger value="connections">Connections</TabsTrigger>
-						<TabsTrigger value="tools">Tools</TabsTrigger>
-					</TabsList>
-					<TabsContent value="servers">
-						<ServerSearch token={apiKey.token} />
-					</TabsContent>
-					<TabsContent value="connections">
-						<Connections token={apiKey.token} namespace={namespace} />
-					</TabsContent>
-					<TabsContent value="tools">
-						<ToolSearch token={apiKey.token} />
-					</TabsContent>
-				</Tabs> : <div>No token selected. Please create a token.</div>}
+				{apiKey ? (
+					<>
+						<Tokens initialTokenResponse={initialTokenResponse} />
+						<Tabs defaultValue="servers" className="w-[400px]">
+							<TabsList>
+								<TabsTrigger value="servers">Servers</TabsTrigger>
+								<TabsTrigger value="connections">Connections</TabsTrigger>
+								<TabsTrigger value="tools">Tools</TabsTrigger>
+							</TabsList>
+							<TabsContent value="servers">
+								<ServerSearch token={apiKey.token} />
+							</TabsContent>
+							<TabsContent value="connections">
+								<Connections token={apiKey.token} namespace={namespace} />
+							</TabsContent>
+							<TabsContent value="tools">
+								<ToolSearch token={apiKey.token} />
+							</TabsContent>
+						</Tabs>
+					</>
+				) : (
+					<>
+						<Tokens initialTokenResponse={initialTokenResponse} />
+						<div>No token selected. Please create a token.</div>
+					</>
+				)}
 			</div>
 		</div>
 	);

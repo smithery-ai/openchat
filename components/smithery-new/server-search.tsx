@@ -598,7 +598,7 @@ const ExternalURLDisplay = ({ url, token, namespace }: ExternalURLDisplayProps) 
 	);
 };
 
-export const ServerSearch = ({ token }: { token?: string }) => {
+export const ServerSearch = ({ token, namespace }: { token?: string, namespace?: string }) => {
 	const [query, setQuery] = useState("");
 	const [selectedServer, setSelectedServer] =
 		useState<ServerListResponse | null>(null);
@@ -729,8 +729,8 @@ export const ServerSearch = ({ token }: { token?: string }) => {
 				</ComboboxContent>
 			</Combobox>
 
-			{selectedServer && token && (
-				<ServerDisplay server={selectedServer} token={token} />
+			{selectedServer && token && namespace && (
+				<ServerDisplay server={selectedServer} token={token} namespace={namespace} />
 			)}
 
 			{selectedExternalUrl && token && (
