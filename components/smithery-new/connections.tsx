@@ -199,12 +199,16 @@ export const ConnectionsList = ({
 	token,
 	namespace,
 	defaultActiveConnectionId,
+	onActiveConnectionIdChange,
 }: {
 	token: string;
 	namespace?: string;
 	defaultActiveConnectionId?: string;
+	onActiveConnectionIdChange: (connectionId: string) => void;
 }) => {
-	const [activeConnectionId, setActiveConnectionId] = useState<string | null>(defaultActiveConnectionId || null);
+	const [activeConnectionId, setActiveConnectionId] = useState<string | null>(
+		defaultActiveConnectionId || null,
+	);
 	const { data, isLoading, error, refetch, isFetching } = useQuery({
 		queryKey: ["connections", token],
 		queryFn: async () => {
@@ -213,7 +217,7 @@ export const ConnectionsList = ({
 			}
 			const client = getSmitheryClient(token);
 			const namespaceToUse = namespace || (await getDefaultNamespace(client));
-			const {connections} =
+			const { connections } =
 				await client.beta.connect.connections.list(namespaceToUse);
 			return { connections, namespace: namespaceToUse };
 		},
@@ -225,6 +229,12 @@ export const ConnectionsList = ({
 			setActiveConnectionId(data?.connections[0]?.connectionId || null);
 		}
 	}, [data?.connections, defaultActiveConnectionId]);
+
+	useEffect(() => {
+		if (activeConnectionId) {
+			onActiveConnectionIdChange(activeConnectionId);
+		}
+	}, [activeConnectionId, onActiveConnectionIdChange]);
 
 	return (
 		<div className="max-w-md">
@@ -256,13 +266,26 @@ export const ConnectionsList = ({
 								connection={connection}
 								token={token}
 								namespace={data.namespace}
-								className={cn("rounded-none", activeConnectionId === connection.connectionId ? "bg-muted" : "hover:bg-muted/50 hover:cursor-pointer")}
+								className={cn(
+									"rounded-none",
+									activeConnectionId === connection.connectionId
+										? "bg-muted"
+										: "hover:bg-muted/50 hover:cursor-pointer",
+								)}
 								onClick={() => setActiveConnectionId(connection.connectionId)}
 							/>
 						</div>
 					))}
 				</div>
 			)}
+		</div>
+	);
+};
+
+const ActiveConnection = ({ connectionId }: { connectionId: string }) => {
+	return (
+		<div className="w-full h-full">
+			<h2 className="text-lg font-semibold">Active Connection: {connectionId}</h2>
 		</div>
 	);
 };
@@ -274,12 +297,20 @@ export const Connections = ({
 	token: string;
 	namespace?: string;
 }) => {
+	const [activeConnectionId, setActiveConnectionId] = useState<string | null>(
+		null,
+	);
 	return (
 		<div className="w-full h-full flex">
 			<div className="w-full max-w-sm border-r-3">
-				<ConnectionsList token={token} namespace={namespace} />
+				<ConnectionsList
+					token={token}
+					namespace={namespace}
+					onActiveConnectionIdChange={setActiveConnectionId}
+				/>
 			</div>
 			<div className="w-full flex-1 h-full">
+				<ActiveConnection connectionId={activeConnectionId || ""} />
 			</div>
 		</div>
 	);
