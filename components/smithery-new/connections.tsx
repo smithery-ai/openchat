@@ -176,12 +176,12 @@ export const ConnectionsList = ({
 						<ServerSearch token={token} namespace={data?.namespace} />
 					</div>
 				)}
-				{isLoading && <p className="text-muted-foreground">Loading...</p>}
-				{error && <p className="text-destructive">Error: {error.message}</p>}
+				{isLoading && <p className="text-muted-foreground px-6">Loading...</p>}
+				{error && <p className="text-destructive px-6">Error: {error.message}</p>}
 				{data && (
 					<div className="overflow-auto flex-1">
 						{data.connections.length === 0 && (
-							<p className="text-muted-foreground">No connections found</p>
+							<p className="text-muted-foreground px-6">No connections found</p>
 						)}
 						{data.connections.map((connection: Connection) => (
 							<div key={`${connection.connectionId}-${data.namespace}`}>
@@ -217,7 +217,7 @@ const ActiveConnection = ({
 	connectionId: string;
 }) => {
 	const { data, isLoading, error } = useQuery({
-		queryKey: ["connection", connectionId],
+		queryKey: ["connection", connectionId, token, namespace],
 		queryFn: async () => {
 			const client = getSmitheryClient(token);
 			const namespaceToUse = namespace || (await getDefaultNamespace(client));
@@ -228,11 +228,12 @@ const ActiveConnection = ({
 		},
 	});
 	return (
-		<div className="w-full h-full">
+		<div className="w-full h-full flex flex-col">
+			<h1>{connectionId}</h1>
 			{isLoading && <p className="text-muted-foreground">Loading...</p>}
 			{error && <p className="text-destructive">Error: {error.message}</p>}
 			{data && (
-				<div className="w-full h-full">
+				<div className="w-full flex-1 overflow-auto">
 					<p className="text-muted-foreground">Connection: {data.name}</p>
 					<p className="text-muted-foreground">
 						Connection ID: {data.connectionId}
@@ -261,6 +262,7 @@ export const Connections = ({
 	const [activeConnectionId, setActiveConnectionId] = useState<string | null>(
 		null,
 	);
+	
 	return (
 		<div className="w-full h-full flex">
 			<div className="w-full max-w-sm border-r-3 h-full overflow-auto">
