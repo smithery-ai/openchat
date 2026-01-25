@@ -232,50 +232,67 @@ const ActiveConnection = ({
 		},
 	});
 
-	// const toolsQuery = useQuery({
-	// 	queryKey: ["tools", connectionId, token, namespace],
-	// 	queryFn: async () => {
-	// 		const namespaceToUse = namespace || (await getDefaultNamespace(getSmitheryClient(token)));
-	// 		const transport = new SmitheryTransport({
-	// 			client: getSmitheryClient(token),
-	// 			connectionId: connectionId,
-	// 			namespace: namespaceToUse,
-	// 		});
-	// 		const client = await createMCPClient({
-	// 			transport: transport,
-	// 		});
-	// 		const tools = await client.tools();
-	// 		return tools;
-	// 	},
-	// });
+	const clientQuery = useQuery({
+		queryKey: ["mcp-client", token, connectionId, namespace],
+		queryFn: async () => {
+			const namespaceToUse =
+				namespace || (await getDefaultNamespace(getSmitheryClient(token)));
+			const transport = new SmitheryTransport({
+				client: getSmitheryClient(token),
+				connectionId: connectionId,
+				namespace: namespaceToUse,
+			});
+			return createMCPClient({ transport });
+		},
+		enabled: !!connectionId,
+	});
+
+	const toolsQuery = useQuery({
+		queryKey: ["tools", connectionId, token, namespace],
+		queryFn: async () => {
+			if (!clientQuery.data) {
+				throw new Error("Client not available");
+			}
+			const client = clientQuery.data;
+			return await client.tools();
+		},
+		enabled: !!clientQuery.data,
+	});
 	return (
-		<div className="w-full h-full flex flex-col">
-			<h1>{connectionId}</h1>
-			{isLoading && <p className="text-muted-foreground">Loading...</p>}
-			{error && <p className="text-destructive">Error: {error.message}</p>}
-			{data && (
-				<div className="w-full flex-1 overflow-auto">
-					<p className="text-muted-foreground">Connection: {data.name}</p>
-					<p className="text-muted-foreground">
-						Connection ID: {data.connectionId}
-					</p>
-					<p className="text-muted-foreground">Namespace: {namespace}</p>
-					<p className="text-muted-foreground">
-						Created At: {new Date(data.createdAt || "").toLocaleDateString()}{" "}
-						{new Date(data.createdAt || "").toLocaleTimeString()}
-					</p>
-					<p className="text-muted-foreground">
-						Metadata: {data.metadata && JSON.stringify(data.metadata)}
-					</p>
-				</div>
-			)}
-			{/* {toolsQuery.data && (
-				<div className="w-full flex-1 overflow-auto">
-					<p className="text-muted-foreground">Tools: {JSON.stringify(toolsQuery.data)}</p>
-				</div>
-			)}
-			{toolsQuery.isLoading && <p className="text-muted-foreground">Loading tools...</p>}
-			{toolsQuery.error && <p className="text-destructive">Error: {toolsQuery.error.message}</p>} */}
+		<div className="w-full h-full flex flex-col overflow-auto">
+			<div className="w-full">
+				<h1>{connectionId}</h1>
+				{isLoading && <p className="text-muted-foreground">Loading...</p>}
+				{error && <p className="text-destructive">Error: {error.message}</p>}
+				{data && (
+					<div className="w-full overflow-auto">
+						<p className="text-muted-foreground">Connection: {data.name}</p>
+						<p className="text-muted-foreground">
+							Connection ID: {data.connectionId}
+						</p>
+						<p className="text-muted-foreground">
+							Connection Created At: {new Date(data.createdAt || "").toLocaleDateString()}{" "}
+							{new Date(data.createdAt || "").toLocaleTimeString()}
+						</p>
+						<p className="text-muted-foreground">
+							Connection Metadata: {data.metadata && JSON.stringify(data.metadata)}
+						</p>
+					</div>
+				)}
+				{toolsQuery.data && (
+					<div className="w-full flex-1 overflow-auto">
+						<p className="text-muted-foreground">
+							Tools: {JSON.stringify(toolsQuery.data)}
+						</p>
+					</div>
+				)}
+				{toolsQuery.isLoading && (
+					<p className="text-muted-foreground">Loading tools...</p>
+				)}
+				{toolsQuery.error && (
+					<p className="text-destructive">Error: {toolsQuery.error.message}</p>
+				)}
+			</div>
 		</div>
 	);
 };
@@ -307,7 +324,6 @@ export const Connections = ({
 					namespace={namespace}
 					connectionId={activeConnectionId || ""}
 				/>
-				<div className="w-[10000px]"></div>
 			</div>
 		</div>
 	);

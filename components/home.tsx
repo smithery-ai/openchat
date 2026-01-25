@@ -82,7 +82,7 @@ export function HomePage({
 						<SidebarTrigger />
 						<Tokens initialTokenResponse={initialTokenResponse} />
 					</header>
-					<div className="flex-1">
+					<div className="flex-1 overflow-auto">
 						{apiKey ? (
 							<div className="w-full h-full">
 								{activeSection === "servers" && (
