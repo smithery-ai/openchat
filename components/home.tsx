@@ -76,7 +76,7 @@ export function HomePage({
 					</SidebarGroup>
 				</SidebarContent>
 			</Sidebar>
-			<SidebarInset>
+			<SidebarInset className="overflow-hidden">
 				<div className="flex flex-col h-screen">
 					<header className="flex h-16 shrink-0 items-center gap-2 border-b-3 px-4">
 						<SidebarTrigger />
