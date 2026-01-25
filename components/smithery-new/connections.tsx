@@ -177,7 +177,9 @@ export const ConnectionsList = ({
 					</div>
 				)}
 				{isLoading && <p className="text-muted-foreground px-6">Loading...</p>}
-				{error && <p className="text-destructive px-6">Error: {error.message}</p>}
+				{error && (
+					<p className="text-destructive px-6">Error: {error.message}</p>
+				)}
 				{data && (
 					<div className="overflow-auto flex-1">
 						{data.connections.length === 0 && (
@@ -262,7 +264,7 @@ export const Connections = ({
 	const [activeConnectionId, setActiveConnectionId] = useState<string | null>(
 		null,
 	);
-	
+
 	return (
 		<div className="w-full h-full flex">
 			<div className="w-full max-w-sm border-r-3 h-full overflow-auto">
