@@ -76,13 +76,13 @@ export function HomePage({
 					</SidebarGroup>
 				</SidebarContent>
 			</Sidebar>
-			<SidebarInset>
+			<SidebarInset className="overflow-hidden">
 				<div className="flex flex-col h-screen">
 					<header className="flex h-16 shrink-0 items-center gap-2 border-b-3 px-4">
 						<SidebarTrigger />
 						<Tokens initialTokenResponse={initialTokenResponse} />
 					</header>
-					<div className="flex-1 overflow-auto">
+					<div className="flex-1">
 						{apiKey ? (
 							<div className="w-full h-full">
 								{activeSection === "servers" && (

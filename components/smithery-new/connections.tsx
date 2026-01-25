@@ -12,6 +12,8 @@ import { Card, CardContent } from "../ui/card";
 import { Separator } from "../ui/separator";
 import { Toggle } from "../ui/toggle";
 import { ServerSearch } from "./server-search";
+import { SmitheryTransport } from "@smithery/api/mcp";
+import { createMCPClient } from "@ai-sdk/mcp";
 
 async function getDefaultNamespace(client: Smithery) {
 	const namespaces = await client.namespaces.list();
@@ -229,6 +231,23 @@ const ActiveConnection = ({
 			return { namespace: namespaceToUse, ...data };
 		},
 	});
+
+	// const toolsQuery = useQuery({
+	// 	queryKey: ["tools", connectionId, token, namespace],
+	// 	queryFn: async () => {
+	// 		const namespaceToUse = namespace || (await getDefaultNamespace(getSmitheryClient(token)));
+	// 		const transport = new SmitheryTransport({
+	// 			client: getSmitheryClient(token),
+	// 			connectionId: connectionId,
+	// 			namespace: namespaceToUse,
+	// 		});
+	// 		const client = await createMCPClient({
+	// 			transport: transport,
+	// 		});
+	// 		const tools = await client.tools();
+	// 		return tools;
+	// 	},
+	// });
 	return (
 		<div className="w-full h-full flex flex-col">
 			<h1>{connectionId}</h1>
@@ -250,6 +269,13 @@ const ActiveConnection = ({
 					</p>
 				</div>
 			)}
+			{/* {toolsQuery.data && (
+				<div className="w-full flex-1 overflow-auto">
+					<p className="text-muted-foreground">Tools: {JSON.stringify(toolsQuery.data)}</p>
+				</div>
+			)}
+			{toolsQuery.isLoading && <p className="text-muted-foreground">Loading tools...</p>}
+			{toolsQuery.error && <p className="text-destructive">Error: {toolsQuery.error.message}</p>} */}
 		</div>
 	);
 };
@@ -275,12 +301,13 @@ export const Connections = ({
 					defaultShowSearchServers={false}
 				/>
 			</div>
-			<div className="w-full flex-1">
+			<div className="w-full flex-1 overflow-auto">
 				<ActiveConnection
 					token={token}
 					namespace={namespace}
 					connectionId={activeConnectionId || ""}
 				/>
+				<div className="w-[10000px]"></div>
 			</div>
 		</div>
 	);
