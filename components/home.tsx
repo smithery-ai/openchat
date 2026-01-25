@@ -1,8 +1,8 @@
 "use client";
 import type { CreateTokenResponse } from "@smithery/api/resources/tokens.mjs";
 import { useAtomValue } from "jotai";
+import { Link2, Server, Wrench } from "lucide-react";
 import { useState } from "react";
-import { Server, Link2, Wrench } from "lucide-react";
 import { selectedTokenAtom } from "@/lib/atoms";
 import { Connections } from "./smithery-new/connections";
 import { ServerSearch } from "./smithery-new/server-search";
@@ -14,13 +14,13 @@ import {
 	SidebarGroup,
 	SidebarGroupContent,
 	SidebarGroupLabel,
+	SidebarInset,
 	SidebarMenu,
 	SidebarMenuButton,
 	SidebarMenuItem,
 	SidebarProvider,
 	SidebarTrigger,
 } from "./ui/sidebar";
-import { SidebarInset } from "./ui/sidebar";
 
 type Section = "servers" | "connections" | "tools";
 
