@@ -5,7 +5,6 @@ import { Check, Copy } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { estimateTokenCount } from "tokenx";
-import { useConnectionConfig } from "./connections";
 import {
 	CodeBlock,
 	CodeBlockCopyButton,
@@ -40,6 +39,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { useConnectionConfig } from "./connections";
 
 interface JSONSchema {
 	type?: string;
@@ -127,7 +127,12 @@ export function ToolDetailDialog({
 		if (value === "" || value === undefined || value === null) return true;
 		if (typeof value === "number" && Number.isNaN(value)) return true;
 		if (Array.isArray(value) && value.length === 0) return true;
-		if (typeof value === "object" && value !== null && Object.keys(value).length === 0) return true;
+		if (
+			typeof value === "object" &&
+			value !== null &&
+			Object.keys(value).length === 0
+		)
+			return true;
 		return false;
 	};
 
@@ -367,14 +372,21 @@ export function ToolDetailDialog({
 									</CodeBlock>
 								</div>
 							</TabsContent>
-							<TabsContent value="output" className="flex-1 overflow-auto mt-3 flex flex-col gap-3">
+							<TabsContent
+								value="output"
+								className="flex-1 overflow-auto mt-3 flex flex-col gap-3"
+							>
 								{executedAt && estimatedTokens !== null && latency !== null && (
 									<div className="flex items-center gap-2 text-xs text-muted-foreground px-1">
 										<span>{executedAt.toLocaleTimeString()}</span>
 										<span>•</span>
-										<span className="font-medium">{estimatedTokens.toLocaleString()} tokens</span>
+										<span className="font-medium">
+											{estimatedTokens.toLocaleString()} tokens
+										</span>
 										<span>•</span>
-										<span className="font-medium">{latency.toLocaleString()}ms</span>
+										<span className="font-medium">
+											{latency.toLocaleString()}ms
+										</span>
 									</div>
 								)}
 								{isExecuting ? (
@@ -573,9 +585,15 @@ function generateToolExecuteCode(
 	config: ConnectionConfig | null,
 ): string {
 	const mcpUrl = config?.mcpUrl || "process.env.MCP_URL";
-	const apiKey = config?.apiKey ? `"${config.apiKey}"` : "process.env.SMITHERY_API_KEY";
-	const namespace = config?.namespace ? `"${config.namespace}"` : "process.env.SMITHERY_NAMESPACE";
-	const connectionId = config?.connectionId ? `"${config.connectionId}"` : "connectionId";
+	const apiKey = config?.apiKey
+		? `"${config.apiKey}"`
+		: "process.env.SMITHERY_API_KEY";
+	const namespace = config?.namespace
+		? `"${config.namespace}"`
+		: "process.env.SMITHERY_NAMESPACE";
+	const connectionId = config?.connectionId
+		? `"${config.connectionId}"`
+		: "connectionId";
 
 	const code = `import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import Smithery from '@smithery/api';

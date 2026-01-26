@@ -22,6 +22,7 @@ const ConnectionConfigContext = createContext<ConnectionConfig | null>(null);
 export function useConnectionConfig() {
 	return useContext(ConnectionConfigContext);
 }
+
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Button } from "../ui/button";
