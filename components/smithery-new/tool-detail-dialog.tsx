@@ -218,14 +218,7 @@ export function ToolDetailDialog({
 			}
 		}
 
-		const paramsString = JSON.stringify(params, null, 2)
-			.split("\n")
-			.map((line, i) => (i === 0 ? line : `  ${line}`))
-			.join("\n");
-
-		return `const result = await tools.${name}.execute(${paramsString});
-
-console.log(result);`;
+		return generateToolExecuteCode(name, params);
 	};
 
 	return (
@@ -359,7 +352,7 @@ console.log(result);`;
 								<CodeBlock
 									code={generateCodePreview()}
 									language="typescript"
-									className="h-full"
+									className="h-full overflow-auto"
 								>
 									<CodeBlockCopyButton />
 								</CodeBlock>
@@ -555,6 +548,49 @@ function renderField(
 			})}
 		/>
 	);
+}
+
+function generateToolExecuteCode(
+	toolName: string,
+	params: Record<string, unknown>,
+): string {
+	const paramsString = JSON.stringify(params, null, 2)
+		.split("\n")
+		.map((line, i) => (i === 0 ? line : `  ${line}`))
+		.join("\n");
+
+	const code = `	
+import { createMCPClient } from '@ai-sdk/mcp';
+import Smithery from '@smithery/api';
+import { SmitheryTransport } from '@smithery/api/mcp';
+import { generateText } from 'ai';
+
+const client = new Smithery({
+  apiKey, // Default to process.env.SMITHERY_API_KEY
+});
+
+const { connectionId } = await client.beta.connect.connections.create(namespace, {
+  mcpUrl,
+});
+
+console.log('Connection ID:', connectionId);
+
+const transport = new SmitheryTransport({
+  mcpUrl,
+  connectionId,
+})
+
+const mcpClient = await createMCPClient({ transport })
+const tools = await mcpClient.tools();
+const { text } = await generateText({
+  model: "anthropic/claude-haiku-4.5",
+  prompt: "Write a short poem about the sea.",
+  tools,
+})
+
+console.log('Generated Text:', text);`;
+
+	return code.trim();
 }
 
 function getDefaultValues(schema: JSONSchema): Record<string, unknown> {
