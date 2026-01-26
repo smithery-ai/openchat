@@ -125,9 +125,13 @@ export function ToolDetailDialog({
 		setResult(null);
 
 		try {
-			// Parse JSON strings for arrays and objects
+			// Parse JSON strings for arrays and objects, filter out empty values
 			const processedParams: Record<string, unknown> = {};
 			for (const [key, value] of Object.entries(params)) {
+				// Skip empty values
+				if (value === "" || value === undefined || value === null || Number.isNaN(value)) {
+					continue;
+				}
 				if (
 					typeof value === "string" &&
 					(value.startsWith("[") || value.startsWith("{"))
@@ -167,7 +171,7 @@ export function ToolDetailDialog({
 	const generateCodePreview = () => {
 		const params: Record<string, unknown> = {};
 		for (const [key, value] of Object.entries(formValues)) {
-			if (value !== "" && value !== undefined && value !== null) {
+			if (value !== "" && value !== undefined && value !== null && !Number.isNaN(value)) {
 				// Try to parse JSON strings
 				if (
 					typeof value === "string" &&
@@ -219,7 +223,7 @@ console.log(result);`;
 
 				<div className="flex-1 overflow-hidden grid grid-cols-1 md:grid-cols-5 gap-6 min-h-0">
 					{/* Left Panel - Parameters */}
-					<div className="md:col-span-2 overflow-auto pr-2">
+					<div className="md:col-span-2 overflow-auto px-2">
 						<form id="tool-form" onSubmit={handleSubmit(handleExecuteSubmit)}>
 							{hasParameters ? (
 								(() => {
@@ -536,7 +540,7 @@ function getDefaultValues(schema: JSONSchema): Record<string, unknown> {
 			if (type === "boolean") {
 				defaults[name] = false;
 			} else if (type === "number" || type === "integer") {
-				defaults[name] = property.minimum || 0;
+				defaults[name] = "";
 			} else if (type === "array") {
 				defaults[name] = "[]";
 			} else if (type === "object") {
