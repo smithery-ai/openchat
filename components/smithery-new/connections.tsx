@@ -14,6 +14,7 @@ import { Toggle } from "../ui/toggle";
 import { ServerSearch } from "./server-search";
 import { SmitheryTransport } from "@smithery/api/mcp";
 import { createMCPClient } from "@ai-sdk/mcp";
+import { ToolsPanel } from "./tools-panel";
 
 async function getDefaultNamespace(client: Smithery) {
 	const namespaces = await client.namespaces.list();
@@ -258,39 +259,63 @@ const ActiveConnection = ({
 		},
 		enabled: !!clientQuery.data,
 	});
+	const handleExecute = async (
+		toolName: string,
+		params: Record<string, unknown>,
+	) => {
+		if (!toolsQuery.data) {
+			throw new Error("Tools not available");
+		}
+		const tool = toolsQuery.data[toolName];
+		if (!tool) {
+			throw new Error(`Tool ${toolName} not found`);
+		}
+		// The execute method from AI SDK tools expects (params, options)
+		return await tool.execute(params, {} as any);
+	};
+
 	return (
 		<div className="w-full h-full flex flex-col overflow-auto">
-			<div className="w-full">
-				<h1>{connectionId}</h1>
-				{isLoading && <p className="text-muted-foreground">Loading...</p>}
-				{error && <p className="text-destructive">Error: {error.message}</p>}
-				{data && (
-					<div className="w-full overflow-auto">
-						<p className="text-muted-foreground">Connection: {data.name}</p>
-						<p className="text-muted-foreground">
-							Connection ID: {data.connectionId}
-						</p>
-						<p className="text-muted-foreground">
-							Connection Created At: {new Date(data.createdAt || "").toLocaleDateString()}{" "}
-							{new Date(data.createdAt || "").toLocaleTimeString()}
-						</p>
-						<p className="text-muted-foreground">
-							Connection Metadata: {data.metadata && JSON.stringify(data.metadata)}
-						</p>
+			<div className="w-full h-full flex flex-col">
+				{isLoading && (
+					<div className="p-6">
+						<p className="text-muted-foreground">Loading connection...</p>
 					</div>
 				)}
-				{toolsQuery.data && (
-					<div className="w-full flex-1 overflow-auto">
-						<p className="text-muted-foreground">
-							Tools: {JSON.stringify(toolsQuery.data)}
-						</p>
+				{error && (
+					<div className="p-6">
+						<p className="text-destructive">Error: {error.message}</p>
+					</div>
+				)}
+				{data && (
+					<div className="border-b p-6">
+						<h1 className="text-xl font-semibold mb-3">{data.name}</h1>
+						<div className="space-y-1 text-sm text-muted-foreground">
+							<p>ID: {data.connectionId}</p>
+							<p>
+								Created: {new Date(data.createdAt || "").toLocaleDateString()}{" "}
+								{new Date(data.createdAt || "").toLocaleTimeString()}
+							</p>
+							{data.metadata && (
+								<p>Metadata: {JSON.stringify(data.metadata)}</p>
+							)}
+						</div>
 					</div>
 				)}
 				{toolsQuery.isLoading && (
-					<p className="text-muted-foreground">Loading tools...</p>
+					<div className="p-6">
+						<p className="text-muted-foreground">Loading tools...</p>
+					</div>
 				)}
 				{toolsQuery.error && (
-					<p className="text-destructive">Error: {toolsQuery.error.message}</p>
+					<div className="p-6">
+						<p className="text-destructive">Error: {toolsQuery.error.message}</p>
+					</div>
+				)}
+				{toolsQuery.data && (
+					<div className="flex-1 overflow-hidden">
+						<ToolsPanel tools={toolsQuery.data} onExecute={handleExecute} />
+					</div>
 				)}
 			</div>
 		</div>
