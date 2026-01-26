@@ -7,7 +7,21 @@ import type { Connection } from "@smithery/api/resources/beta/connect/connection
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ToolExecutionOptions } from "ai";
 import { Plus, RefreshCw, Trash2, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
+
+// Context for connection config - consumed by ToolDetailDialog for code generation
+interface ConnectionConfig {
+	mcpUrl: string;
+	apiKey: string;
+	namespace: string;
+	connectionId: string;
+}
+
+const ConnectionConfigContext = createContext<ConnectionConfig | null>(null);
+
+export function useConnectionConfig() {
+	return useContext(ConnectionConfigContext);
+}
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Button } from "../ui/button";
@@ -244,7 +258,8 @@ const ActiveConnection = ({
 				connectionId: connectionId,
 				namespace: namespaceToUse,
 			});
-			return createMCPClient({ transport });
+			const mcpClient = await createMCPClient({ transport });
+			return mcpClient;
 		},
 		enabled: !!connectionId,
 	});
@@ -320,10 +335,19 @@ const ActiveConnection = ({
 						</p>
 					</div>
 				)}
-				{toolsQuery.data && (
-					<div className="flex-1 overflow-hidden">
-						<ToolsPanel tools={toolsQuery.data} onExecute={handleExecute} />
-					</div>
+				{toolsQuery.data && data && (
+					<ConnectionConfigContext.Provider
+						value={{
+							mcpUrl: data.mcpUrl || "",
+							apiKey: token,
+							namespace: data.namespace,
+							connectionId: connectionId,
+						}}
+					>
+						<div className="flex-1 overflow-hidden">
+							<ToolsPanel tools={toolsQuery.data} onExecute={handleExecute} />
+						</div>
+					</ConnectionConfigContext.Provider>
 				)}
 			</div>
 		</div>

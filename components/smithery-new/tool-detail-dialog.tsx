@@ -5,6 +5,7 @@ import { Check, Copy } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { estimateTokenCount } from "tokenx";
+import { useConnectionConfig } from "./connections";
 import {
 	CodeBlock,
 	CodeBlockCopyButton,
@@ -72,6 +73,7 @@ export function ToolDetailDialog({
 	tool,
 	onExecute,
 }: ToolDetailDialogProps) {
+	const connectionConfig = useConnectionConfig();
 	const [isExecuting, setIsExecuting] = useState(false);
 	const [result, setResult] = useState<unknown>(null);
 	const [error, setError] = useState<string | null>(null);
@@ -218,7 +220,7 @@ export function ToolDetailDialog({
 			}
 		}
 
-		return generateToolExecuteCode(name, params);
+		return generateToolExecuteCode(name, params, connectionConfig);
 	};
 
 	return (
@@ -349,13 +351,21 @@ export function ToolDetailDialog({
 								</Button>
 							</div>
 							<TabsContent value="code" className="flex-1 overflow-auto mt-3">
-								<CodeBlock
-									code={generateCodePreview()}
-									language="typescript"
-									className="h-full overflow-auto"
-								>
-									<CodeBlockCopyButton />
-								</CodeBlock>
+								<div className="flex flex-col gap-3 h-full">
+									<CodeBlock
+										code="npm install @smithery/api ai @ai-sdk/mcp"
+										language="bash"
+									>
+										<CodeBlockCopyButton />
+									</CodeBlock>
+									<CodeBlock
+										code={generateCodePreview()}
+										language="typescript"
+										className="flex-1 overflow-auto"
+									>
+										<CodeBlockCopyButton />
+									</CodeBlock>
+								</div>
 							</TabsContent>
 							<TabsContent value="output" className="flex-1 overflow-auto mt-3 flex flex-col gap-3">
 								{executedAt && estimatedTokens !== null && latency !== null && (
@@ -550,45 +560,53 @@ function renderField(
 	);
 }
 
+interface ConnectionConfig {
+	mcpUrl: string;
+	apiKey: string;
+	namespace: string;
+	connectionId: string;
+}
+
 function generateToolExecuteCode(
 	toolName: string,
 	params: Record<string, unknown>,
+	config: ConnectionConfig | null,
 ): string {
-	const paramsString = JSON.stringify(params, null, 2)
-		.split("\n")
-		.map((line, i) => (i === 0 ? line : `  ${line}`))
-		.join("\n");
+	const mcpUrl = config?.mcpUrl || "process.env.MCP_URL";
+	const apiKey = config?.apiKey ? `"${config.apiKey}"` : "process.env.SMITHERY_API_KEY";
+	const namespace = config?.namespace ? `"${config.namespace}"` : "process.env.SMITHERY_NAMESPACE";
+	const connectionId = config?.connectionId ? `"${config.connectionId}"` : "connectionId";
 
-	const code = `	
-import { createMCPClient } from '@ai-sdk/mcp';
+	const code = `import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import Smithery from '@smithery/api';
 import { SmitheryTransport } from '@smithery/api/mcp';
-import { generateText } from 'ai';
 
-const client = new Smithery({
-  apiKey, // Default to process.env.SMITHERY_API_KEY
-});
-
-const { connectionId } = await client.beta.connect.connections.create(namespace, {
-  mcpUrl,
-});
-
-console.log('Connection ID:', connectionId);
+const mcpUrl = "${mcpUrl}";
+const namespace = ${namespace};
+const connectionId = ${connectionId};
+const apiKey = ${apiKey};
 
 const transport = new SmitheryTransport({
-  mcpUrl,
-  connectionId,
-})
+  client: new Smithery({ apiKey }),
+  connectionId, // Leave empty to create a new connection
+  namespace,
+});
 
-const mcpClient = await createMCPClient({ transport })
-const tools = await mcpClient.tools();
-const { text } = await generateText({
-  model: "anthropic/claude-haiku-4.5",
-  prompt: "Write a short poem about the sea.",
-  tools,
-})
+// Initialize the Traditional MCP Client
+const mcpClient = new Client({
+    name: "smithery-mcp-client",
+    version: "1.0.0",
+});
 
-console.log('Generated Text:', text);`;
+// Connect explicitly
+await mcpClient.connect(transport);
+
+const result = await mcpClient.callTool({
+  name: "${toolName}",
+  arguments: ${JSON.stringify(params, null, 2)},
+});
+console.log(result);
+`;
 
 	return code.trim();
 }
