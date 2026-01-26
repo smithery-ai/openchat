@@ -120,6 +120,15 @@ export function ToolDetailDialog({
 		}
 	}, [open, reset, schema]);
 
+	// Check if a value is empty and should be excluded
+	const isEmptyValue = (value: unknown): boolean => {
+		if (value === "" || value === undefined || value === null) return true;
+		if (typeof value === "number" && Number.isNaN(value)) return true;
+		if (Array.isArray(value) && value.length === 0) return true;
+		if (typeof value === "object" && value !== null && Object.keys(value).length === 0) return true;
+		return false;
+	};
+
 	const handleExecuteSubmit = async (params: Record<string, unknown>) => {
 		if (!onExecute) return;
 
@@ -137,22 +146,24 @@ export function ToolDetailDialog({
 			// Parse JSON strings for arrays and objects, filter out empty values
 			const processedParams: Record<string, unknown> = {};
 			for (const [key, value] of Object.entries(params)) {
-				// Skip empty values
-				if (value === "" || value === undefined || value === null || Number.isNaN(value)) {
-					continue;
-				}
+				// Try to parse JSON strings first
+				let parsedValue = value;
 				if (
 					typeof value === "string" &&
 					(value.startsWith("[") || value.startsWith("{"))
 				) {
 					try {
-						processedParams[key] = JSON.parse(value);
+						parsedValue = JSON.parse(value);
 					} catch {
-						processedParams[key] = value;
+						// Keep original string if parsing fails
 					}
-				} else {
-					processedParams[key] = value;
 				}
+
+				// Skip empty values
+				if (isEmptyValue(parsedValue)) {
+					continue;
+				}
+				processedParams[key] = parsedValue;
 			}
 
 			const res = await onExecute(processedParams);
@@ -189,20 +200,21 @@ export function ToolDetailDialog({
 	const generateCodePreview = () => {
 		const params: Record<string, unknown> = {};
 		for (const [key, value] of Object.entries(formValues)) {
-			if (value !== "" && value !== undefined && value !== null && !Number.isNaN(value)) {
-				// Try to parse JSON strings
-				if (
-					typeof value === "string" &&
-					(value.startsWith("[") || value.startsWith("{"))
-				) {
-					try {
-						params[key] = JSON.parse(value);
-					} catch {
-						params[key] = value;
-					}
-				} else {
-					params[key] = value;
+			// Try to parse JSON strings first
+			let parsedValue = value;
+			if (
+				typeof value === "string" &&
+				(value.startsWith("[") || value.startsWith("{"))
+			) {
+				try {
+					parsedValue = JSON.parse(value);
+				} catch {
+					// Keep original string if parsing fails
 				}
+			}
+
+			if (!isEmptyValue(parsedValue)) {
+				params[key] = parsedValue;
 			}
 		}
 
@@ -562,9 +574,9 @@ function getDefaultValues(schema: JSONSchema): Record<string, unknown> {
 			} else if (type === "number" || type === "integer") {
 				defaults[name] = "";
 			} else if (type === "array") {
-				defaults[name] = "[]";
+				defaults[name] = "";
 			} else if (type === "object") {
-				defaults[name] = "{}";
+				defaults[name] = "";
 			} else {
 				defaults[name] = "";
 			}
