@@ -4,6 +4,7 @@ import type { Tool } from "ai";
 import { Check, Copy } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
+import { estimateTokenCount } from "tokenx";
 import {
 	CodeBlock,
 	CodeBlockCopyButton,
@@ -77,6 +78,8 @@ export function ToolDetailDialog({
 	const [executedAt, setExecutedAt] = useState<Date | null>(null);
 	const [copied, setCopied] = useState(false);
 	const [activeTab, setActiveTab] = useState("code");
+	const [estimatedTokens, setEstimatedTokens] = useState<number | null>(null);
+	const [latency, setLatency] = useState<number | null>(null);
 
 	// Extract schema
 	const inputSchema = tool.inputSchema;
@@ -112,6 +115,8 @@ export function ToolDetailDialog({
 			setError(null);
 			setExecutedAt(null);
 			setActiveTab("code");
+			setEstimatedTokens(null);
+			setLatency(null);
 		}
 	}, [open, reset, schema]);
 
@@ -123,6 +128,10 @@ export function ToolDetailDialog({
 		setIsExecuting(true);
 		setError(null);
 		setResult(null);
+		setEstimatedTokens(null);
+		setLatency(null);
+
+		const startTime = performance.now();
 
 		try {
 			// Parse JSON strings for arrays and objects, filter out empty values
@@ -147,8 +156,17 @@ export function ToolDetailDialog({
 			}
 
 			const res = await onExecute(processedParams);
+			const endTime = performance.now();
+			const executionLatency = endTime - startTime;
+
+			// Estimate token count of the result
+			const resultString = JSON.stringify(res);
+			const tokens = estimateTokenCount(resultString);
+
 			setResult(res);
 			setExecutedAt(new Date());
+			setLatency(executionLatency);
+			setEstimatedTokens(tokens);
 		} catch (err) {
 			setError(err instanceof Error ? err.message : "An error occurred");
 		} finally {
@@ -314,14 +332,7 @@ console.log(result);`;
 							<div className="flex items-center justify-between gap-2">
 								<TabsList className="w-fit">
 									<TabsTrigger value="code">Code</TabsTrigger>
-									<TabsTrigger value="output">
-										Output
-										{executedAt && (
-											<span className="ml-1.5 text-xs text-muted-foreground">
-												({executedAt.toLocaleTimeString()})
-											</span>
-										)}
-									</TabsTrigger>
+									<TabsTrigger value="output">Output</TabsTrigger>
 								</TabsList>
 								<Button
 									type="button"
@@ -341,7 +352,16 @@ console.log(result);`;
 									<CodeBlockCopyButton />
 								</CodeBlock>
 							</TabsContent>
-							<TabsContent value="output" className="flex-1 overflow-auto mt-3">
+							<TabsContent value="output" className="flex-1 overflow-auto mt-3 flex flex-col gap-3">
+								{executedAt && estimatedTokens !== null && latency !== null && (
+									<div className="flex items-center gap-2 text-xs text-muted-foreground px-1">
+										<span>{executedAt.toLocaleTimeString()}</span>
+										<span>•</span>
+										<span className="font-medium">{estimatedTokens.toLocaleString()} tokens</span>
+										<span>•</span>
+										<span className="font-medium">{latency.toLocaleString()}ms</span>
+									</div>
+								)}
 								{isExecuting ? (
 									<div className="flex items-center justify-center h-full text-muted-foreground text-sm">
 										<div className="flex flex-col items-center gap-2">
