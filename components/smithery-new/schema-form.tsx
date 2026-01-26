@@ -1,9 +1,14 @@
 "use client";
 
 import { useForm } from "react-hook-form";
+import { Button } from "@/components/ui/button";
+import {
+	Field,
+	FieldDescription,
+	FieldError,
+	FieldLabel,
+} from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
 import {
 	Select,
 	SelectContent,
@@ -11,13 +16,8 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import {
-	Field,
-	FieldDescription,
-	FieldError,
-	FieldLabel,
-} from "@/components/ui/field";
-import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 
 interface JSONSchema {
 	type?: string;
@@ -37,12 +37,18 @@ interface JSONSchemaProperty {
 }
 
 interface SchemaFormProps {
-	schema: JSONSchema;
+	schema: unknown;
 	onSubmit: (data: Record<string, unknown>) => void;
 	isLoading?: boolean;
 }
 
 export function SchemaForm({ schema, onSubmit, isLoading }: SchemaFormProps) {
+	// Extract JSON schema from various formats
+	const jsonSchema: JSONSchema =
+		schema && typeof schema === "object" && "jsonSchema" in schema
+			? (schema as { jsonSchema: JSONSchema }).jsonSchema
+			: (schema as JSONSchema) || {};
+
 	const {
 		register,
 		handleSubmit,
@@ -50,11 +56,11 @@ export function SchemaForm({ schema, onSubmit, isLoading }: SchemaFormProps) {
 		setValue,
 		watch,
 	} = useForm<Record<string, unknown>>({
-		defaultValues: getDefaultValues(schema),
+		defaultValues: getDefaultValues(jsonSchema),
 	});
 
-	const properties = schema.properties || {};
-	const requiredFields = schema.required || [];
+	const properties = jsonSchema.properties || {};
+	const requiredFields = jsonSchema.required || [];
 
 	return (
 		<form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -180,7 +186,9 @@ function renderField(
 						if (!value) return true;
 						try {
 							const parsed = JSON.parse(value as string);
-							return typeof parsed === "object" || "Must be a valid JSON object";
+							return (
+								typeof parsed === "object" || "Must be a valid JSON object"
+							);
 						} catch {
 							return "Must be valid JSON";
 						}

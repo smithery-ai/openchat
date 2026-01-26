@@ -1,8 +1,11 @@
 "use client";
 
+import { createMCPClient } from "@ai-sdk/mcp";
 import Smithery from "@smithery/api";
+import { SmitheryTransport } from "@smithery/api/mcp";
 import type { Connection } from "@smithery/api/resources/beta/connect/connections.mjs";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type { ToolExecutionOptions } from "ai";
 import { Plus, RefreshCw, Trash2, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
@@ -12,8 +15,6 @@ import { Card, CardContent } from "../ui/card";
 import { Separator } from "../ui/separator";
 import { Toggle } from "../ui/toggle";
 import { ServerSearch } from "./server-search";
-import { SmitheryTransport } from "@smithery/api/mcp";
-import { createMCPClient } from "@ai-sdk/mcp";
 import { ToolsPanel } from "./tools-panel";
 
 async function getDefaultNamespace(client: Smithery) {
@@ -271,7 +272,12 @@ const ActiveConnection = ({
 			throw new Error(`Tool ${toolName} not found`);
 		}
 		// The execute method from AI SDK tools expects (params, options)
-		return await tool.execute(params, {} as any);
+		// We're executing tools directly, so provide minimal required options
+		const options: ToolExecutionOptions = {
+			toolCallId: `manual-${Date.now()}`,
+			messages: [],
+		};
+		return await tool.execute(params, options);
 	};
 
 	return (
@@ -309,7 +315,9 @@ const ActiveConnection = ({
 				)}
 				{toolsQuery.error && (
 					<div className="p-6">
-						<p className="text-destructive">Error: {toolsQuery.error.message}</p>
+						<p className="text-destructive">
+							Error: {toolsQuery.error.message}
+						</p>
 					</div>
 				)}
 				{toolsQuery.data && (

@@ -1,40 +1,31 @@
 "use client";
 
+import type { Tool } from "ai";
+import { Check, ChevronDown, ChevronUp, Copy } from "lucide-react";
 import { useState } from "react";
-import { ChevronDown, ChevronUp, Copy, Check } from "lucide-react";
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+	Card,
+	CardContent,
+	CardFooter,
+	CardHeader,
+} from "@/components/ui/card";
 import {
 	Collapsible,
 	CollapsibleContent,
 	CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { SchemaForm } from "./schema-form";
 import { cn } from "@/lib/utils";
-
-interface JSONSchema {
-	type?: string;
-	properties?: Record<string, unknown>;
-	required?: string[];
-	additionalProperties?: boolean;
-}
+import { SchemaForm } from "./schema-form";
 
 interface ToolCardProps {
 	name: string;
-	description?: string;
-	inputSchema?: any; // Accept any schema structure from AI SDK
-	type?: string;
+	tool: Tool;
 	onExecute?: (params: Record<string, unknown>) => Promise<unknown>;
 }
 
-export function ToolCard({
-	name,
-	description,
-	inputSchema,
-	type,
-	onExecute,
-}: ToolCardProps) {
+export function ToolCard({ name, tool, onExecute }: ToolCardProps) {
 	const [isOpen, setIsOpen] = useState(false);
 	const [isExecuting, setIsExecuting] = useState(false);
 	const [result, setResult] = useState<unknown>(null);
@@ -54,7 +45,10 @@ export function ToolCard({
 			// Parse JSON strings for arrays and objects
 			const processedParams: Record<string, unknown> = {};
 			for (const [key, value] of Object.entries(params)) {
-				if (typeof value === "string" && (value.startsWith("[") || value.startsWith("{"))) {
+				if (
+					typeof value === "string" &&
+					(value.startsWith("[") || value.startsWith("{"))
+				) {
 					try {
 						processedParams[key] = JSON.parse(value);
 					} catch {
@@ -87,13 +81,20 @@ export function ToolCard({
 		}
 	};
 
-	// Extract the actual schema, handling both formats and undefined
-	const schema: JSONSchema = inputSchema && typeof inputSchema === "object" && "jsonSchema" in inputSchema
-		? inputSchema.jsonSchema
-		: inputSchema || {};
+	// Extract schema from the Tool's inputSchema
+	const inputSchema = tool.inputSchema;
+	const schema =
+		typeof inputSchema === "object" &&
+		inputSchema &&
+		"jsonSchema" in inputSchema
+			? inputSchema.jsonSchema
+			: inputSchema;
 
 	const hasParameters =
-		schema?.properties &&
+		schema &&
+		typeof schema === "object" &&
+		"properties" in schema &&
+		schema.properties &&
 		Object.keys(schema.properties).length > 0;
 
 	return (
@@ -102,13 +103,15 @@ export function ToolCard({
 				<div className="flex items-start justify-between gap-4">
 					<div className="flex-1 min-w-0">
 						<h3 className="font-semibold text-base break-all">{name}</h3>
-						{description && (
-							<p className="text-sm text-muted-foreground mt-1 break-words">{description}</p>
+						{tool.description && (
+							<p className="text-sm text-muted-foreground mt-1 break-words">
+								{tool.description}
+							</p>
 						)}
 					</div>
-					{type && type !== "dynamic" && (
+					{tool.type && tool.type !== "dynamic" && (
 						<Badge variant="outline" className="shrink-0">
-							{type}
+							{tool.type}
 						</Badge>
 					)}
 				</div>
@@ -135,7 +138,7 @@ export function ToolCard({
 						</CollapsibleTrigger>
 						<CollapsibleContent className="mt-4">
 							<SchemaForm
-								schema={schema as any}
+								schema={schema}
 								onSubmit={handleExecute}
 								isLoading={isExecuting}
 							/>

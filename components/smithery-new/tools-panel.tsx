@@ -1,29 +1,18 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import type { Tool } from "ai";
 import { Search } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { ToolCard } from "./tool-card";
-import { Field, FieldLabel } from "@/components/ui/field";
-
-interface JSONSchema {
-	type?: string;
-	properties?: Record<string, unknown>;
-	required?: string[];
-	additionalProperties?: boolean;
-}
-
-interface ToolsData {
-	[key: string]: {
-		description?: string;
-		inputSchema: { jsonSchema: JSONSchema } | JSONSchema;
-		type?: string;
-	};
-}
 
 interface ToolsPanelProps {
-	tools: Record<string, any>; // Accept any tools structure from AI SDK
-	onExecute?: (toolName: string, params: Record<string, unknown>) => Promise<unknown>;
+	tools: Record<string, Tool>;
+	onExecute?: (
+		toolName: string,
+		params: Record<string, unknown>,
+	) => Promise<unknown>;
 }
 
 export function ToolsPanel({ tools, onExecute }: ToolsPanelProps) {
@@ -97,9 +86,7 @@ export function ToolsPanel({ tools, onExecute }: ToolsPanelProps) {
 			<div className="flex-1 overflow-auto p-6">
 				{filteredCount === 0 ? (
 					<div className="flex flex-col items-center justify-center p-8 text-center">
-						<p className="text-muted-foreground">
-							No tools match your search
-						</p>
+						<p className="text-muted-foreground">No tools match your search</p>
 						<p className="text-sm text-muted-foreground mt-1">
 							Try a different search term
 						</p>
@@ -110,9 +97,7 @@ export function ToolsPanel({ tools, onExecute }: ToolsPanelProps) {
 							<ToolCard
 								key={name}
 								name={name}
-								description={tool.description}
-								inputSchema={tool.inputSchema}
-								type={tool.type}
+								tool={tool}
 								onExecute={(params) => handleExecute(name, params)}
 							/>
 						))}
