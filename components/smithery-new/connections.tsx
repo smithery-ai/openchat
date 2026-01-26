@@ -248,6 +248,11 @@ const ActiveConnection = ({
 			});
 			return { namespace: namespaceToUse, ...data };
 		},
+		// Poll every 2 seconds while status is not "connected" (e.g., during OAuth flow)
+		refetchInterval: (query) => {
+			const status = query.state.data?.status?.state;
+			return status && status !== "connected" ? 2000 : false;
+		},
 	});
 
 	const clientQuery = useQuery({
