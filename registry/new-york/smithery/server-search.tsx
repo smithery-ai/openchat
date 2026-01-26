@@ -4,8 +4,16 @@ import Smithery, { AuthenticationError } from "@smithery/api";
 import type { Connection } from "@smithery/api/resources/beta/connect/connections.mjs";
 import type { ServerListResponse } from "@smithery/api/resources/servers/servers.mjs";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowRight, CheckCircle, Link, Loader2, Lock } from "lucide-react";
+import {
+	AlertTriangle,
+	ArrowRight,
+	CheckCircle,
+	Link,
+	Loader2,
+	Lock,
+} from "lucide-react";
 import { useEffect, useState } from "react";
+import { useDebounce } from "@/hooks/use-debounce";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,7 +31,6 @@ import {
 	ItemMedia,
 	ItemTitle,
 } from "@/components/ui/item";
-import { useDebounce } from "@/hooks/use-debounce";
 
 interface AuthRequiredBannerProps {
 	serverName: string;
@@ -64,8 +71,69 @@ const AuthRequiredBanner = ({
 	</div>
 );
 
+interface ExistingConnectionWarningBannerProps {
+	serverName: string;
+	onUseExisting: () => void;
+	onCreateNew: () => void;
+	isConnecting: boolean;
+}
+
+const ExistingConnectionWarningBanner = ({
+	serverName,
+	onUseExisting,
+	onCreateNew,
+	isConnecting,
+}: ExistingConnectionWarningBannerProps) => (
+	<div className="flex flex-col gap-3 rounded-md bg-muted p-3">
+		<div className="flex items-start gap-3">
+			<AlertTriangle className="size-4 flex-shrink-0 text-amber-500 mt-0.5" />
+			<div className="flex-1 min-w-0">
+				<p className="text-sm font-medium text-foreground">
+					Connection already exists
+				</p>
+				<p className="text-xs text-muted-foreground mt-1">
+					A connection to {serverName} already exists. Would you like to use the
+					existing connection or create a new one?
+				</p>
+			</div>
+		</div>
+		<div className="flex gap-2">
+			<Button
+				variant="secondary"
+				size="sm"
+				className="flex-1"
+				onClick={onUseExisting}
+				disabled={isConnecting}
+			>
+				{isConnecting ? (
+					<Loader2 className="size-4 animate-spin" />
+				) : (
+					"Use existing"
+				)}
+			</Button>
+			<Button
+				variant="default"
+				size="sm"
+				className="flex-1"
+				onClick={onCreateNew}
+				disabled={isConnecting}
+			>
+				{isConnecting ? (
+					<Loader2 className="size-4 animate-spin" />
+				) : (
+					"Create new"
+				)}
+			</Button>
+		</div>
+	</div>
+);
+
 interface ConnectionButtonProps {
-	connectionStatus?: "connected" | "auth_required" | "error";
+	connectionStatus?:
+		| "connected"
+		| "auth_required"
+		| "existing_connection_warning"
+		| "error";
 	isConnecting: boolean;
 	onConnect: () => void;
 }
@@ -90,6 +158,9 @@ const ConnectionButton = ({
 					Pending authorization...
 				</Button>
 			);
+		case "existing_connection_warning":
+			// Buttons are rendered separately in ExistingConnectionWarningBanner
+			return null;
 		default:
 			return (
 				<Button
@@ -114,13 +185,21 @@ const ConnectionButton = ({
 	}
 };
 
+type OnExistingConnectionMode = "warn" | "error" | "use" | "create-new";
+
 interface ServerDisplayProps {
 	server: ServerListResponse;
 	token: string;
 	namespace?: string;
+	onExistingConnection: OnExistingConnectionMode;
 }
 
-const ServerDisplay = ({ server, token, namespace }: ServerDisplayProps) => {
+const ServerDisplay = ({
+	server,
+	token,
+	namespace,
+	onExistingConnection,
+}: ServerDisplayProps) => {
 	const queryClient = useQueryClient();
 	const [countdown, setCountdown] = useState<number | null>(null);
 
@@ -136,18 +215,33 @@ const ServerDisplay = ({ server, token, namespace }: ServerDisplayProps) => {
 		enabled: !!token,
 	});
 
+	const serverUrl =
+		server.qualifiedName.startsWith("http://") ||
+		server.qualifiedName.startsWith("https://")
+			? server.qualifiedName
+			: `https://server.smithery.ai/${server.qualifiedName}/mcp`;
+	const serverName = server.displayName || server.qualifiedName;
+
 	const {
 		mutate: connect,
 		isPending: isConnecting,
 		data: connectionData,
 		mutateAsync: connectAsync,
 	} = useMutation({
-		mutationFn: async () => {
+		mutationFn: async (
+			overrideMode?: "use" | "create-new",
+		): Promise<ConnectionStatus> => {
 			if (!token || !activeNamespace) {
 				throw new Error("Token and namespace are required");
 			}
 			const client = getSmitheryClient(token);
-			return await connectToServer(client, server, activeNamespace, token);
+			return await createConnection(
+				client,
+				activeNamespace,
+				serverUrl,
+				serverName,
+				overrideMode ?? onExistingConnection,
+			);
 		},
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ["connections"] });
@@ -155,11 +249,19 @@ const ServerDisplay = ({ server, token, namespace }: ServerDisplayProps) => {
 		onError: (error) => {
 			console.error(
 				"error connecting to server",
-				`connectionId: ${server.qualifiedName}, namespace: ${activeNamespace}`,
+				`server: ${server.qualifiedName}, namespace: ${activeNamespace}`,
 				error,
 			);
 		},
 	});
+
+	const handleUseExisting = () => {
+		connect("use");
+	};
+
+	const handleCreateNew = () => {
+		connect("create-new");
+	};
 
 	// Countdown timer for auth_required state
 	useEffect(() => {
@@ -179,28 +281,29 @@ const ServerDisplay = ({ server, token, namespace }: ServerDisplayProps) => {
 	}, [countdown]);
 
 	// Poll connection status when auth_required
+	const authConnectionId =
+		connectionData?.status === "auth_required"
+			? connectionData.connectionId
+			: null;
+
 	useEffect(() => {
-		if (
-			connectionData?.status !== "auth_required" ||
-			!token ||
-			!activeNamespace
-		) {
+		if (!authConnectionId || !token || !activeNamespace) {
 			return;
 		}
 
 		const pollInterval = setInterval(async () => {
 			try {
 				const client = getSmitheryClient(token);
-				const connectionId = generateConnectionId(token, server.qualifiedName);
 				const status = await checkConnectionStatus(
 					client,
-					connectionId,
+					authConnectionId,
 					activeNamespace,
 				);
 
 				if (status.status === "connected") {
 					// Update mutation data to trigger re-render
-					await connectAsync();
+					// Use "use" mode to reuse the existing connection we're polling
+					await connectAsync("use");
 					setCountdown(null);
 				}
 			} catch (error) {
@@ -209,13 +312,7 @@ const ServerDisplay = ({ server, token, namespace }: ServerDisplayProps) => {
 		}, 2000); // Check every 2 seconds
 
 		return () => clearInterval(pollInterval);
-	}, [
-		connectionData?.status,
-		token,
-		activeNamespace,
-		server.qualifiedName,
-		connectAsync,
-	]);
+	}, [authConnectionId, token, activeNamespace, connectAsync]);
 
 	return (
 		<div className="mt-4 p-4 border rounded-md flex flex-col gap-4">
@@ -272,9 +369,18 @@ const ServerDisplay = ({ server, token, namespace }: ServerDisplayProps) => {
 				<ConnectionButton
 					connectionStatus={connectionData?.status}
 					isConnecting={isConnecting}
-					onConnect={connect}
+					onConnect={() => connect(undefined)}
 				/>
 			</div>
+
+			{connectionData?.status === "existing_connection_warning" && (
+				<ExistingConnectionWarningBanner
+					serverName={serverName}
+					onUseExisting={handleUseExisting}
+					onCreateNew={handleCreateNew}
+					isConnecting={isConnecting}
+				/>
+			)}
 
 			{connectionData?.status === "error" && (
 				<p className="text-destructive text-sm mt-2">
@@ -299,17 +405,14 @@ const getSmitheryClient = (token: string) => {
 	});
 };
 
-function sanitizeConnectionId(str: string): string {
-	return str.replace(/[^a-zA-Z0-9_-]/g, "_");
-}
-
-function generateConnectionId(token: string, identifier: string): string {
-	return `${token.slice(-100)}__${sanitizeConnectionId(identifier)}`;
-}
-
 type ConnectionStatus =
 	| { status: "connected"; connection: Connection }
-	| { status: "auth_required"; authorizationUrl?: string }
+	| { status: "auth_required"; connectionId: string; authorizationUrl?: string }
+	| {
+			status: "existing_connection_warning";
+			existingConnectionId: string;
+			name: string;
+	  }
 	| { status: "error"; error: unknown };
 
 async function checkConnectionStatus(
@@ -344,6 +447,7 @@ async function checkConnectionStatus(
 				errorData?.data?.authorizationUrl;
 			return {
 				status: "auth_required",
+				connectionId,
 				authorizationUrl,
 			};
 		}
@@ -359,45 +463,52 @@ async function checkConnectionStatus(
 	}
 }
 
-async function connectToServer(
+async function createConnection(
 	client: Smithery,
-	server: ServerListResponse,
 	namespace: string,
-	token: string,
+	mcpUrl: string,
+	name: string,
+	onExistingConnection: OnExistingConnectionMode,
 ): Promise<ConnectionStatus> {
-	const connectionId = generateConnectionId(token, server.qualifiedName);
-	const serverUrl =
-		server.qualifiedName.startsWith("http://") ||
-		server.qualifiedName.startsWith("https://")
-			? server.qualifiedName
-			: `https://server.smithery.ai/${server.qualifiedName}/mcp`;
+	// Check for existing connection by name
+	const existingList = await client.beta.connect.connections.list(namespace, {
+		name,
+	});
+	const existing = existingList.connections[0];
 
-	console.log("checking for existing connection", connectionId);
-	// Avoid re-creating an existing connection
-	const existingConnection = await client.beta.connect.connections
-		.get(connectionId, {
-			namespace: namespace,
-		})
-		.catch(() => {
-			return null;
-		});
-	console.log("existingConnection", existingConnection);
-
-	if (existingConnection) {
-		return await checkConnectionStatus(client, connectionId, namespace);
+	if (existing) {
+		switch (onExistingConnection) {
+			case "error":
+				return {
+					status: "error",
+					error: new Error(`Connection "${name}" already exists`),
+				};
+			case "warn":
+				return {
+					status: "existing_connection_warning",
+					existingConnectionId: existing.connectionId,
+					name,
+				};
+			case "use":
+				return checkConnectionStatus(client, existing.connectionId, namespace);
+			case "create-new":
+				// Continue to create new connection
+				break;
+		}
 	}
 
-	console.log("creating connection", connectionId);
-	const connection = await client.beta.connect.connections.set(connectionId, {
-		namespace,
-		mcpUrl: serverUrl,
-		name: server.displayName || server.qualifiedName,
+	// Create new connection (API auto-generates unique ID)
+	console.log("creating connection", name);
+	const connection = await client.beta.connect.connections.create(namespace, {
+		mcpUrl,
+		name,
 	});
 	console.log("connection", connection);
 
 	if (connection.status?.state === "auth_required") {
 		return {
 			status: "auth_required",
+			connectionId: connection.connectionId,
 			authorizationUrl: connection.status?.authorizationUrl,
 		};
 	}
@@ -423,12 +534,14 @@ interface ExternalURLDisplayProps {
 	url: string;
 	token: string;
 	namespace?: string;
+	onExistingConnection: OnExistingConnectionMode;
 }
 
 const ExternalURLDisplay = ({
 	url,
 	token,
 	namespace,
+	onExistingConnection,
 }: ExternalURLDisplayProps) => {
 	const queryClient = useQueryClient();
 	const [countdown, setCountdown] = useState<number | null>(null);
@@ -450,49 +563,20 @@ const ExternalURLDisplay = ({
 		data: connectionData,
 		mutateAsync: connectAsync,
 	} = useMutation({
-		mutationFn: async () => {
+		mutationFn: async (
+			overrideMode?: "use" | "create-new",
+		): Promise<ConnectionStatus> => {
 			if (!token || !activeNamespace) {
 				throw new Error("Token and namespace are required");
 			}
 			const client = getSmitheryClient(token);
-			const connectionId = generateConnectionId(token, url);
-
-			// Check for existing connection
-			const existingConnection = await client.beta.connect.connections
-				.get(connectionId, {
-					namespace: activeNamespace,
-				})
-				.catch(() => null);
-
-			if (existingConnection) {
-				return await checkConnectionStatus(
-					client,
-					connectionId,
-					activeNamespace,
-				);
-			}
-
-			// Create new connection
-			const connection = await client.beta.connect.connections.set(
-				connectionId,
-				{
-					namespace: activeNamespace,
-					mcpUrl: url,
-					name: url,
-				},
+			return await createConnection(
+				client,
+				activeNamespace,
+				url,
+				url,
+				overrideMode ?? onExistingConnection,
 			);
-
-			if (connection.status?.state === "auth_required") {
-				return {
-					status: "auth_required" as const,
-					authorizationUrl: connection.status?.authorizationUrl,
-				};
-			}
-
-			return {
-				status: "connected" as const,
-				connection,
-			};
 		},
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ["connections"] });
@@ -501,6 +585,14 @@ const ExternalURLDisplay = ({
 			console.error("error connecting to external URL", error);
 		},
 	});
+
+	const handleUseExisting = () => {
+		connect("use");
+	};
+
+	const handleCreateNew = () => {
+		connect("create-new");
+	};
 
 	// Countdown timer for auth_required state
 	useEffect(() => {
@@ -531,28 +623,29 @@ const ExternalURLDisplay = ({
 	}, [connectionData, countdown]);
 
 	// Poll connection status when auth_required
+	const authConnectionId =
+		connectionData?.status === "auth_required"
+			? connectionData.connectionId
+			: null;
+
 	useEffect(() => {
-		if (
-			connectionData?.status !== "auth_required" ||
-			!token ||
-			!activeNamespace
-		) {
+		if (!authConnectionId || !token || !activeNamespace) {
 			return;
 		}
 
 		const pollInterval = setInterval(async () => {
 			try {
 				const client = getSmitheryClient(token);
-				const connectionId = generateConnectionId(token, url);
 				const status = await checkConnectionStatus(
 					client,
-					connectionId,
+					authConnectionId,
 					activeNamespace,
 				);
 
 				if (status.status === "connected") {
 					// Update mutation data to trigger re-render
-					await connectAsync();
+					// Use "use" mode to reuse the existing connection we're polling
+					await connectAsync("use");
 					setCountdown(null);
 				}
 			} catch (error) {
@@ -561,7 +654,7 @@ const ExternalURLDisplay = ({
 		}, 2000); // Check every 2 seconds
 
 		return () => clearInterval(pollInterval);
-	}, [connectionData?.status, token, activeNamespace, url, connectAsync]);
+	}, [authConnectionId, token, activeNamespace, connectAsync]);
 
 	return (
 		<div className="mt-4 p-4 border rounded-md flex flex-col gap-4">
@@ -589,9 +682,18 @@ const ExternalURLDisplay = ({
 				<ConnectionButton
 					connectionStatus={connectionData?.status}
 					isConnecting={isConnecting}
-					onConnect={connect}
+					onConnect={() => connect(undefined)}
 				/>
 			</div>
+
+			{connectionData?.status === "existing_connection_warning" && (
+				<ExistingConnectionWarningBanner
+					serverName={url}
+					onUseExisting={handleUseExisting}
+					onCreateNew={handleCreateNew}
+					isConnecting={isConnecting}
+				/>
+			)}
 
 			{connectionData?.status === "error" && (
 				<p className="text-destructive text-sm mt-2">
@@ -605,9 +707,11 @@ const ExternalURLDisplay = ({
 export const ServerSearch = ({
 	token,
 	namespace,
+	onExistingConnection = "warn",
 }: {
 	token?: string;
 	namespace?: string;
+	onExistingConnection?: OnExistingConnectionMode;
 }) => {
 	const [query, setQuery] = useState("");
 	const [selectedServer, setSelectedServer] =
@@ -665,11 +769,13 @@ export const ServerSearch = ({
 				itemToStringLabel={(server) =>
 					server.displayName || server.qualifiedName
 				}
+				defaultOpen={true}
 			>
 				<ComboboxInput
 					placeholder="Search for a server or paste MCP URL..."
 					disabled={!token}
 					onKeyDown={handleKeyDown}
+					autoFocus={true}
 				/>
 				<ComboboxContent side="bottom" align="start">
 					{isUrl ? (
@@ -746,11 +852,16 @@ export const ServerSearch = ({
 					server={selectedServer}
 					token={token}
 					namespace={namespace}
+					onExistingConnection={onExistingConnection}
 				/>
 			)}
 
 			{selectedExternalUrl && token && (
-				<ExternalURLDisplay url={selectedExternalUrl} token={token} />
+				<ExternalURLDisplay
+					url={selectedExternalUrl}
+					token={token}
+					onExistingConnection={onExistingConnection}
+				/>
 			)}
 		</div>
 	);
