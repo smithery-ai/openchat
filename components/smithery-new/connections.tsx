@@ -6,7 +6,7 @@ import { SmitheryTransport } from "@smithery/api/mcp";
 import type { Connection } from "@smithery/api/resources/beta/connect/connections.mjs";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ToolExecutionOptions } from "ai";
-import { Plus, RefreshCw, Trash2, X } from "lucide-react";
+import { ExternalLink, Plus, RefreshCw, Trash2, X } from "lucide-react";
 import { createContext, useContext, useEffect, useState } from "react";
 
 // Context for connection config - consumed by ToolDetailDialog for code generation
@@ -25,6 +25,7 @@ export function useConnectionConfig() {
 
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Card, CardContent } from "../ui/card";
 import { Separator } from "../ui/separator";
@@ -311,16 +312,60 @@ const ActiveConnection = ({
 				)}
 				{data && (
 					<div className="border-b p-6">
-						<h1 className="text-xl font-semibold mb-3">{data.name}</h1>
-						<div className="space-y-1 text-sm text-muted-foreground">
-							<p>ID: {data.connectionId}</p>
-							<p>
-								Created: {new Date(data.createdAt || "").toLocaleDateString()}{" "}
-								{new Date(data.createdAt || "").toLocaleTimeString()}
-							</p>
-							{data.metadata && (
-								<p>Metadata: {JSON.stringify(data.metadata)}</p>
-							)}
+						<div className="flex items-start gap-4">
+							<Avatar className="h-14 w-14 rounded-lg">
+								<AvatarImage src={data.iconUrl || ""} />
+								<AvatarFallback className="rounded-lg bg-muted text-lg">
+									{data.name?.charAt(0)}
+								</AvatarFallback>
+							</Avatar>
+							<div className="flex-1 min-w-0">
+								<div className="flex items-center gap-3 mb-1">
+									<h1 className="text-xl font-semibold">{data.serverInfo?.title ?? data.serverInfo?.name ?? data.name}</h1>
+									<Badge
+										variant={
+											data.status?.state === "connected"
+												? "default"
+												: "secondary"
+										}
+										className={cn(
+											"text-xs",
+											data.status?.state === "connected" &&
+												"bg-green-500/15 text-green-600 hover:bg-green-500/20",
+										)}
+									>
+										{data.status?.state || "unknown"}
+									</Badge>
+									{data.serverInfo?.version && (
+										<span className="text-xs text-muted-foreground">
+											v{data.serverInfo.version}
+										</span>
+									)}
+								</div>
+								{data.serverInfo?.description && (
+									<p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+										{data.serverInfo.description}
+									</p>
+								)}
+								<div className="flex items-center gap-4 text-xs text-muted-foreground">
+									<span className="text-xs text-muted-foreground">Connection ID: {data.connectionId}</span>
+									<span>
+										Created{" "}
+										{new Date(data.createdAt || "").toLocaleDateString()}
+									</span>
+									{data.serverInfo?.websiteUrl && (
+										<a
+											href={data.serverInfo.websiteUrl}
+											target="_blank"
+											rel="noopener noreferrer"
+											className="inline-flex items-center gap-1 text-primary hover:underline"
+										>
+											<ExternalLink className="h-3 w-3" />
+											View on Smithery
+										</a>
+									)}
+								</div>
+							</div>
 						</div>
 					</div>
 				)}
