@@ -21,7 +21,11 @@ import {
 	Field,
 	FieldDescription,
 	FieldError,
+	FieldGroup,
 	FieldLabel,
+	FieldLegend,
+	FieldSeparator,
+	FieldSet,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import {
@@ -216,43 +220,78 @@ console.log(result);`;
 				<div className="flex-1 overflow-hidden grid grid-cols-1 md:grid-cols-5 gap-6 min-h-0">
 					{/* Left Panel - Parameters */}
 					<div className="md:col-span-2 overflow-auto pr-2">
-						<form
-							id="tool-form"
-							onSubmit={handleSubmit(handleExecuteSubmit)}
-							className="space-y-4"
-						>
+						<form id="tool-form" onSubmit={handleSubmit(handleExecuteSubmit)}>
 							{hasParameters ? (
-								Object.entries(properties).map(([fieldName, property]) => {
-									const isRequired = requiredFields.includes(fieldName);
-									return (
-										<Field key={fieldName}>
-											<FieldLabel htmlFor={fieldName}>
-												{fieldName}
-												{isRequired && (
-													<span className="text-destructive ml-1">*</span>
-												)}
-											</FieldLabel>
-											{property.description && (
-												<FieldDescription>
-													{property.description}
-												</FieldDescription>
-											)}
-											{renderField(
-												fieldName,
-												property,
-												register,
-												setValue,
-												watch,
-												isRequired,
-											)}
-											<FieldError
-												errors={
-													errors[fieldName] ? [errors[fieldName]] : undefined
-												}
-											/>
-										</Field>
+								(() => {
+									const requiredEntries = Object.entries(properties).filter(
+										([fieldName]) => requiredFields.includes(fieldName),
 									);
-								})
+									const optionalEntries = Object.entries(properties).filter(
+										([fieldName]) => !requiredFields.includes(fieldName),
+									);
+
+									const renderFieldSet = (
+										entries: Array<[string, JSONSchemaProperty]>,
+										isRequired: boolean,
+										label: string,
+									) => {
+										if (entries.length === 0) return null;
+
+										return (
+											<FieldSet>
+												<FieldLegend>{label}</FieldLegend>
+												<FieldGroup>
+													{entries.map(([fieldName, property]) => (
+														<Field key={fieldName}>
+															<FieldLabel htmlFor={fieldName}>
+																{fieldName}
+															</FieldLabel>
+															{renderField(
+																fieldName,
+																property,
+																register,
+																setValue,
+																watch,
+																isRequired,
+															)}
+															{property.description && (
+																<FieldDescription>
+																	{property.description}
+																</FieldDescription>
+															)}
+															<FieldError
+																errors={
+																	errors[fieldName]
+																		? [errors[fieldName]]
+																		: undefined
+																}
+															/>
+														</Field>
+													))}
+												</FieldGroup>
+											</FieldSet>
+										);
+									};
+
+									const requiredSection = renderFieldSet(
+										requiredEntries,
+										true,
+										"Required",
+									);
+									const optionalSection = renderFieldSet(
+										optionalEntries,
+										false,
+										"Optional",
+									);
+
+									return (
+										<FieldGroup>
+											{requiredSection}
+											{requiredSection && optionalSection && <FieldSeparator />}
+											{optionalSection}
+										</FieldGroup>
+									);
+								})()
 							) : (
 								<p className="text-sm text-muted-foreground">
 									This tool has no parameters.
@@ -360,10 +399,10 @@ function renderField(
 				value={currentValue as string}
 				onValueChange={(value) => setValue(name, value)}
 			>
-				<SelectTrigger id={name}>
+				<SelectTrigger className="w-full" id={name}>
 					<SelectValue placeholder="Select an option" />
 				</SelectTrigger>
-				<SelectContent>
+				<SelectContent className="w-full">
 					{property.enum.map((option) => (
 						<SelectItem key={option} value={option}>
 							{option}
