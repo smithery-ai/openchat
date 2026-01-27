@@ -1,7 +1,6 @@
 "use client";
 
 import type { Tool } from "ai";
-import { Check, Copy } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { estimateTokenCount } from "tokenx";
@@ -40,6 +39,7 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useConnectionConfig } from "@/components/smithery/connection-context";
+import { ToolOutputViewer } from "@/components/smithery/tool-output-viewer";
 
 interface JSONSchema {
 	type?: string;
@@ -78,7 +78,6 @@ export function ToolDetailDialog({
 	const [result, setResult] = useState<unknown>(null);
 	const [error, setError] = useState<string | null>(null);
 	const [executedAt, setExecutedAt] = useState<Date | null>(null);
-	const [copied, setCopied] = useState(false);
 	const [activeTab, setActiveTab] = useState("code");
 	const [estimatedTokens, setEstimatedTokens] = useState<number | null>(null);
 	const [latency, setLatency] = useState<number | null>(null);
@@ -189,17 +188,6 @@ export function ToolDetailDialog({
 			setError(err instanceof Error ? err.message : "An error occurred");
 		} finally {
 			setIsExecuting(false);
-		}
-	};
-
-	const handleCopyResult = async () => {
-		if (!result) return;
-		try {
-			await navigator.clipboard.writeText(JSON.stringify(result, null, 2));
-			setCopied(true);
-			setTimeout(() => setCopied(false), 2000);
-		} catch (err) {
-			console.error("Failed to copy:", err);
 		}
 	};
 
@@ -401,23 +389,7 @@ export function ToolDetailDialog({
 										{error}
 									</div>
 								) : result ? (
-									<div className="relative">
-										<pre className="rounded-md bg-muted p-4 text-sm overflow-auto max-h-full">
-											<code>{JSON.stringify(result, null, 2)}</code>
-										</pre>
-										<Button
-											variant="ghost"
-											size="icon"
-											className="absolute top-2 right-2 h-7 w-7"
-											onClick={handleCopyResult}
-										>
-											{copied ? (
-												<Check className="h-3.5 w-3.5" />
-											) : (
-												<Copy className="h-3.5 w-3.5" />
-											)}
-										</Button>
-									</div>
+									<ToolOutputViewer result={result} />
 								) : (
 									<div className="flex items-center justify-center h-full text-muted-foreground text-sm">
 										Execute the tool to see output
