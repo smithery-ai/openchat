@@ -763,7 +763,11 @@ export const ServerSearch = ({
 				value={selectedServer}
 				onValueChange={(server) => {
 					setSelectedServer(server);
-					setSelectedExternalUrl(null);
+					// Only clear external URL when a server is actually selected
+					// (not when combobox fires null from closing without selection)
+					if (server) {
+						setSelectedExternalUrl(null);
+					}
 				}}
 				onInputValueChange={(value) => setQuery(value)}
 				itemToStringLabel={(server) =>
