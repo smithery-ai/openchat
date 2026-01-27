@@ -221,7 +221,70 @@ export function ChatBlock({ token, namespace }: ChatBlockProps) {
 										</EmptyDescription>
 									</EmptyHeader>
 									<EmptyContent>
-										<div className="flex-row gap-4 justify-center w-full">
+										{connections.length > 0 ? <ActToolApproval
+											prompt={"send an email to ani+test@smithery.ai saying 'Hello from chatbot'"}
+											configId={connections[0].connectionId}
+											initialConnectionIds={connections.map((connection) => connection.connectionId)}
+											apiKey={token}
+											onExecute={(prompt, connectionIds, result) => {
+												console.log("Action executed", {
+													prompt,
+													connectionIds,
+												});
+												// Add tool output to notify AI SDK
+												addToolOutput({
+													tool: "act",
+													toolCallId: "123",
+													output: {
+														status: "executed",
+														prompt,
+														connectionIds,
+														result,
+													},
+												});
+												// Continue the conversation
+												submitMessage(
+													{
+														text: "",
+														files: [],
+													},
+													{ connections },
+												);
+											}}
+											onReject={() => {
+												console.log("Action rejected", {
+													toolCallId: "123",
+												});
+												// Add tool output to notify AI SDK
+												addToolOutput({
+													tool: "act",
+													toolCallId: "123",
+													output: {
+														status: "rejected",
+													},
+												});
+												// Continue the conversation
+												submitMessage(
+													{
+														text: "",
+														files: [],
+													},
+													{ connections },
+												);
+											}}
+										/> : <div className="flex-row gap-4 justify-center w-full">
+											<p>No connections found. Please add a connection to continue.</p>
+											<ServerSearch
+												hideSearchAfterConnect={true}
+												query={""}
+												namespace={namespace}
+												token={token}
+												onServerConnect={(connection) => {
+													setConnections([...connections, connection]);
+												}}
+											/>
+										</div>}
+										{/* <div className="flex-row gap-4 justify-center w-full">
 											{emptyStateCards.map((card, _idx) => (
 												<Card
 													key={card.title}
@@ -241,7 +304,7 @@ export function ChatBlock({ token, namespace }: ChatBlockProps) {
 													</CardHeader>
 												</Card>
 											))}
-										</div>
+										</div> */}
 									</EmptyContent>
 								</Empty>
 							</div>
