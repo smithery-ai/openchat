@@ -10,7 +10,7 @@ function getSmitheryClient(apiKey?: string | null) {
 	if (!keyToUse) {
 		throw new Error("Smithery API key not configured");
 	}
-	return new Smithery({ apiKey: keyToUse });
+	return new Smithery({ apiKey: keyToUse, baseURL: process.env.NEXT_PUBLIC_SMITHERY_API_URL });
 }
 
 // Helper to get default namespace
@@ -348,7 +348,7 @@ export const validateSmitheryApiKey = async (
 		}
 
 		// Validate by making lightweight API call
-		const client = new Smithery({ apiKey: keyToValidate });
+		const client = new Smithery({ apiKey: keyToValidate, baseURL: process.env.NEXT_PUBLIC_SMITHERY_API_URL });
 		await client.namespaces.list();
 		return { isValid: true };
 	} catch (error) {

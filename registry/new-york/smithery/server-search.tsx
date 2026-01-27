@@ -403,6 +403,7 @@ async function getDefaultNamespace(client: Smithery) {
 const getSmitheryClient = (token: string) => {
 	return new Smithery({
 		apiKey: token,
+		baseURL: process.env.NEXT_PUBLIC_SMITHERY_API_URL,
 	});
 };
 
