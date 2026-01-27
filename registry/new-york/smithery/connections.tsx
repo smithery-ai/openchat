@@ -137,11 +137,11 @@ const ConnectionsListInner = ({
 	const { data, isLoading, error, refetch, isFetching } = useQuery({
 		queryKey: ["connections", token],
 		queryFn: async () => {
+			if (!namespace) throw new Error("Namespace required");
 			const client = getSmitheryClient(token);
-			const { connections } = await client.beta.connect.connections.list(
-				namespace!,
-			);
-			return { connections, namespace: namespace! };
+			const { connections } =
+				await client.beta.connect.connections.list(namespace);
+			return { connections, namespace };
 		},
 		enabled: !!token && !!namespace,
 	});
@@ -252,11 +252,12 @@ const ActiveConnection = ({
 	const { data, isLoading, error } = useQuery({
 		queryKey: ["connection", connectionId, token, namespace],
 		queryFn: async () => {
+			if (!namespace) throw new Error("Namespace required");
 			const client = getSmitheryClient(token);
 			const data = await client.beta.connect.connections.get(connectionId, {
-				namespace: namespace!,
+				namespace,
 			});
-			return { namespace: namespace!, ...data };
+			return { namespace, ...data };
 		},
 		enabled: !!namespace,
 		// Poll every 2 seconds when auth_required, stop when connected or error
@@ -312,10 +313,11 @@ const ActiveConnection = ({
 	const clientQuery = useQuery({
 		queryKey: ["mcp-client", token, connectionId, namespace],
 		queryFn: async () => {
+			if (!namespace) throw new Error("Namespace required");
 			const { transport } = await createConnection({
 				client: getSmitheryClient(token),
 				connectionId: connectionId,
-				namespace: namespace!,
+				namespace,
 			});
 			const mcpClient = await createMCPClient({ transport });
 			return mcpClient;

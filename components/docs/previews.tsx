@@ -553,13 +553,13 @@ function ToolDetailDialogInner({
 					</Select>
 					<Button onClick={() => setDialogOpen(true)}>Open Dialog</Button>
 				</div>
-				{firstTool && (
+				{firstTool && firstToolName && (
 					<ToolDetailDialog
 						open={dialogOpen}
 						onOpenChange={setDialogOpen}
-						name={firstToolName!}
+						name={firstToolName}
 						tool={firstTool}
-						onExecute={(params) => handleExecute(firstToolName!, params)}
+						onExecute={(params) => handleExecute(firstToolName, params)}
 					/>
 				)}
 			</div>
