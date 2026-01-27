@@ -31,7 +31,7 @@ export async function createToken({
 					userId,
 				},
 			},
-			mcp: {
+			rpc: {
 				actions: ["read", "write"],
 				namespaces: [namespace],
 				metadata: {

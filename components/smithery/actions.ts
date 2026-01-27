@@ -109,7 +109,7 @@ export const enableServer = async (
 
 	// Verify auth by calling tools/list
 	try {
-		await client.beta.connect.mcp.call(connectionId, {
+		await client.beta.connect.rpc.call(connectionId, {
 			namespace,
 			jsonrpc: "2.0",
 			method: "tools/list",
@@ -190,7 +190,7 @@ export const checkConnection = async (
 
 	// Check auth by calling tools/list
 	try {
-		await client.beta.connect.mcp.call(connectionId, {
+		await client.beta.connect.rpc.call(connectionId, {
 			namespace,
 			jsonrpc: "2.0",
 			method: "tools/list",
@@ -211,7 +211,7 @@ export const testConnection = async (
 ) => {
 	try {
 		const client = getSmitheryClient(apiKey);
-		const response = await client.beta.connect.mcp.call(connectionId, {
+		const response = await client.beta.connect.rpc.call(connectionId, {
 			namespace: namespace,
 			jsonrpc: "2.0",
 			method: "tools/list",
@@ -259,7 +259,7 @@ export const planAction = async (
 	// Get tools from all connections
 	const toolsWithConfigs = await Promise.all(
 		serverConfigs.map(async (config) => {
-			const response = await client.beta.connect.mcp.call(config.configId, {
+			const response = await client.beta.connect.rpc.call(config.configId, {
 				namespace,
 				jsonrpc: "2.0",
 				method: "tools/list",
@@ -327,7 +327,7 @@ export const runTool = async (
 	apiKey?: string | null,
 ) => {
 	const client = getSmitheryClient(apiKey);
-	const response = await client.beta.connect.mcp.call(configId, {
+	const response = await client.beta.connect.rpc.call(configId, {
 		namespace: namespace,
 		jsonrpc: "2.0",
 		method: "tools/call",

@@ -2,7 +2,7 @@
 
 import { createMCPClient } from "@ai-sdk/mcp";
 import Smithery from "@smithery/api";
-import { createConnection } from "@smithery/api/mcp";
+import { SmitheryTransport } from "@smithery/api/mcp";
 import type { Connection } from "@smithery/api/resources/beta/connect/connections.mjs";
 import { useQuery } from "@tanstack/react-query";
 import type { Tool, ToolExecutionOptions } from "ai";
@@ -65,7 +65,7 @@ function useConnectionTools(
 				throw new Error("Token and connection required");
 			const namespaceToUse =
 				namespace || (await getDefaultNamespace(getSmitheryClient(token)));
-			const { transport } = await createConnection({
+			const transport = new SmitheryTransport({
 				client: getSmitheryClient(token),
 				connectionId,
 				namespace: namespaceToUse,
