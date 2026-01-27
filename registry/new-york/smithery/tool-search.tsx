@@ -12,6 +12,7 @@ import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Spinner } from "@/components/ui/spinner";
+import { WithQueryClient } from "@/registry/new-york/smithery/query-client-wrapper";
 import { ServerSearch } from "@/registry/new-york/smithery/server-search";
 
 async function getDefaultNamespace(client: Smithery) {
@@ -71,7 +72,7 @@ const ToolCard = ({ tool }: ToolCardProps) => {
 	);
 };
 
-export const ToolSearch = ({ token }: { token?: string }) => {
+const ToolSearchInner = ({ token }: { token?: string }) => {
 	const [query, setQuery] = useState("");
 	const debouncedQuery = useDebounce(query, 300);
 
@@ -164,3 +165,9 @@ export const ToolSearch = ({ token }: { token?: string }) => {
 		</div>
 	);
 };
+
+export const ToolSearch = (props: { token?: string }) => (
+	<WithQueryClient>
+		<ToolSearchInner {...props} />
+	</WithQueryClient>
+);

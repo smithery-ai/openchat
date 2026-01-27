@@ -1,7 +1,8 @@
 "use client";
 
 import type { CreateTokenResponse } from "@smithery/api/resources/tokens.mjs";
-import { useAtom } from "jotai";
+import { atom, useAtom } from "jotai";
+import { atomWithStorage } from "jotai/utils";
 import { Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -19,7 +20,13 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { tokensCreatedAtom, selectedTokenAtom } from "@/lib/atoms";
+
+// Jotai atoms for token state management
+export const tokensCreatedAtom = atomWithStorage<CreateTokenResponse[]>(
+	"tokensCreated",
+	[],
+);
+export const selectedTokenAtom = atom<CreateTokenResponse | null>(null);
 
 export function Tokens({
 	initialTokenResponse,

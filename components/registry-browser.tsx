@@ -3,7 +3,7 @@
 import type { CreateTokenResponse } from "@smithery/api/resources/tokens.mjs";
 import { useAtomValue } from "jotai";
 import { useState } from "react";
-import { selectedTokenAtom } from "@/lib/atoms";
+import { selectedTokenAtom } from "@/registry/new-york/smithery/tokens";
 import { Connections } from "@/registry/new-york/smithery/connections";
 import { ServerSearch } from "@/registry/new-york/smithery/server-search";
 import { ToolSearch } from "@/registry/new-york/smithery/tool-search";

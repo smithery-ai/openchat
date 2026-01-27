@@ -66,10 +66,14 @@
 				"select",
 				"switch",
 				"tabs",
-				"textarea",
-				"smithery-connection-context"
+				"textarea"
 			],
 			"files": [
+				{
+					"path": "registry/new-york/smithery/connection-context.tsx",
+					"type": "registry:component",
+					"target": "components/smithery/connection-context.tsx"
+				},
 				{
 					"path": "registry/new-york/smithery/code-block.tsx",
 					"type": "registry:component",
@@ -87,13 +91,35 @@
 			"type": "registry:block",
 			"title": "Smithery Tool Card",
 			"description": "A card component for displaying MCP tool information with click-to-open detail dialog.",
-			"dependencies": ["ai", "lucide-react"],
+			"dependencies": ["ai", "lucide-react", "react-hook-form", "tokenx", "shiki"],
 			"registryDependencies": [
 				"badge",
+				"button",
 				"card",
-				"smithery-tool-detail-dialog"
+				"dialog",
+				"field",
+				"input",
+				"select",
+				"switch",
+				"tabs",
+				"textarea"
 			],
 			"files": [
+				{
+					"path": "registry/new-york/smithery/connection-context.tsx",
+					"type": "registry:component",
+					"target": "components/smithery/connection-context.tsx"
+				},
+				{
+					"path": "registry/new-york/smithery/code-block.tsx",
+					"type": "registry:component",
+					"target": "components/smithery/code-block.tsx"
+				},
+				{
+					"path": "registry/new-york/smithery/tool-detail-dialog.tsx",
+					"type": "registry:component",
+					"target": "components/smithery/tool-detail-dialog.tsx"
+				},
 				{
 					"path": "registry/new-york/smithery/tool-card.tsx",
 					"type": "registry:component",
@@ -106,9 +132,40 @@
 			"type": "registry:block",
 			"title": "Smithery Tools Panel",
 			"description": "A panel component for browsing and searching tools from connected MCP servers.",
-			"dependencies": ["ai", "lucide-react"],
-			"registryDependencies": ["field", "input", "smithery-tool-card"],
+			"dependencies": ["ai", "lucide-react", "react-hook-form", "tokenx", "shiki"],
+			"registryDependencies": [
+				"badge",
+				"button",
+				"card",
+				"dialog",
+				"field",
+				"input",
+				"select",
+				"switch",
+				"tabs",
+				"textarea"
+			],
 			"files": [
+				{
+					"path": "registry/new-york/smithery/connection-context.tsx",
+					"type": "registry:component",
+					"target": "components/smithery/connection-context.tsx"
+				},
+				{
+					"path": "registry/new-york/smithery/code-block.tsx",
+					"type": "registry:component",
+					"target": "components/smithery/code-block.tsx"
+				},
+				{
+					"path": "registry/new-york/smithery/tool-detail-dialog.tsx",
+					"type": "registry:component",
+					"target": "components/smithery/tool-detail-dialog.tsx"
+				},
+				{
+					"path": "registry/new-york/smithery/tool-card.tsx",
+					"type": "registry:component",
+					"target": "components/smithery/tool-card.tsx"
+				},
 				{
 					"path": "registry/new-york/smithery/tools-panel.tsx",
 					"type": "registry:component",
@@ -126,19 +183,69 @@
 				"@smithery/api",
 				"@tanstack/react-query",
 				"ai",
-				"lucide-react"
+				"lucide-react",
+				"react-hook-form",
+				"tokenx",
+				"shiki"
 			],
 			"registryDependencies": [
 				"avatar",
+				"badge",
 				"button",
 				"card",
+				"combobox",
+				"dialog",
+				"field",
+				"input",
+				"item",
+				"select",
 				"separator",
-				"toggle",
-				"smithery-connection-context",
-				"smithery-server-search",
-				"smithery-tools-panel"
+				"switch",
+				"tabs",
+				"textarea",
+				"toggle"
 			],
 			"files": [
+				{
+					"path": "registry/new-york/hooks/use-debounce.ts",
+					"type": "registry:hook",
+					"target": "hooks/use-debounce.ts"
+				},
+				{
+					"path": "registry/new-york/smithery/query-client-wrapper.tsx",
+					"type": "registry:component",
+					"target": "components/smithery/query-client-wrapper.tsx"
+				},
+				{
+					"path": "registry/new-york/smithery/connection-context.tsx",
+					"type": "registry:component",
+					"target": "components/smithery/connection-context.tsx"
+				},
+				{
+					"path": "registry/new-york/smithery/code-block.tsx",
+					"type": "registry:component",
+					"target": "components/smithery/code-block.tsx"
+				},
+				{
+					"path": "registry/new-york/smithery/tool-detail-dialog.tsx",
+					"type": "registry:component",
+					"target": "components/smithery/tool-detail-dialog.tsx"
+				},
+				{
+					"path": "registry/new-york/smithery/tool-card.tsx",
+					"type": "registry:component",
+					"target": "components/smithery/tool-card.tsx"
+				},
+				{
+					"path": "registry/new-york/smithery/tools-panel.tsx",
+					"type": "registry:component",
+					"target": "components/smithery/tools-panel.tsx"
+				},
+				{
+					"path": "registry/new-york/smithery/server-search.tsx",
+					"type": "registry:component",
+					"target": "components/smithery/server-search.tsx"
+				},
 				{
 					"path": "registry/new-york/smithery/connections.tsx",
 					"type": "registry:component",
@@ -156,8 +263,18 @@
 				"@tanstack/react-query",
 				"lucide-react"
 			],
-			"registryDependencies": ["avatar", "button", "combobox", "item", "use-debounce"],
+			"registryDependencies": ["avatar", "button", "combobox", "item"],
 			"files": [
+				{
+					"path": "registry/new-york/hooks/use-debounce.ts",
+					"type": "registry:hook",
+					"target": "hooks/use-debounce.ts"
+				},
+				{
+					"path": "registry/new-york/smithery/query-client-wrapper.tsx",
+					"type": "registry:component",
+					"target": "components/smithery/query-client-wrapper.tsx"
+				},
 				{
 					"path": "registry/new-york/smithery/server-search.tsx",
 					"type": "registry:component",
@@ -192,15 +309,31 @@
 			],
 			"registryDependencies": [
 				"avatar",
+				"button",
 				"card",
+				"combobox",
 				"empty",
 				"input",
+				"item",
 				"separator",
-				"spinner",
-				"use-debounce",
-				"smithery-server-search"
+				"spinner"
 			],
 			"files": [
+				{
+					"path": "registry/new-york/hooks/use-debounce.ts",
+					"type": "registry:hook",
+					"target": "hooks/use-debounce.ts"
+				},
+				{
+					"path": "registry/new-york/smithery/query-client-wrapper.tsx",
+					"type": "registry:component",
+					"target": "components/smithery/query-client-wrapper.tsx"
+				},
+				{
+					"path": "registry/new-york/smithery/server-search.tsx",
+					"type": "registry:component",
+					"target": "components/smithery/server-search.tsx"
+				},
 				{
 					"path": "registry/new-york/smithery/tool-search.tsx",
 					"type": "registry:component",
@@ -244,6 +377,11 @@
 				"toggle"
 			],
 			"files": [
+				{
+					"path": "registry/new-york/smithery/query-client-wrapper.tsx",
+					"type": "registry:component",
+					"target": "components/smithery/query-client-wrapper.tsx"
+				},
 				{
 					"path": "registry/new-york/smithery/connection-context.tsx",
 					"type": "registry:component",

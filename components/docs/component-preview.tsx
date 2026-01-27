@@ -10,7 +10,7 @@ import type { Tool, ToolExecutionOptions } from "ai";
 import { useAtomValue } from "jotai";
 import { AlertCircle } from "lucide-react";
 import { useState } from "react";
-import { selectedTokenAtom } from "@/lib/atoms";
+import { selectedTokenAtom } from "@/registry/new-york/smithery/tokens";
 import { ConnectionConfigContext } from "@/registry/new-york/smithery/connection-context";
 import { Spinner } from "@/components/ui/spinner";
 import {
