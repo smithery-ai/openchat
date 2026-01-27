@@ -1,6 +1,11 @@
 "use client";
 
-import Smithery, { AuthenticationError } from "@smithery/api";
+import { createMCPClient } from "@ai-sdk/mcp";
+import Smithery from "@smithery/api";
+import {
+	createConnection,
+	SmitheryAuthorizationError,
+} from "@smithery/api/mcp";
 import type { Connection } from "@smithery/api/resources/beta/connect/connections.mjs";
 import type { ServerListResponse } from "@smithery/api/resources/servers/servers.mjs";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -236,7 +241,7 @@ const ServerDisplay = ({
 				throw new Error("Token and namespace are required");
 			}
 			const client = getSmitheryClient(token);
-			return await createConnection(
+			return await getOrCreateConnection(
 				client,
 				activeNamespace,
 				serverUrl,
@@ -424,12 +429,15 @@ async function checkConnectionStatus(
 	namespace: string,
 ): Promise<ConnectionStatus> {
 	try {
-		const jsonRpcResponse = await client.beta.connect.mcp.call(connectionId, {
+		const { transport } = await createConnection({
+			client,
+			connectionId,
 			namespace,
-			jsonrpc: "2.0",
-			method: "tools/list",
 		});
-		console.log("jsonRpcResponse", jsonRpcResponse);
+		const mcpClient = await createMCPClient({ transport });
+
+		const tools = await mcpClient.tools();
+		console.log("tools list", tools);
 
 		const connection = await client.beta.connect.connections.get(connectionId, {
 			namespace: namespace,
@@ -440,14 +448,13 @@ async function checkConnectionStatus(
 			connection,
 		};
 	} catch (error) {
-		if (error instanceof AuthenticationError) {
-			const errorData = error.error as unknown as {
-				error?: { data?: { authorizationUrl?: string } };
-				data?: { authorizationUrl?: string };
-			};
-			const authorizationUrl =
-				errorData?.error?.data?.authorizationUrl ||
-				errorData?.data?.authorizationUrl;
+		if (error instanceof SmitheryAuthorizationError) {
+			const authorizationUrl = error.authorizationUrl;
+			console.log("connection requires authorization", {
+				connectionId,
+				namespace,
+				authorizationUrl,
+			});
 			return {
 				status: "auth_required",
 				connectionId,
@@ -466,7 +473,7 @@ async function checkConnectionStatus(
 	}
 }
 
-async function createConnection(
+async function getOrCreateConnection(
 	client: Smithery,
 	namespace: string,
 	mcpUrl: string,
@@ -515,6 +522,8 @@ async function createConnection(
 			authorizationUrl: connection.status?.authorizationUrl,
 		};
 	}
+
+	console.log("established connection", connection.status?.state, connection);
 
 	return {
 		status: "connected",
@@ -570,7 +579,7 @@ const ExternalURLDisplay = ({
 				throw new Error("Token and namespace are required");
 			}
 			const client = getSmitheryClient(token);
-			return await createConnection(
+			return await getOrCreateConnection(
 				client,
 				activeNamespace,
 				url,
