@@ -557,9 +557,6 @@ function generateToolExecuteCode(
 	config: ConnectionConfig | null,
 ): string {
 	const mcpUrl = config?.mcpUrl || "process.env.MCP_URL";
-	const apiKey = config?.apiKey
-		? `"${config.apiKey}"`
-		: "process.env.SMITHERY_API_KEY";
 	const namespace = config?.namespace
 		? `"${config.namespace}"`
 		: "process.env.SMITHERY_NAMESPACE";
@@ -574,10 +571,10 @@ import { SmitheryTransport } from '@smithery/api/mcp';
 const mcpUrl = "${mcpUrl}";
 const namespace = ${namespace};
 const connectionId = ${connectionId};
-const apiKey = ${apiKey};
+const apiKey = process.env.SMITHERY_API_KEY;
 
 const transport = new SmitheryTransport({
-  client: new Smithery({ apiKey, baseURL: process.env.NEXT_PUBLIC_SMITHERY_API_URL }),
+  client: new Smithery({ apiKey }),
   connectionId, // Leave empty to create a new connection
   namespace,
 });
