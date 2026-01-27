@@ -1,7 +1,10 @@
 "use client";
 
 import { Download, FileText } from "lucide-react";
-import { CodeBlock, CodeBlockCopyButton } from "@/components/smithery/code-block";
+import {
+	CodeBlock,
+	CodeBlockCopyButton,
+} from "@/components/smithery/code-block";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -29,7 +32,11 @@ interface ResourceContent {
 	};
 }
 
-type ContentItem = TextContent | ImageContent | ResourceContent | { type: string; [key: string]: unknown };
+type ContentItem =
+	| TextContent
+	| ImageContent
+	| ResourceContent
+	| { type: string; [key: string]: unknown };
 
 interface ToolResult {
 	content?: ContentItem[];
@@ -72,7 +79,10 @@ function TextContentViewer({ content }: { content: TextContent }) {
 	const trimmed = text.trim();
 
 	// Check if text is JSON
-	if ((trimmed.startsWith("{") || trimmed.startsWith("[")) && isValidJson(trimmed)) {
+	if (
+		(trimmed.startsWith("{") || trimmed.startsWith("[")) &&
+		isValidJson(trimmed)
+	) {
 		const formatted = formatJson(JSON.parse(trimmed));
 		return <JsonViewer json={formatted} />;
 	}
@@ -111,14 +121,19 @@ function ResourceContentViewer({ content }: { content: ResourceContent }) {
 	if (text) {
 		const trimmed = text.trim();
 		// Check if it's JSON
-		if ((trimmed.startsWith("{") || trimmed.startsWith("[")) && isValidJson(trimmed)) {
+		if (
+			(trimmed.startsWith("{") || trimmed.startsWith("[")) &&
+			isValidJson(trimmed)
+		) {
 			const formatted = formatJson(JSON.parse(trimmed));
 			return (
 				<div className="space-y-2">
 					<div className="flex items-center gap-2 text-xs text-muted-foreground">
 						<FileText className="h-3 w-3" />
 						<span className="truncate">{displayName}</span>
-						{mimeType && <span className="text-muted-foreground/70">({mimeType})</span>}
+						{mimeType && (
+							<span className="text-muted-foreground/70">({mimeType})</span>
+						)}
 					</div>
 					<JsonViewer json={formatted} />
 				</div>
@@ -131,7 +146,9 @@ function ResourceContentViewer({ content }: { content: ResourceContent }) {
 				<div className="flex items-center gap-2 text-xs text-muted-foreground">
 					<FileText className="h-3 w-3" />
 					<span className="truncate">{displayName}</span>
-					{mimeType && <span className="text-muted-foreground/70">({mimeType})</span>}
+					{mimeType && (
+						<span className="text-muted-foreground/70">({mimeType})</span>
+					)}
 				</div>
 				<div className="rounded-md bg-muted p-4 text-sm whitespace-pre-wrap font-mono">
 					{text}
@@ -167,7 +184,9 @@ function ResourceContentViewer({ content }: { content: ResourceContent }) {
 				<FileText className="h-5 w-5 text-muted-foreground" />
 				<div className="flex-1 min-w-0">
 					<p className="text-sm font-medium truncate">{displayName}</p>
-					{mimeType && <p className="text-xs text-muted-foreground">{mimeType}</p>}
+					{mimeType && (
+						<p className="text-xs text-muted-foreground">{mimeType}</p>
+					)}
 				</div>
 				<Button
 					variant="ghost"
@@ -241,7 +260,9 @@ export function ToolOutputViewer({ result, className }: ToolOutputViewerProps) {
 	if (structuredContent !== undefined) {
 		return (
 			<div className={cn("space-y-3", className)}>
-				<div className="text-xs font-medium text-muted-foreground">Structured Content</div>
+				<div className="text-xs font-medium text-muted-foreground">
+					Structured Content
+				</div>
 				<JsonViewer json={formatJson(structuredContent)} />
 			</div>
 		);
@@ -250,9 +271,15 @@ export function ToolOutputViewer({ result, className }: ToolOutputViewerProps) {
 	// If we have content array, render each item
 	if (Array.isArray(content) && content.length > 0) {
 		return (
-			<div className={cn("space-y-3", isError && "rounded-md border-destructive/50 bg-destructive/5 p-3", className)}>
+			<div
+				className={cn(
+					"space-y-3",
+					isError && "rounded-md border-destructive/50 bg-destructive/5 p-3",
+					className,
+				)}
+			>
 				{content.map((item, index) => (
-					<ContentItemViewer key={index} item={item} />
+					<ContentItemViewer key={`${item.type}-${index}`} item={item} />
 				))}
 			</div>
 		);

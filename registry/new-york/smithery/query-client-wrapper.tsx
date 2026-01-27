@@ -5,7 +5,7 @@ import {
 	QueryClientContext,
 	QueryClientProvider,
 } from "@tanstack/react-query";
-import { useContext, useState, type ReactNode } from "react";
+import { type ReactNode, useContext, useState } from "react";
 
 // Shared default QueryClient for all Smithery components
 let sharedQueryClient: QueryClient | null = null;

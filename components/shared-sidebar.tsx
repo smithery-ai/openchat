@@ -1,22 +1,21 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
 import type { CreateTokenResponse } from "@smithery/api/resources/tokens.mjs";
 import {
 	Blocks,
-	Link2,
-	Server,
-	Wrench,
 	FileJson,
+	Key,
 	LayoutGrid,
+	Link2,
+	Search,
+	Server,
+	Settings2,
 	Square,
 	SquareArrowOutUpRight,
-	Key,
-	Search,
-	Settings2,
+	Wrench,
 } from "lucide-react";
-import { Tokens } from "@/registry/new-york/smithery/tokens";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
 	Sidebar,
 	SidebarContent,
@@ -30,6 +29,7 @@ import {
 	SidebarProvider,
 	SidebarTrigger,
 } from "@/components/ui/sidebar";
+import { Tokens } from "@/registry/new-york/smithery/tokens";
 
 export const navigationItems: {
 	title: string;
@@ -48,7 +48,11 @@ export const componentItems = [
 	{ title: "Tool Search", slug: "tool-search", icon: Search },
 	{ title: "Tools Panel", slug: "tools-panel", icon: LayoutGrid },
 	{ title: "Tool Card", slug: "tool-card", icon: Square },
-	{ title: "Tool Detail Dialog", slug: "tool-detail-dialog", icon: SquareArrowOutUpRight },
+	{
+		title: "Tool Detail Dialog",
+		slug: "tool-detail-dialog",
+		icon: SquareArrowOutUpRight,
+	},
 	{ title: "Schema Form", slug: "schema-form", icon: FileJson },
 	{ title: "Connection Context", slug: "connection-context", icon: Settings2 },
 ];
@@ -136,9 +140,7 @@ export function SharedSidebar({
 						<Tokens initialTokenResponse={initialTokenResponse} />
 					</header>
 
-					<div className="flex-1 overflow-auto">
-						{children}
-					</div>
+					<div className="flex-1 overflow-auto">{children}</div>
 				</div>
 			</SidebarInset>
 		</SidebarProvider>

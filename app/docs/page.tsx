@@ -1,15 +1,20 @@
-import Link from "next/link";
 import {
+	FileJson,
 	Key,
-	Search,
-	Link2,
 	LayoutGrid,
+	Link2,
+	Search,
+	Settings2,
 	Square,
 	SquareArrowOutUpRight,
-	FileJson,
-	Settings2,
 } from "lucide-react";
-import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import Link from "next/link";
+import {
+	Card,
+	CardDescription,
+	CardHeader,
+	CardTitle,
+} from "@/components/ui/card";
 
 const components = [
 	{
@@ -72,10 +77,12 @@ export default function DocsPage() {
 	return (
 		<div className="space-y-8">
 			<div>
-				<h1 className="text-3xl font-bold tracking-tight">Smithery Components</h1>
+				<h1 className="text-3xl font-bold tracking-tight">
+					Smithery Components
+				</h1>
 				<p className="text-muted-foreground mt-2">
-					A collection of React components for building MCP-powered applications.
-					Install any component using the shadcn CLI.
+					A collection of React components for building MCP-powered
+					applications. Install any component using the shadcn CLI.
 				</p>
 			</div>
 
@@ -89,7 +96,9 @@ export default function DocsPage() {
 										<component.icon className="h-5 w-5 text-primary" />
 									</div>
 									<div>
-										<CardTitle className="text-base">{component.title}</CardTitle>
+										<CardTitle className="text-base">
+											{component.title}
+										</CardTitle>
 										<CardDescription className="text-sm mt-1">
 											{component.description}
 										</CardDescription>
