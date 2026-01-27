@@ -40,7 +40,7 @@ export async function createToken({
 			},
 			namespaces: {
 				actions: ["read", "write"],
-				namespaces: [namespace],
+				namespaces: ["*"],
 			},
 		},
 		ttlSeconds,
