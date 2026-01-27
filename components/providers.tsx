@@ -2,7 +2,6 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { type ReactNode, useState } from "react";
-import { ChatProvider } from "@/contexts/chat-context";
 
 export function Providers({ children }: { children: ReactNode }) {
 	const [queryClient] = useState(
@@ -18,7 +17,7 @@ export function Providers({ children }: { children: ReactNode }) {
 
 	return (
 		<QueryClientProvider client={queryClient}>
-			<ChatProvider>{children}</ChatProvider>
+			{children}
 		</QueryClientProvider>
 	);
 }
