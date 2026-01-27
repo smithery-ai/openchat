@@ -1,4 +1,5 @@
 "use client";
+import type { Connection } from "@smithery/api/resources/beta/connect/connections.mjs";
 import {
 	CopyIcon,
 	DatabaseIcon,
@@ -61,8 +62,6 @@ import {
 	ConnectionsDialog,
 } from "@/components/smithery/connections-manager";
 import { ServerPill } from "@/components/smithery/server-pill";
-import { ServerSearch } from "@/registry/new-york/smithery/server-search";
-import type { ConnectionConfig } from "@/components/smithery/types";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -80,7 +79,7 @@ import {
 } from "@/components/ui/empty";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useChatContext } from "@/contexts/chat-context";
-import { Connection } from "@smithery/api/resources/beta/connect/connections.mjs";
+import { ServerSearch } from "@/registry/new-york/smithery/server-search";
 
 const models = [
 	{
@@ -394,8 +393,13 @@ export function ChatBlock({ token, namespace }: ChatBlockProps) {
 																	toolCallId: part.toolCallId,
 																	output: {
 																		connectedServer: {
-																			name: connection.serverInfo?.title ?? connection.serverInfo?.name ?? connection.name,
-																			description: connection.serverInfo?.description ?? "",
+																			name:
+																				connection.serverInfo?.title ??
+																				connection.serverInfo?.name ??
+																				connection.name,
+																			description:
+																				connection.serverInfo?.description ??
+																				"",
 																			connectionId: connection.connectionId,
 																		},
 																		status: "connected",
@@ -575,9 +579,7 @@ export function ChatBlock({ token, namespace }: ChatBlockProps) {
 										(connection, index, self) =>
 											index ===
 											self.findIndex(
-												(c) =>
-													c.connectionId ===
-													connection.connectionId,
+												(c) => c.connectionId === connection.connectionId,
 											),
 									)
 									.map((connection, _i) => {

@@ -573,7 +573,8 @@ const ExternalURLDisplay = ({
 
 	const activeNamespace = namespace || defaultNamespace;
 
-	const { mutate: connect,
+	const {
+		mutate: connect,
 		isPending: isConnecting,
 		data: connectionData,
 		mutateAsync: connectAsync,

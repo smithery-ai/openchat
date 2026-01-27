@@ -1,5 +1,6 @@
 "use client";
 
+import type { Connection } from "@smithery/api/resources/beta/connect/connections.mjs";
 import type { ServerListResponse } from "@smithery/api/resources/index.mjs";
 import { AlertCircle, CheckCircle, X, XCircle } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -12,7 +13,6 @@ import {
 } from "@/components/ui/tooltip";
 import { checkConnection } from "./actions";
 import type { ConnectionConfig } from "./types";
-import { Connection } from "@smithery/api/resources/beta/connect/connections.mjs";
 
 type ConnectionStatus = "connecting" | "connected" | "auth_required" | "error";
 
@@ -24,7 +24,7 @@ type ServerPillProps = {
 };
 
 // Utility functions
-function getServerName(
+function _getServerName(
 	connectionConfig: ConnectionConfig,
 	serverInfo?: ServerListResponse,
 ): string {
@@ -38,7 +38,7 @@ function getServerName(
 	}
 }
 
-function getServerUrl(
+function _getServerUrl(
 	connectionConfig: ConnectionConfig,
 	serverInfo?: ServerListResponse,
 ): string {
@@ -59,7 +59,10 @@ export function ServerPill({
 	const serverInfo = useMemo(
 		() => ({
 			id: connection.connectionId,
-			name: connection.serverInfo?.title ?? connection.serverInfo?.name ?? connection.name,
+			name:
+				connection.serverInfo?.title ??
+				connection.serverInfo?.name ??
+				connection.name,
 			url: connection.mcpUrl,
 			iconUrl: connection.serverInfo?.icons?.[0]?.src ?? null,
 		}),
@@ -191,9 +194,7 @@ export function ServerPill({
 			<TooltipContent side="top" className="max-w-xs">
 				<div className="space-y-1 text-xs">
 					<div className="font-medium">{serverInfo.name}</div>
-					<div className="text-muted-foreground">
-						{connection.mcpUrl}
-					</div>
+					<div className="text-muted-foreground">{connection.mcpUrl}</div>
 					<div className="flex items-center gap-1">
 						<span>Status:</span>
 						<span className={statusColorClass}>{statusText}</span>
