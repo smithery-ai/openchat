@@ -32,18 +32,18 @@ export function HomePage({
 	namespace?: string;
 }) {
 	const apiKey = useAtomValue(selectedTokenAtom);
-	const [activeSection, setActiveSection] = useState<Section>("servers");
+	const [activeSection, setActiveSection] = useState<Section>("connections");
 
 	const menuItems = [
-		{
-			title: "Servers",
-			value: "servers" as Section,
-			icon: Server,
-		},
 		{
 			title: "Connections",
 			value: "connections" as Section,
 			icon: Link2,
+		},
+		{
+			title: "Servers",
+			value: "servers" as Section,
+			icon: Server,
 		},
 		{
 			title: "Tools",
