@@ -508,11 +508,11 @@ const ConnectionsInner = ({
 				/>
 			</div>
 			<div className="w-full flex-1 overflow-auto">
-				<ActiveConnection
+				{activeConnectionId && <ActiveConnection
 					token={token}
 					namespace={namespace}
 					connectionId={activeConnectionId || ""}
-				/>
+				/>}
 			</div>
 		</div>
 	);
