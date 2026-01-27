@@ -137,18 +137,12 @@ const ConnectionsListInner = ({
 	const { data, isLoading, error, refetch, isFetching } = useQuery({
 		queryKey: ["connections", token],
 		queryFn: async () => {
-			if (!token) {
-				throw new Error("API token is required");
-			}
-			if (!namespace) {
-				throw new Error("namespace is required");
-			}
 			const client = getSmitheryClient(token);
 			const { connections } =
-				await client.beta.connect.connections.list(namespace);
-			return { connections, namespace };
+				await client.beta.connect.connections.list(namespace!);
+			return { connections, namespace: namespace! };
 		},
-		enabled: !!token,
+		enabled: !!token && !!namespace,
 	});
 
 	useEffect(() => {
@@ -257,15 +251,13 @@ const ActiveConnection = ({
 	const { data, isLoading, error } = useQuery({
 		queryKey: ["connection", connectionId, token, namespace],
 		queryFn: async () => {
-			if (!namespace) {
-				throw new Error("namespace is required");
-			}
 			const client = getSmitheryClient(token);
 			const data = await client.beta.connect.connections.get(connectionId, {
-				namespace,
+				namespace: namespace!,
 			});
-			return { namespace, ...data };
+			return { namespace: namespace!, ...data };
 		},
+		enabled: !!namespace,
 		// Poll every 2 seconds when auth_required, stop when connected or error
 		refetchInterval: (query) => {
 			const state = query.state.data?.status?.state;
@@ -319,18 +311,16 @@ const ActiveConnection = ({
 	const clientQuery = useQuery({
 		queryKey: ["mcp-client", token, connectionId, namespace],
 		queryFn: async () => {
-			if (!namespace) {
-				throw new Error("namespace is required");
-			}
 			const { transport } = await createConnection({
 				client: getSmitheryClient(token),
 				connectionId: connectionId,
-				namespace,
+				namespace: namespace!,
 			});
 			const mcpClient = await createMCPClient({ transport });
 			return mcpClient;
 		},
-		enabled: !!connectionId && data?.status?.state === "connected",
+		enabled:
+			!!connectionId && !!namespace && data?.status?.state === "connected",
 	});
 
 	const toolsQuery = useQuery({

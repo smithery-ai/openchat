@@ -239,17 +239,33 @@ export function ServerSearchPreview() {
 // Connections Preview
 export function ConnectionsPreview() {
 	const apiKey = useAtomValue(selectedTokenAtom);
-	const { data: namespace } = useDefaultNamespace(apiKey?.token);
+	const { data: namespace, isLoading: namespaceLoading } = useDefaultNamespace(
+		apiKey?.token,
+	);
+
+	if (!apiKey) {
+		return (
+			<PreviewFrame>
+				<TokenRequiredMessage />
+			</PreviewFrame>
+		);
+	}
+
+	if (namespaceLoading) {
+		return (
+			<PreviewFrame>
+				<div className="flex items-center gap-2 p-6 text-muted-foreground">
+					<Spinner className="h-4 w-4" /> Loading...
+				</div>
+			</PreviewFrame>
+		);
+	}
 
 	return (
 		<PreviewFrame>
-			{apiKey ? (
-				<div className="h-[500px]">
-					<Connections token={apiKey.token} namespace={namespace} />
-				</div>
-			) : (
-				<TokenRequiredMessage />
-			)}
+			<div className="h-[500px]">
+				<Connections token={apiKey.token} namespace={namespace} />
+			</div>
 		</PreviewFrame>
 	);
 }
