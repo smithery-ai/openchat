@@ -31,6 +31,7 @@ import {
 	ItemMedia,
 	ItemTitle,
 } from "@/components/ui/item";
+import { WithQueryClient } from "@/registry/new-york/smithery/query-client-wrapper";
 
 interface AuthRequiredBannerProps {
 	serverName: string;
@@ -704,7 +705,7 @@ const ExternalURLDisplay = ({
 	);
 };
 
-export const ServerSearch = ({
+const ServerSearchInner = ({
 	token,
 	namespace,
 	onExistingConnection = "warn",
@@ -870,3 +871,13 @@ export const ServerSearch = ({
 		</div>
 	);
 };
+
+export const ServerSearch = (props: {
+	token?: string;
+	namespace?: string;
+	onExistingConnection?: OnExistingConnectionMode;
+}) => (
+	<WithQueryClient>
+		<ServerSearchInner {...props} />
+	</WithQueryClient>
+);

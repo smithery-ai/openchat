@@ -15,12 +15,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Toggle } from "@/components/ui/toggle";
-import { ServerSearch } from "@/components/smithery/server-search";
-import { ToolsPanel } from "@/components/smithery/tools-panel";
+import { ServerSearch } from "@/registry/new-york/smithery/server-search";
+import { ToolsPanel } from "@/registry/new-york/smithery/tools-panel";
 import {
 	ConnectionConfigContext,
 	useConnectionConfig,
-} from "@/components/smithery/connection-context";
+} from "@/registry/new-york/smithery/connection-context";
+import { WithQueryClient } from "@/registry/new-york/smithery/query-client-wrapper";
 
 // Re-export useConnectionConfig for backward compatibility
 export { useConnectionConfig };
@@ -40,7 +41,7 @@ const getSmitheryClient = (token: string) => {
 	});
 };
 
-export const ConnectionCard = ({
+const ConnectionCardInner = ({
 	connection,
 	token,
 	namespace,
@@ -108,7 +109,20 @@ export const ConnectionCard = ({
 	);
 };
 
-export const ConnectionsList = ({
+export const ConnectionCard = (
+	props: {
+		connection: Connection;
+		token: string;
+		namespace: string;
+		className?: string;
+	} & React.HTMLAttributes<HTMLDivElement>,
+) => (
+	<WithQueryClient>
+		<ConnectionCardInner {...props} />
+	</WithQueryClient>
+);
+
+const ConnectionsListInner = ({
 	token,
 	namespace,
 	defaultActiveConnectionId,
@@ -220,6 +234,18 @@ export const ConnectionsList = ({
 		</div>
 	);
 };
+
+export const ConnectionsList = (props: {
+	token: string;
+	namespace?: string;
+	defaultActiveConnectionId?: string;
+	onActiveConnectionIdChange: (connectionId: string) => void;
+	defaultShowSearchServers?: boolean;
+}) => (
+	<WithQueryClient>
+		<ConnectionsListInner {...props} />
+	</WithQueryClient>
+);
 
 const ActiveConnection = ({
 	token,
@@ -348,7 +374,7 @@ const ActiveConnection = ({
 	);
 };
 
-export const Connections = ({
+const ConnectionsInner = ({
 	token,
 	namespace,
 }: {
@@ -362,7 +388,7 @@ export const Connections = ({
 	return (
 		<div className="w-full h-full flex">
 			<div className="w-full max-w-sm border-r-3 h-full overflow-auto">
-				<ConnectionsList
+				<ConnectionsListInner
 					token={token}
 					namespace={namespace}
 					onActiveConnectionIdChange={setActiveConnectionId}
@@ -379,3 +405,9 @@ export const Connections = ({
 		</div>
 	);
 };
+
+export const Connections = (props: { token: string; namespace?: string }) => (
+	<WithQueryClient>
+		<ConnectionsInner {...props} />
+	</WithQueryClient>
+);

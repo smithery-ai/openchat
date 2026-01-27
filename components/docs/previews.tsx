@@ -1,0 +1,569 @@
+"use client";
+
+import { createMCPClient } from "@ai-sdk/mcp";
+import Smithery from "@smithery/api";
+import { SmitheryTransport } from "@smithery/api/mcp";
+import type { Connection } from "@smithery/api/resources/beta/connect/connections.mjs";
+import { useQuery } from "@tanstack/react-query";
+import type { Tool, ToolExecutionOptions } from "ai";
+import { useAtomValue } from "jotai";
+import { AlertCircle } from "lucide-react";
+import { useState } from "react";
+import { selectedTokenAtom } from "@/registry/new-york/smithery/tokens";
+import { ConnectionConfigContext } from "@/registry/new-york/smithery/connection-context";
+import { Connections } from "@/registry/new-york/smithery/connections";
+import { ServerSearch } from "@/registry/new-york/smithery/server-search";
+import { ToolSearch } from "@/registry/new-york/smithery/tool-search";
+import { ToolsPanel } from "@/registry/new-york/smithery/tools-panel";
+import { ToolCard } from "@/registry/new-york/smithery/tool-card";
+import { ToolDetailDialog } from "@/registry/new-york/smithery/tool-detail-dialog";
+import { SchemaForm } from "@/registry/new-york/smithery/schema-form";
+import { Spinner } from "@/components/ui/spinner";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { PreviewFrame } from "./preview-frame";
+
+const DEFAULT_MCP_URL = "https://mcp.exa.ai";
+
+const getSmitheryClient = (token: string) => {
+	return new Smithery({
+		apiKey: token,
+		baseURL: process.env.NEXT_PUBLIC_SMITHERY_API_URL,
+	});
+};
+
+async function getDefaultNamespace(client: Smithery) {
+	const namespaces = await client.namespaces.list();
+	if (namespaces.namespaces.length === 0) {
+		throw new Error("No namespaces found");
+	}
+	return namespaces.namespaces[0].name;
+}
+
+// Hook to get the default namespace
+function useDefaultNamespace(token: string | undefined) {
+	return useQuery({
+		queryKey: ["defaultNamespace", token],
+		queryFn: async () => {
+			if (!token) throw new Error("Token required");
+			const client = getSmitheryClient(token);
+			return await getDefaultNamespace(client);
+		},
+		enabled: !!token,
+	});
+}
+
+function useConnections(token: string | undefined, namespace?: string) {
+	return useQuery({
+		queryKey: ["connections", token],
+		queryFn: async () => {
+			if (!token) throw new Error("Token required");
+			const client = getSmitheryClient(token);
+			const namespaceToUse = namespace || (await getDefaultNamespace(client));
+			const { connections } = await client.beta.connect.connections.list(namespaceToUse);
+			return { connections, namespace: namespaceToUse };
+		},
+		enabled: !!token,
+	});
+}
+
+function useConnectionTools(
+	token: string | undefined,
+	connectionId: string | null,
+	namespace?: string,
+) {
+	const clientQuery = useQuery({
+		queryKey: ["mcp-client", token, connectionId, namespace],
+		queryFn: async () => {
+			if (!token || !connectionId) throw new Error("Token and connection required");
+			const namespaceToUse = namespace || (await getDefaultNamespace(getSmitheryClient(token)));
+			const transport = new SmitheryTransport({
+				client: getSmitheryClient(token),
+				connectionId,
+				namespace: namespaceToUse,
+			});
+			const mcpClient = await createMCPClient({ transport });
+			return { client: mcpClient, namespace: namespaceToUse };
+		},
+		enabled: !!token && !!connectionId,
+	});
+
+	const toolsQuery = useQuery({
+		queryKey: ["tools", connectionId, token, namespace],
+		queryFn: async () => {
+			if (!clientQuery.data) throw new Error("Client not available");
+			return await clientQuery.data.client.tools();
+		},
+		enabled: !!clientQuery.data,
+	});
+
+	const handleExecute = async (toolName: string, params: Record<string, unknown>) => {
+		if (!toolsQuery.data) throw new Error("Tools not available");
+		const tool = toolsQuery.data[toolName];
+		if (!tool) throw new Error(`Tool ${toolName} not found`);
+		const options: ToolExecutionOptions = {
+			toolCallId: `manual-${Date.now()}`,
+			messages: [],
+		};
+		return await tool.execute(params, options);
+	};
+
+	return {
+		tools: toolsQuery.data,
+		isLoading: clientQuery.isLoading || toolsQuery.isLoading,
+		error: clientQuery.error || toolsQuery.error,
+		handleExecute,
+		namespace: clientQuery.data?.namespace,
+	};
+}
+
+function ConnectionSelector({
+	token,
+	namespace,
+	selectedConnectionId,
+	onSelect,
+}: {
+	token: string;
+	namespace?: string;
+	selectedConnectionId: string | null;
+	onSelect: (connectionId: string | null) => void;
+}) {
+	const { data, isLoading, error } = useConnections(token, namespace);
+
+	if (isLoading) {
+		return (
+			<div className="flex items-center gap-2 text-sm text-muted-foreground">
+				<Spinner className="h-4 w-4" />
+				Loading connections...
+			</div>
+		);
+	}
+
+	if (error) {
+		return (
+			<div className="text-sm text-destructive">
+				Error: {error.message}
+			</div>
+		);
+	}
+
+	if (!data?.connections.length) {
+		return (
+			<div className="flex items-center gap-2 text-sm text-muted-foreground">
+				<AlertCircle className="h-4 w-4" />
+				No connections. Connect to <code className="bg-muted px-1 py-0.5 rounded text-xs">{DEFAULT_MCP_URL}</code> first.
+			</div>
+		);
+	}
+
+	return (
+		<Select
+			value={selectedConnectionId || ""}
+			onValueChange={(value) => onSelect(value || null)}
+		>
+			<SelectTrigger className="w-[280px]">
+				<SelectValue placeholder="Select a connection" />
+			</SelectTrigger>
+			<SelectContent>
+				{data.connections.map((connection: Connection) => (
+					<SelectItem key={connection.connectionId} value={connection.connectionId}>
+						{connection.name}
+					</SelectItem>
+				))}
+			</SelectContent>
+		</Select>
+	);
+}
+
+function TokenRequiredMessage() {
+	return (
+		<div className="p-6 text-muted-foreground text-center">
+			Select a token above to view the preview.
+		</div>
+	);
+}
+
+// Server Search Preview - needs namespace for full functionality
+export function ServerSearchPreview() {
+	const apiKey = useAtomValue(selectedTokenAtom);
+	const { data: namespace, isLoading: namespaceLoading } = useDefaultNamespace(apiKey?.token);
+
+	if (!apiKey) {
+		return (
+			<PreviewFrame>
+				<TokenRequiredMessage />
+			</PreviewFrame>
+		);
+	}
+
+	if (namespaceLoading) {
+		return (
+			<PreviewFrame>
+				<div className="flex items-center gap-2 p-6 text-muted-foreground">
+					<Spinner className="h-4 w-4" /> Loading...
+				</div>
+			</PreviewFrame>
+		);
+	}
+
+	return (
+		<PreviewFrame>
+			<div className="p-4">
+				<p className="text-sm text-muted-foreground mb-4">
+					Try pasting <code className="bg-muted px-1 py-0.5 rounded text-xs">{DEFAULT_MCP_URL}</code>
+				</p>
+				<ServerSearch token={apiKey.token} namespace={namespace} />
+			</div>
+		</PreviewFrame>
+	);
+}
+
+// Connections Preview
+export function ConnectionsPreview() {
+	const apiKey = useAtomValue(selectedTokenAtom);
+
+	return (
+		<PreviewFrame>
+			{apiKey ? (
+				<div className="h-[500px]">
+					<Connections token={apiKey.token} />
+				</div>
+			) : (
+				<TokenRequiredMessage />
+			)}
+		</PreviewFrame>
+	);
+}
+
+// Tool Search Preview
+export function ToolSearchPreview() {
+	const apiKey = useAtomValue(selectedTokenAtom);
+
+	return (
+		<PreviewFrame>
+			{apiKey ? (
+				<div className="p-4">
+					<ToolSearch token={apiKey.token} />
+				</div>
+			) : (
+				<TokenRequiredMessage />
+			)}
+		</PreviewFrame>
+	);
+}
+
+// Tools Panel Preview - config OUTSIDE preview frame
+export function ToolsPanelPreview() {
+	const apiKey = useAtomValue(selectedTokenAtom);
+	const [selectedConnectionId, setSelectedConnectionId] = useState<string | null>(null);
+
+	if (!apiKey) {
+		return (
+			<PreviewFrame>
+				<TokenRequiredMessage />
+			</PreviewFrame>
+		);
+	}
+
+	return (
+		<div className="space-y-4">
+			<div className="flex items-center gap-2">
+				<span className="text-sm text-muted-foreground">Connection:</span>
+				<ConnectionSelector
+					token={apiKey.token}
+					selectedConnectionId={selectedConnectionId}
+					onSelect={setSelectedConnectionId}
+				/>
+			</div>
+			<PreviewFrame>
+				<ToolsPanelInner token={apiKey.token} connectionId={selectedConnectionId} />
+			</PreviewFrame>
+		</div>
+	);
+}
+
+function ToolsPanelInner({ token, connectionId }: { token: string; connectionId: string | null }) {
+	const { tools, isLoading, error, handleExecute, namespace } = useConnectionTools(token, connectionId);
+
+	if (!connectionId) {
+		return <div className="p-6 text-muted-foreground">Select a connection above.</div>;
+	}
+
+	if (isLoading) {
+		return (
+			<div className="flex items-center gap-2 p-6 text-muted-foreground">
+				<Spinner className="h-4 w-4" /> Loading tools...
+			</div>
+		);
+	}
+
+	if (error) {
+		return <div className="p-6 text-destructive">Error: {error.message}</div>;
+	}
+
+	if (!tools || Object.keys(tools).length === 0) {
+		return <div className="p-6 text-muted-foreground">No tools found.</div>;
+	}
+
+	return (
+		<ConnectionConfigContext.Provider value={{ mcpUrl: DEFAULT_MCP_URL, apiKey: token, namespace: namespace || "", connectionId }}>
+			<div className="h-[400px]">
+				<ToolsPanel tools={tools} onExecute={handleExecute} />
+			</div>
+		</ConnectionConfigContext.Provider>
+	);
+}
+
+// Tool Card Preview - config OUTSIDE preview frame
+export function ToolCardPreview() {
+	const apiKey = useAtomValue(selectedTokenAtom);
+	const [selectedConnectionId, setSelectedConnectionId] = useState<string | null>(null);
+
+	if (!apiKey) {
+		return (
+			<PreviewFrame>
+				<TokenRequiredMessage />
+			</PreviewFrame>
+		);
+	}
+
+	return (
+		<div className="space-y-4">
+			<div className="flex items-center gap-2">
+				<span className="text-sm text-muted-foreground">Connection:</span>
+				<ConnectionSelector
+					token={apiKey.token}
+					selectedConnectionId={selectedConnectionId}
+					onSelect={setSelectedConnectionId}
+				/>
+			</div>
+			<PreviewFrame>
+				<ToolCardInner token={apiKey.token} connectionId={selectedConnectionId} />
+			</PreviewFrame>
+		</div>
+	);
+}
+
+function ToolCardInner({ token, connectionId }: { token: string; connectionId: string | null }) {
+	const { tools, isLoading, error, handleExecute, namespace } = useConnectionTools(token, connectionId);
+
+	if (!connectionId) {
+		return <div className="p-6 text-muted-foreground">Select a connection above.</div>;
+	}
+
+	if (isLoading) {
+		return (
+			<div className="flex items-center gap-2 p-6 text-muted-foreground">
+				<Spinner className="h-4 w-4" /> Loading tools...
+			</div>
+		);
+	}
+
+	if (error) {
+		return <div className="p-6 text-destructive">Error: {error.message}</div>;
+	}
+
+	if (!tools || Object.keys(tools).length === 0) {
+		return <div className="p-6 text-muted-foreground">No tools found.</div>;
+	}
+
+	return (
+		<ConnectionConfigContext.Provider value={{ mcpUrl: DEFAULT_MCP_URL, apiKey: token, namespace: namespace || "", connectionId }}>
+			<div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+				{Object.entries(tools).slice(0, 4).map(([name, tool]) => (
+					<ToolCard
+						key={name}
+						name={name}
+						tool={tool}
+						onExecute={(params) => handleExecute(name, params)}
+					/>
+				))}
+			</div>
+		</ConnectionConfigContext.Provider>
+	);
+}
+
+// Tool Detail Dialog Preview - config OUTSIDE preview frame
+export function ToolDetailDialogPreview() {
+	const apiKey = useAtomValue(selectedTokenAtom);
+	const [selectedConnectionId, setSelectedConnectionId] = useState<string | null>(null);
+
+	if (!apiKey) {
+		return (
+			<PreviewFrame>
+				<TokenRequiredMessage />
+			</PreviewFrame>
+		);
+	}
+
+	return (
+		<div className="space-y-4">
+			<div className="flex items-center gap-2">
+				<span className="text-sm text-muted-foreground">Connection:</span>
+				<ConnectionSelector
+					token={apiKey.token}
+					selectedConnectionId={selectedConnectionId}
+					onSelect={setSelectedConnectionId}
+				/>
+			</div>
+			<PreviewFrame>
+				<ToolDetailDialogInner token={apiKey.token} connectionId={selectedConnectionId} />
+			</PreviewFrame>
+		</div>
+	);
+}
+
+function ToolDetailDialogInner({ token, connectionId }: { token: string; connectionId: string | null }) {
+	const { tools, isLoading, error, handleExecute, namespace } = useConnectionTools(token, connectionId);
+	const [dialogOpen, setDialogOpen] = useState(false);
+	const [selectedToolName, setSelectedToolName] = useState<string | null>(null);
+
+	if (!connectionId) {
+		return <div className="p-6 text-muted-foreground">Select a connection above.</div>;
+	}
+
+	if (isLoading) {
+		return (
+			<div className="flex items-center gap-2 p-6 text-muted-foreground">
+				<Spinner className="h-4 w-4" /> Loading tools...
+			</div>
+		);
+	}
+
+	if (error) {
+		return <div className="p-6 text-destructive">Error: {error.message}</div>;
+	}
+
+	if (!tools || Object.keys(tools).length === 0) {
+		return <div className="p-6 text-muted-foreground">No tools found.</div>;
+	}
+
+	const toolEntries = Object.entries(tools);
+	const firstToolName = selectedToolName || toolEntries[0]?.[0];
+	const firstTool = firstToolName ? tools[firstToolName] : null;
+
+	return (
+		<ConnectionConfigContext.Provider value={{ mcpUrl: DEFAULT_MCP_URL, apiKey: token, namespace: namespace || "", connectionId }}>
+			<div className="p-4 space-y-4">
+				<div className="flex items-center gap-2">
+					<span className="text-sm text-muted-foreground">Tool:</span>
+					<Select value={firstToolName || ""} onValueChange={setSelectedToolName}>
+						<SelectTrigger className="w-[200px]">
+							<SelectValue />
+						</SelectTrigger>
+						<SelectContent>
+							{toolEntries.map(([name]) => (
+								<SelectItem key={name} value={name}>{name}</SelectItem>
+							))}
+						</SelectContent>
+					</Select>
+					<Button onClick={() => setDialogOpen(true)}>Open Dialog</Button>
+				</div>
+				{firstTool && (
+					<ToolDetailDialog
+						open={dialogOpen}
+						onOpenChange={setDialogOpen}
+						name={firstToolName!}
+						tool={firstTool}
+						onExecute={(params) => handleExecute(firstToolName!, params)}
+					/>
+				)}
+			</div>
+		</ConnectionConfigContext.Provider>
+	);
+}
+
+// Schema Form Preview - config OUTSIDE preview frame
+export function SchemaFormPreview() {
+	const apiKey = useAtomValue(selectedTokenAtom);
+	const [selectedConnectionId, setSelectedConnectionId] = useState<string | null>(null);
+
+	if (!apiKey) {
+		return (
+			<PreviewFrame>
+				<TokenRequiredMessage />
+			</PreviewFrame>
+		);
+	}
+
+	return (
+		<div className="space-y-4">
+			<div className="flex items-center gap-2">
+				<span className="text-sm text-muted-foreground">Connection:</span>
+				<ConnectionSelector
+					token={apiKey.token}
+					selectedConnectionId={selectedConnectionId}
+					onSelect={setSelectedConnectionId}
+				/>
+			</div>
+			<PreviewFrame>
+				<SchemaFormInner token={apiKey.token} connectionId={selectedConnectionId} />
+			</PreviewFrame>
+		</div>
+	);
+}
+
+function SchemaFormInner({ token, connectionId }: { token: string; connectionId: string | null }) {
+	const { tools, isLoading, error } = useConnectionTools(token, connectionId);
+	const [selectedToolName, setSelectedToolName] = useState<string | null>(null);
+
+	const handleSubmit = (data: Record<string, unknown>) => {
+		console.log("Form submitted:", data);
+		alert(`Form submitted!\n\n${JSON.stringify(data, null, 2)}`);
+	};
+
+	if (!connectionId) {
+		return <div className="p-6 text-muted-foreground">Select a connection above.</div>;
+	}
+
+	if (isLoading) {
+		return (
+			<div className="flex items-center gap-2 p-6 text-muted-foreground">
+				<Spinner className="h-4 w-4" /> Loading tools...
+			</div>
+		);
+	}
+
+	if (error) {
+		return <div className="p-6 text-destructive">Error: {error.message}</div>;
+	}
+
+	if (!tools || Object.keys(tools).length === 0) {
+		return <div className="p-6 text-muted-foreground">No tools found.</div>;
+	}
+
+	const toolEntries = Object.entries(tools);
+	const firstToolName = selectedToolName || toolEntries[0]?.[0];
+	const firstTool = firstToolName ? tools[firstToolName] : null;
+
+	if (!firstTool?.inputSchema) {
+		return <div className="p-6 text-muted-foreground">No tool with schema available.</div>;
+	}
+
+	return (
+		<div className="p-4 space-y-4 max-w-md">
+			<div className="flex items-center gap-2">
+				<span className="text-sm text-muted-foreground">Tool schema:</span>
+				<Select value={firstToolName || ""} onValueChange={setSelectedToolName}>
+					<SelectTrigger className="w-[200px]">
+						<SelectValue />
+					</SelectTrigger>
+					<SelectContent>
+						{toolEntries.map(([name]) => (
+							<SelectItem key={name} value={name}>{name}</SelectItem>
+						))}
+					</SelectContent>
+				</Select>
+			</div>
+			<div className="border rounded-lg p-4">
+				<SchemaForm schema={firstTool.inputSchema} onSubmit={handleSubmit} />
+			</div>
+		</div>
+	);
+}

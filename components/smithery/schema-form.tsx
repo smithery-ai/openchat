@@ -1,2 +1,3 @@
-// Re-export from registry for backwards compatibility
-export { SchemaForm } from "@/registry/new-york/smithery/schema-form";
+"use client";
+
+export * from "@/registry/new-york/smithery/schema-form";

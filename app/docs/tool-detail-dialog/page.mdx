@@ -1,0 +1,56 @@
+# Tool Detail Dialog
+
+The ToolDetailDialog component provides a comprehensive view of an MCP tool with parameter inputs, code preview, and execution capabilities.
+
+<ToolDetailDialogPreview />
+
+## Installation
+
+<InstallCommand name="smithery-tool-detail-dialog" />
+
+## Usage
+
+```tsx
+import { ToolDetailDialog } from "@/components/smithery/tool-detail-dialog"
+import { useState } from "react"
+
+export function MyApp() {
+  const [open, setOpen] = useState(false)
+  const tool = tools["search"]
+
+  const handleExecute = async (params: Record<string, unknown>) => {
+    return await tool.execute(params, { toolCallId: "manual", messages: [] })
+  }
+
+  return (
+    <>
+      <button onClick={() => setOpen(true)}>Open Tool</button>
+      <ToolDetailDialog
+        open={open}
+        onOpenChange={setOpen}
+        name="search"
+        tool={tool}
+        onExecute={handleExecute}
+      />
+    </>
+  )
+}
+```
+
+## Props
+
+- `open` (required): Whether the dialog is open
+- `onOpenChange` (required): Callback when the open state changes
+- `name` (required): The name of the tool
+- `tool` (required): The AI SDK Tool object
+- `onExecute` (optional): Async function to execute the tool
+
+## Features
+
+- Split-pane layout with parameters on the left and code/output on the right
+- Dynamic form generation from JSON Schema
+- Separates required and optional parameters
+- Real-time code preview that updates as you fill in parameters
+- Execute tools and see JSON output with token count and latency
+- Copy buttons for code and results
+- Supports all JSON Schema types (string, number, boolean, array, object, enum)

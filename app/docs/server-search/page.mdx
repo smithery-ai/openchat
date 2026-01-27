@@ -1,0 +1,39 @@
+# Server Search
+
+The ServerSearch component provides a combobox interface for searching and connecting to MCP servers. Users can either search the Smithery registry for servers or paste a direct MCP URL.
+
+<ServerSearchPreview />
+
+## Installation
+
+<InstallCommand name="smithery-server-search" />
+
+## Usage
+
+```tsx
+import { ServerSearch } from "@/components/smithery/server-search"
+
+export function MyApp() {
+  return (
+    <ServerSearch
+      token="your-smithery-api-token"
+      namespace="your-namespace" // optional
+      onExistingConnection="warn" // "warn" | "error" | "use" | "create-new"
+    />
+  )
+}
+```
+
+## Props
+
+- `token` (required): Your Smithery API token for authentication
+- `namespace` (optional): The namespace to create connections in. Defaults to the first available namespace
+- `onExistingConnection` (optional): How to handle existing connections - `"warn"` (default), `"error"`, `"use"`, or `"create-new"`
+
+## Features
+
+- Search the Smithery server registry with instant results
+- Paste any MCP URL directly (e.g., `https://mcp.exa.ai`)
+- OAuth flow support for servers requiring authentication
+- Handles existing connection conflicts with configurable behavior
+- Shows server metadata including icon, description, and verification status

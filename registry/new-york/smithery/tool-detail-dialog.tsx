@@ -38,8 +38,8 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { useConnectionConfig } from "@/components/smithery/connection-context";
-import { ToolOutputViewer } from "@/components/smithery/tool-output-viewer";
+import { useConnectionConfig } from "@/registry/new-york/smithery/connection-context";
+import { ToolOutputViewer } from "@/registry/new-york/smithery/tool-output-viewer";
 
 interface JSONSchema {
 	type?: string;
