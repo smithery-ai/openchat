@@ -731,7 +731,7 @@ export function ConnectionCardPreview() {
 // Connections List Preview
 export function ConnectionsListPreview() {
 	const apiKey = useAtomValue(selectedTokenAtom);
-	const [activeConnectionId, setActiveConnectionId] = useState<string | null>(
+	const [_activeConnectionId, setActiveConnectionId] = useState<string | null>(
 		null,
 	);
 

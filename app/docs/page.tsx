@@ -41,7 +41,8 @@ const components = [
 	{
 		title: "Connection Card",
 		slug: "connection-card",
-		description: "Display individual connection details with delete functionality.",
+		description:
+			"Display individual connection details with delete functionality.",
 		icon: CreditCard,
 	},
 	{

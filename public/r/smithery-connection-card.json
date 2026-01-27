@@ -1,29 +1,37 @@
 {
-	"$schema": "https://ui.shadcn.com/schema/registry-item.json",
-	"name": "smithery-connection-card",
-	"title": "Smithery Connection Card",
-	"description": "A reusable card component for displaying individual MCP server connection details.",
-	"dependencies": ["@smithery/api", "@tanstack/react-query", "lucide-react"],
-	"registryDependencies": ["avatar", "button", "card"],
-	"files": [
-		{
-			"path": "registry/new-york/smithery/query-client-wrapper.tsx",
-			"content": "\"use client\";\n\nimport {\n\tQueryClient,\n\tQueryClientContext,\n\tQueryClientProvider,\n} from \"@tanstack/react-query\";\nimport { type ReactNode, useContext, useState } from \"react\";\n\n// Shared default QueryClient for all Smithery components\nlet sharedQueryClient: QueryClient | null = null;\n\nfunction getSharedQueryClient() {\n\tif (!sharedQueryClient) {\n\t\tsharedQueryClient = new QueryClient({\n\t\t\tdefaultOptions: {\n\t\t\t\tqueries: { staleTime: 60 * 1000 },\n\t\t\t},\n\t\t});\n\t}\n\treturn sharedQueryClient;\n}\n\n/**\n * Wrapper that auto-provides QueryClient if none exists.\n * - If a QueryClientProvider already exists, uses that client (user's takes precedence)\n * - If no provider exists, creates a shared client for Smithery components\n */\nexport function WithQueryClient({ children }: { children: ReactNode }) {\n\t// Check if we're already inside a QueryClientProvider\n\tconst existingClient = useContext(QueryClientContext);\n\n\t// Create our own client only if needed (lazy init, stable across renders)\n\tconst [fallbackClient] = useState(() => getSharedQueryClient());\n\n\t// If there's already a client, just render children\n\tif (existingClient) {\n\t\treturn <>{children}</>;\n\t}\n\n\t// Otherwise, provide our own client\n\treturn (\n\t\t<QueryClientProvider client={fallbackClient}>\n\t\t\t{children}\n\t\t</QueryClientProvider>\n\t);\n}\n",
-			"type": "registry:component",
-			"target": "components/smithery/query-client-wrapper.tsx"
-		},
-		{
-			"path": "registry/new-york/smithery/smithery-utils.ts",
-			"content": "import Smithery from \"@smithery/api\";\n\nexport async function getDefaultNamespace(client: Smithery) {\n\tconst namespaces = await client.namespaces.list();\n\tif (namespaces.namespaces.length === 0) {\n\t\tthrow new Error(\"No namespaces found\");\n\t}\n\treturn namespaces.namespaces[0].name;\n}\n\nexport const getSmitheryClient = (token: string) => {\n\treturn new Smithery({\n\t\tapiKey: token,\n\t\tbaseURL: process.env.NEXT_PUBLIC_SMITHERY_API_URL,\n\t});\n};\n",
-			"type": "registry:lib",
-			"target": "lib/smithery/smithery-utils.ts"
-		},
-		{
-			"path": "registry/new-york/smithery/connection-card.tsx",
-			"content": "\"use client\";\n\nimport type { Connection } from \"@smithery/api/resources/beta/connect/connections.mjs\";\nimport { useMutation, useQueryClient } from \"@tanstack/react-query\";\nimport { Trash2 } from \"lucide-react\";\nimport { Avatar, AvatarFallback, AvatarImage } from \"@/components/ui/avatar\";\nimport { Button } from \"@/components/ui/button\";\nimport { Card, CardContent } from \"@/components/ui/card\";\nimport { cn } from \"@/lib/utils\";\nimport { WithQueryClient } from \"@/registry/new-york/smithery/query-client-wrapper\";\nimport { getSmitheryClient } from \"@/registry/new-york/smithery/smithery-utils\";\n\nconst ConnectionCardInner = ({\n\tconnection,\n\ttoken,\n\tnamespace,\n\tclassName,\n\t...rest\n}: {\n\tconnection: Connection;\n\ttoken: string;\n\tnamespace: string;\n\tclassName?: string;\n} & React.HTMLAttributes<HTMLDivElement>) => {\n\tconst queryClient = useQueryClient();\n\tconst deleteMutation = useMutation({\n\t\tmutationFn: async () => {\n\t\t\tconst client = getSmitheryClient(token);\n\t\t\tawait client.beta.connect.connections.delete(connection.connectionId, {\n\t\t\t\tnamespace: namespace,\n\t\t\t});\n\t\t},\n\t\tonSuccess: () => {\n\t\t\tqueryClient.invalidateQueries({ queryKey: [\"connections\"] });\n\t\t},\n\t});\n\n\treturn (\n\t\t<Card className={cn(\"border-none shadow-none\", className || \"\")} {...rest}>\n\t\t\t<CardContent className=\"flex items-center gap-4\">\n\t\t\t\t<Avatar className=\"h-10 w-10 rounded-md\">\n\t\t\t\t\t<AvatarImage src={connection.iconUrl || \"\"} />\n\t\t\t\t\t<AvatarFallback className=\"rounded-md bg-muted\">\n\t\t\t\t\t\t{connection.name.charAt(0)}\n\t\t\t\t\t</AvatarFallback>\n\t\t\t\t</Avatar>\n\t\t\t\t<div className=\"flex-1 min-w-0\">\n\t\t\t\t\t<h3 className=\"font-medium truncate flex items-center gap-2\">\n\t\t\t\t\t\t{connection.serverInfo?.title ??\n\t\t\t\t\t\t\tconnection.serverInfo?.name ??\n\t\t\t\t\t\t\tconnection.name}\n\t\t\t\t\t\t{connection.connectionId && (\n\t\t\t\t\t\t\t<span className=\"ml-2 text-xs font-mono text-muted-foreground bg-muted px-2 py-0.5 rounded\">\n\t\t\t\t\t\t\t\t{\"•\".repeat(Math.min(connection.connectionId.length - 10, 4))}\n\t\t\t\t\t\t\t\t{connection.connectionId.slice(-10)}\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t)}\n\t\t\t\t\t</h3>\n\t\t\t\t\t<p className=\"text-muted-foreground text-xs truncate\">\n\t\t\t\t\t\t{connection.mcpUrl}\n\t\t\t\t\t</p>\n\t\t\t\t\t<p className=\"text-muted-foreground text-xs truncate\">\n\t\t\t\t\t\t{new Date(connection.createdAt || \"\").toLocaleDateString()}{\" \"}\n\t\t\t\t\t\t{new Date(connection.createdAt || \"\").toLocaleTimeString()}\n\t\t\t\t\t</p>\n\t\t\t\t\t<p className=\"text-muted-foreground text-xs truncate\">\n\t\t\t\t\t\t{connection.metadata && JSON.stringify(connection.metadata)}\n\t\t\t\t\t</p>\n\t\t\t\t</div>\n\t\t\t\t<Button\n\t\t\t\t\tvariant=\"ghost\"\n\t\t\t\t\tsize=\"icon\"\n\t\t\t\t\tonClick={() => deleteMutation.mutate()}\n\t\t\t\t\tdisabled={deleteMutation.isPending}\n\t\t\t\t>\n\t\t\t\t\t<Trash2 className=\"h-4 w-4\" />\n\t\t\t\t</Button>\n\t\t\t</CardContent>\n\t\t</Card>\n\t);\n};\n\nexport const ConnectionCard = (\n\tprops: {\n\t\tconnection: Connection;\n\t\ttoken: string;\n\t\tnamespace: string;\n\t\tclassName?: string;\n\t} & React.HTMLAttributes<HTMLDivElement>,\n) => (\n\t<WithQueryClient>\n\t\t<ConnectionCardInner {...props} />\n\t</WithQueryClient>\n);\n",
-			"type": "registry:component",
-			"target": "components/smithery/connection-card.tsx"
-		}
-	],
-	"type": "registry:block"
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "smithery-connection-card",
+  "title": "Smithery Connection Card",
+  "description": "A reusable card component for displaying individual MCP server connection details.",
+  "dependencies": [
+    "@smithery/api",
+    "@tanstack/react-query",
+    "lucide-react"
+  ],
+  "registryDependencies": [
+    "avatar",
+    "button",
+    "card"
+  ],
+  "files": [
+    {
+      "path": "registry/new-york/smithery/query-client-wrapper.tsx",
+      "content": "\"use client\";\n\nimport {\n\tQueryClient,\n\tQueryClientContext,\n\tQueryClientProvider,\n} from \"@tanstack/react-query\";\nimport { type ReactNode, useContext, useState } from \"react\";\n\n// Shared default QueryClient for all Smithery components\nlet sharedQueryClient: QueryClient | null = null;\n\nfunction getSharedQueryClient() {\n\tif (!sharedQueryClient) {\n\t\tsharedQueryClient = new QueryClient({\n\t\t\tdefaultOptions: {\n\t\t\t\tqueries: { staleTime: 60 * 1000 },\n\t\t\t},\n\t\t});\n\t}\n\treturn sharedQueryClient;\n}\n\n/**\n * Wrapper that auto-provides QueryClient if none exists.\n * - If a QueryClientProvider already exists, uses that client (user's takes precedence)\n * - If no provider exists, creates a shared client for Smithery components\n */\nexport function WithQueryClient({ children }: { children: ReactNode }) {\n\t// Check if we're already inside a QueryClientProvider\n\tconst existingClient = useContext(QueryClientContext);\n\n\t// Create our own client only if needed (lazy init, stable across renders)\n\tconst [fallbackClient] = useState(() => getSharedQueryClient());\n\n\t// If there's already a client, just render children\n\tif (existingClient) {\n\t\treturn <>{children}</>;\n\t}\n\n\t// Otherwise, provide our own client\n\treturn (\n\t\t<QueryClientProvider client={fallbackClient}>\n\t\t\t{children}\n\t\t</QueryClientProvider>\n\t);\n}\n",
+      "type": "registry:component",
+      "target": "components/smithery/query-client-wrapper.tsx"
+    },
+    {
+      "path": "registry/new-york/smithery/smithery-utils.ts",
+      "content": "import Smithery from \"@smithery/api\";\n\nexport async function getDefaultNamespace(client: Smithery) {\n\tconst namespaces = await client.namespaces.list();\n\tif (namespaces.namespaces.length === 0) {\n\t\tthrow new Error(\"No namespaces found\");\n\t}\n\treturn namespaces.namespaces[0].name;\n}\n\nexport const getSmitheryClient = (token: string) => {\n\treturn new Smithery({\n\t\tapiKey: token,\n\t\tbaseURL: process.env.NEXT_PUBLIC_SMITHERY_API_URL,\n\t});\n};\n",
+      "type": "registry:lib",
+      "target": "lib/smithery/smithery-utils.ts"
+    },
+    {
+      "path": "registry/new-york/smithery/connection-card.tsx",
+      "content": "\"use client\";\n\nimport type { Connection } from \"@smithery/api/resources/beta/connect/connections.mjs\";\nimport { useMutation, useQueryClient } from \"@tanstack/react-query\";\nimport { Trash2 } from \"lucide-react\";\nimport { Avatar, AvatarFallback, AvatarImage } from \"@/components/ui/avatar\";\nimport { Button } from \"@/components/ui/button\";\nimport { Card, CardContent } from \"@/components/ui/card\";\nimport { cn } from \"@/lib/utils\";\nimport { WithQueryClient } from \"@/registry/new-york/smithery/query-client-wrapper\";\nimport { getSmitheryClient } from \"@/registry/new-york/smithery/smithery-utils\";\n\nconst ConnectionCardInner = ({\n\tconnection,\n\ttoken,\n\tnamespace,\n\tclassName,\n\t...rest\n}: {\n\tconnection: Connection;\n\ttoken: string;\n\tnamespace: string;\n\tclassName?: string;\n} & React.HTMLAttributes<HTMLDivElement>) => {\n\tconst queryClient = useQueryClient();\n\tconst deleteMutation = useMutation({\n\t\tmutationFn: async () => {\n\t\t\tconst client = getSmitheryClient(token);\n\t\t\tawait client.beta.connect.connections.delete(connection.connectionId, {\n\t\t\t\tnamespace: namespace,\n\t\t\t});\n\t\t},\n\t\tonSuccess: () => {\n\t\t\tqueryClient.invalidateQueries({ queryKey: [\"connections\"] });\n\t\t},\n\t});\n\n\treturn (\n\t\t<Card className={cn(\"border-none shadow-none\", className || \"\")} {...rest}>\n\t\t\t<CardContent className=\"flex items-center gap-4\">\n\t\t\t\t<Avatar className=\"h-10 w-10 rounded-md\">\n\t\t\t\t\t<AvatarImage src={connection.iconUrl || \"\"} />\n\t\t\t\t\t<AvatarFallback className=\"rounded-md bg-muted\">\n\t\t\t\t\t\t{connection.name.charAt(0)}\n\t\t\t\t\t</AvatarFallback>\n\t\t\t\t</Avatar>\n\t\t\t\t<div className=\"flex-1 min-w-0\">\n\t\t\t\t\t<h3 className=\"font-medium truncate flex items-center gap-2\">\n\t\t\t\t\t\t{connection.serverInfo?.title ??\n\t\t\t\t\t\t\tconnection.serverInfo?.name ??\n\t\t\t\t\t\t\tconnection.name}\n\t\t\t\t\t\t{connection.connectionId && (\n\t\t\t\t\t\t\t<span className=\"ml-2 text-xs font-mono text-muted-foreground bg-muted px-2 py-0.5 rounded\">\n\t\t\t\t\t\t\t\t{\"•\".repeat(Math.min(connection.connectionId.length - 10, 4))}\n\t\t\t\t\t\t\t\t{connection.connectionId.slice(-10)}\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t)}\n\t\t\t\t\t</h3>\n\t\t\t\t\t<p className=\"text-muted-foreground text-xs truncate\">\n\t\t\t\t\t\t{connection.mcpUrl}\n\t\t\t\t\t</p>\n\t\t\t\t\t<p className=\"text-muted-foreground text-xs truncate\">\n\t\t\t\t\t\t{new Date(connection.createdAt || \"\").toLocaleDateString()}{\" \"}\n\t\t\t\t\t\t{new Date(connection.createdAt || \"\").toLocaleTimeString()}\n\t\t\t\t\t</p>\n\t\t\t\t\t<p className=\"text-muted-foreground text-xs truncate\">\n\t\t\t\t\t\t{connection.metadata && JSON.stringify(connection.metadata)}\n\t\t\t\t\t</p>\n\t\t\t\t</div>\n\t\t\t\t<Button\n\t\t\t\t\tvariant=\"ghost\"\n\t\t\t\t\tsize=\"icon\"\n\t\t\t\t\tonClick={() => deleteMutation.mutate()}\n\t\t\t\t\tdisabled={deleteMutation.isPending}\n\t\t\t\t>\n\t\t\t\t\t<Trash2 className=\"h-4 w-4\" />\n\t\t\t\t</Button>\n\t\t\t</CardContent>\n\t\t</Card>\n\t);\n};\n\nexport const ConnectionCard = (\n\tprops: {\n\t\tconnection: Connection;\n\t\ttoken: string;\n\t\tnamespace: string;\n\t\tclassName?: string;\n\t} & React.HTMLAttributes<HTMLDivElement>,\n) => (\n\t<WithQueryClient>\n\t\t<ConnectionCardInner {...props} />\n\t</WithQueryClient>\n);\n",
+      "type": "registry:component",
+      "target": "components/smithery/connection-card.tsx"
+    }
+  ],
+  "type": "registry:block"
 }
