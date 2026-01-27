@@ -6,7 +6,7 @@ import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { ToolDetailDialog } from "@/components/smithery/tool-detail-dialog";
+import { ToolDetailDialog } from "@/registry/new-york/smithery/tool-detail-dialog";
 
 interface ToolCardProps {
 	name: string;

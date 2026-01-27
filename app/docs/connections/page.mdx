@@ -1,0 +1,68 @@
+# Connections
+
+The Connections component provides a full-featured interface for managing MCP server connections. It displays a list of your active connections and allows you to browse tools from each one.
+
+<ConnectionsPreview />
+
+## Installation
+
+<InstallCommand name="smithery-connections" />
+
+## Usage
+
+```tsx
+import { Connections } from "@/components/smithery/connections"
+
+export function MyApp() {
+  return (
+    <Connections
+      token="your-smithery-api-token"
+      namespace="your-namespace" // optional
+    />
+  )
+}
+```
+
+## Props
+
+- `token` (required): Your Smithery API token for authentication
+- `namespace` (optional): The namespace to manage connections in. Defaults to the first available namespace
+
+## Features
+
+- Split-pane layout with connections list on the left and details on the right
+- Add new connections via the integrated ServerSearch component
+- Delete existing connections
+- View connection metadata (ID, creation date, URL)
+- Browse and execute tools from the selected connection
+- Real-time refresh of connection status
+
+## Sub-components
+
+### ConnectionCard
+
+Individual connection card with delete functionality:
+
+```tsx
+import { ConnectionCard } from "@/components/smithery/connections"
+
+<ConnectionCard
+  connection={connection}
+  token="your-token"
+  namespace="your-namespace"
+/>
+```
+
+### ConnectionsList
+
+Just the connections list without the tools panel:
+
+```tsx
+import { ConnectionsList } from "@/components/smithery/connections"
+
+<ConnectionsList
+  token="your-token"
+  namespace="your-namespace"
+  onActiveConnectionIdChange={(id) => console.log(id)}
+/>
+```

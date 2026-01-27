@@ -39,7 +39,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { useConnectionConfig } from "@/components/smithery/connection-context";
+import { useConnectionConfig } from "@/registry/new-york/smithery/connection-context";
 
 interface JSONSchema {
 	type?: string;
