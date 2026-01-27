@@ -75,7 +75,13 @@ export function Tokens({
 
 		fetchToken();
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [hydrated]);
+	}, [
+		hydrated,
+		getOrCreateToken,
+		setSelectedToken, // Merge with current tokens using callback to get fresh state
+		setTokensCreated,
+		tokensCreated.length,
+	]);
 
 	// Select first token if none selected
 	useEffect(() => {

@@ -144,9 +144,7 @@ export function SharedSidebar({
 
 								// Try localhost whoami first
 								try {
-									const response = await fetch(
-										"http://localhost:4260/whoami",
-									);
+									const response = await fetch("http://localhost:4260/whoami");
 									if (response.ok) {
 										const data = await response.json();
 										if (data.SMITHERY_API_KEY) {
