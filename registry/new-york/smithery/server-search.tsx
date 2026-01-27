@@ -423,7 +423,7 @@ async function checkConnectionStatus(
 	namespace: string,
 ): Promise<ConnectionStatus> {
 	try {
-		const jsonRpcResponse = await client.beta.connect.rpc.call(connectionId, {
+		const jsonRpcResponse = await client.beta.connect.mcp.call(connectionId, {
 			namespace,
 			jsonrpc: "2.0",
 			method: "tools/list",

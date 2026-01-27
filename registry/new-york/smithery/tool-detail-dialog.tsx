@@ -566,17 +566,16 @@ function generateToolExecuteCode(
 
 	const code = `import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import Smithery from '@smithery/api';
-import { SmitheryTransport } from '@smithery/api/mcp';
+import { createConnection } from '@smithery/api/mcp';
 
 const mcpUrl = "${mcpUrl}";
-const namespace = ${namespace};
 const connectionId = ${connectionId};
 const apiKey = process.env.SMITHERY_API_KEY;
 
-const transport = new SmitheryTransport({
+const { transport } = await createConnection({
   client: new Smithery({ apiKey }),
-  connectionId, // Leave empty to create a new connection
-  namespace,
+  connectionId,
+  mcpUrl,
 });
 
 // Initialize the Traditional MCP Client
