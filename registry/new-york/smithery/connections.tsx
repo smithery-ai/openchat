@@ -2,7 +2,7 @@
 
 import { createMCPClient } from "@ai-sdk/mcp";
 import Smithery from "@smithery/api";
-import { SmitheryTransport } from "@smithery/api/mcp";
+import { createConnection } from "@smithery/api/mcp";
 import type { Connection } from "@smithery/api/resources/beta/connect/connections.mjs";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ToolExecutionOptions } from "ai";
@@ -325,7 +325,7 @@ const ActiveConnection = ({
 		queryFn: async () => {
 			const namespaceToUse =
 				namespace || (await getDefaultNamespace(getSmitheryClient(token)));
-			const transport = new SmitheryTransport({
+			const { transport } = await createConnection({
 				client: getSmitheryClient(token),
 				connectionId: connectionId,
 				namespace: namespaceToUse,

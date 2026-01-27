@@ -1,15 +1,15 @@
 {
-	"$schema": "https://ui.shadcn.com/schema/registry-item.json",
-	"name": "smithery-connection-context",
-	"title": "Smithery Connection Context",
-	"description": "Context provider and hook for sharing connection configuration between Smithery components.",
-	"files": [
-		{
-			"path": "registry/new-york/smithery/connection-context.tsx",
-			"content": "\"use client\";\n\nimport { createContext, useContext } from \"react\";\n\n// Context for connection config - consumed by ToolDetailDialog for code generation\nexport interface ConnectionConfig {\n\tmcpUrl: string;\n\tapiKey: string;\n\tnamespace: string;\n\tconnectionId: string;\n}\n\nexport const ConnectionConfigContext = createContext<ConnectionConfig | null>(\n\tnull,\n);\n\nexport function useConnectionConfig() {\n\treturn useContext(ConnectionConfigContext);\n}\n",
-			"type": "registry:component",
-			"target": "components/smithery/connection-context.tsx"
-		}
-	],
-	"type": "registry:block"
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "smithery-connection-context",
+  "title": "Smithery Connection Context",
+  "description": "Context provider and hook for sharing connection configuration between Smithery components.",
+  "files": [
+    {
+      "path": "registry/new-york/smithery/connection-context.tsx",
+      "content": "\"use client\";\n\nimport { createContext, useContext } from \"react\";\n\n// Context for connection config - consumed by ToolDetailDialog for code generation\nexport interface ConnectionConfig {\n\tmcpUrl: string;\n\tapiKey: string;\n\tnamespace: string;\n\tconnectionId: string;\n}\n\nexport const ConnectionConfigContext = createContext<ConnectionConfig | null>(\n\tnull,\n);\n\nexport function useConnectionConfig() {\n\treturn useContext(ConnectionConfigContext);\n}\n",
+      "type": "registry:component",
+      "target": "components/smithery/connection-context.tsx"
+    }
+  ],
+  "type": "registry:block"
 }
