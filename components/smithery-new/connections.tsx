@@ -99,9 +99,6 @@ export const ConnectionCard = ({
 						{new Date(connection.createdAt || "").toLocaleDateString()}{" "}
 						{new Date(connection.createdAt || "").toLocaleTimeString()}
 					</p>
-					<p className="text-muted-foreground text-xs truncate">
-						{connection.metadata && JSON.stringify(connection.metadata)}
-					</p>
 				</div>
 				<Button
 					variant="ghost"
@@ -326,7 +323,11 @@ const ActiveConnection = ({
 							</Avatar>
 							<div className="flex-1 min-w-0">
 								<div className="flex items-center gap-3 mb-1">
-									<h1 className="text-xl font-semibold">{data.serverInfo?.title ?? data.serverInfo?.name ?? data.name}</h1>
+									<h1 className="text-xl font-semibold">
+										{data.serverInfo?.title ??
+											data.serverInfo?.name ??
+											data.name}
+									</h1>
 									<Badge
 										variant={
 											data.status?.state === "connected"
@@ -353,7 +354,9 @@ const ActiveConnection = ({
 									</p>
 								)}
 								<div className="flex items-center gap-4 text-xs text-muted-foreground">
-									<span className="text-xs text-muted-foreground">Connection ID: {data.connectionId}</span>
+									<span className="text-xs text-muted-foreground">
+										Connection ID: {data.connectionId}
+									</span>
 									<span>
 										Created{" "}
 										{new Date(data.createdAt || "").toLocaleDateString()}
@@ -370,6 +373,16 @@ const ActiveConnection = ({
 										</a>
 									)}
 								</div>
+								{data.metadata && Object.keys(data.metadata).length > 0 && (
+									<div className="mt-3 p-3 bg-muted/50 rounded-md">
+										<p className="text-xs font-medium text-muted-foreground mb-2">
+											Metadata
+										</p>
+										<pre className="text-xs text-muted-foreground overflow-auto">
+											{JSON.stringify(data.metadata, null, 2)}
+										</pre>
+									</div>
+								)}
 							</div>
 						</div>
 					</div>
