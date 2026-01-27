@@ -200,7 +200,7 @@ interface ComponentPreviewProps {
 }
 
 export function ComponentPreview({
-	component,
+	component: _component,
 	requiresConnection = false,
 	children,
 }: ComponentPreviewProps) {
