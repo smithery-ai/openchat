@@ -8,17 +8,17 @@ import { selectedTokenAtom } from "@/registry/new-york/smithery/tokens";
 import { ChatBlock } from "./chat-block";
 import { type NavigationSection, SharedSidebar } from "./shared-sidebar";
 
-export function RegistryBrowser({ namespace }: { namespace?: string }) {
+export function RegistryBrowser({ namespace }: { namespace: string }) {
 	const searchParams = useSearchParams();
 	const apiKey = useAtomValue(selectedTokenAtom);
 	const [activeNav, setActiveNav] = useState<NavigationSection>(
-		(searchParams.get("nav") as NavigationSection) || "connections",
+		(searchParams.get("nav") as NavigationSection) || "chat",
 	);
 
 	return (
 		<SharedSidebar activeNav={activeNav} onNavChange={setActiveNav}>
 			{activeNav === "chat" ? (
-				<ChatBlock token={apiKey?.token ?? null} />
+				<ChatBlock token={apiKey?.token ?? null} namespace={namespace} />
 			) : apiKey ? (
 				<Connections token={apiKey.token} namespace={namespace} />
 			) : (

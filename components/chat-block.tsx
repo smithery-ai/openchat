@@ -62,7 +62,7 @@ import {
 	ConnectionsDialog,
 } from "@/components/smithery/connections-manager";
 import { ServerPill } from "@/components/smithery/server-pill";
-import { ServerSearch } from "@/components/smithery/tool-search";
+import { ServerSearch } from "@/registry/new-york/smithery/server-search";
 import type { ConnectionConfig } from "@/components/smithery/types";
 import { Button } from "@/components/ui/button";
 import {
@@ -110,9 +110,10 @@ const emptyStateCards = [
 
 interface ChatBlockProps {
 	token: string | null;
+	namespace: string;
 }
 
-export function ChatBlock({ token }: ChatBlockProps) {
+export function ChatBlock({ token, namespace }: ChatBlockProps) {
 	const [input, setInput] = useState("");
 	const [model, setModel] = useState<string>(models[0].value);
 	const [servers, setServers] = useState<
@@ -230,26 +231,38 @@ export function ChatBlock({ token }: ChatBlockProps) {
 											questions, request actions, or connect to servers.
 										</EmptyDescription>
 									</EmptyHeader>
-									<EmptyContent className="flex-row gap-4 justify-center">
-										{emptyStateCards.map((card, _idx) => (
-											<Card
-												key={card.title}
-												className="cursor-pointer hover:bg-accent transition-colors min-w-[200px]"
-												onClick={() =>
-													handleSubmit({
-														text: card.text,
-														files: [],
-													})
-												}
-											>
-												<CardHeader>
-													<CardTitle className="flex justify-center items-center gap-2">
-														<span>{card.title}</span>
-													</CardTitle>
-													<CardDescription>{card.text}</CardDescription>
-												</CardHeader>
-											</Card>
-										))}
+									<EmptyContent>
+										<ServerSearch
+											token={token}
+											namespace={namespace}
+											onExistingConnection="warn"
+											query="gmail"
+											onServerConnect={(connection) => {
+												console.log("onServerConnect", connection);
+											}}
+											hideSearchAfterConnect={true}
+										/>
+										{/* <div className="flex-row gap-4 justify-center w-full bg-red-100">
+											{emptyStateCards.map((card, _idx) => (
+												<Card
+													key={card.title}
+													className="cursor-pointer hover:bg-accent transition-colors min-w-[200px]"
+													onClick={() =>
+														handleSubmit({
+															text: card.text,
+															files: [],
+														})
+													}
+												>
+													<CardHeader>
+														<CardTitle className="flex justify-center items-center gap-2">
+															<span>{card.title}</span>
+														</CardTitle>
+														<CardDescription>{card.text}</CardDescription>
+													</CardHeader>
+												</Card>
+											))}
+										</div> */}
 									</EmptyContent>
 								</Empty>
 							</div>
@@ -386,7 +399,7 @@ export function ChatBlock({ token }: ChatBlockProps) {
 													>
 														<ServerSearch
 															query={searchPart.input.query}
-															apiKey={token}
+															token={token}
 															onServerConnect={(server, connectionConfig) => {
 																// Notify AI SDK that server was connected
 																const newServers = [
