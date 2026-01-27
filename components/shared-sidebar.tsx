@@ -27,6 +27,7 @@ import {
 	SidebarProvider,
 	SidebarTrigger,
 } from "@/components/ui/sidebar";
+import { createToken } from "@/lib/actions";
 import { Tokens } from "@/registry/new-york/smithery/tokens";
 
 export const navigationItems: {
@@ -130,7 +131,15 @@ export function SharedSidebar({
 				<div className="flex flex-col h-screen">
 					<header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
 						<SidebarTrigger />
-						<Tokens initialTokenResponse={initialTokenResponse} />
+						<Tokens
+							initialTokenResponse={initialTokenResponse}
+							onCreateToken={async () => {
+								return await createToken({
+									ttlSeconds: 60 * 60 * 24,
+									userId: crypto.randomUUID(),
+								});
+							}}
+						/>
 					</header>
 
 					<div className="flex-1 overflow-auto">{children}</div>
