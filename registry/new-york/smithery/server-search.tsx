@@ -235,6 +235,7 @@ const ServerDisplay = ({
 		isPending: isConnecting,
 		data: connectionData,
 		mutateAsync: connectAsync,
+		error: connectionError,
 	} = useMutation({
 		mutationFn: async (
 			overrideMode?: "use" | "create-new",
@@ -393,9 +394,17 @@ const ServerDisplay = ({
 				/>
 			)}
 
-			{connectionData?.status === "error" && (
+			{(connectionData?.status === "error" || connectionError) && (
 				<p className="text-destructive text-sm mt-2">
-					Error connecting to server
+					Error connecting to server: {connectionData?.status === "error"
+						? (typeof connectionData.error === "object" && connectionData.error && 'message' in connectionData.error
+							? (connectionData.error as { message?: string }).message ?? "Unknown error"
+							: String(connectionData.error ?? "Unknown error"))
+						: connectionError instanceof Error
+							? connectionError.message
+							: connectionError
+								? String(connectionError)
+								: "Unknown error"}
 				</p>
 			)}
 		</div>
