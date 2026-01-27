@@ -315,7 +315,7 @@ export const ConnectionsManager = ({
 
 	const loadNamespaces = useCallback(async () => {
 		try {
-			const data = await listNamespaces(apiKey);
+			const data = await listNamespaces();
 			setNamespaces(data);
 			if (data.length > 0 && !selectedNamespace) {
 				setSelectedNamespace(data[0].name);

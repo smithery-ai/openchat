@@ -30,6 +30,7 @@ import {
 	ItemMedia,
 	ItemTitle,
 } from "@/components/ui/item";
+import { listNamespaces } from "@/components/smithery/actions";
 import { useDebounce } from "@/hooks/use-debounce";
 import { WithQueryClient } from "@/registry/new-york/smithery/query-client-wrapper";
 
@@ -210,8 +211,7 @@ const ServerDisplay = ({
 			if (namespace) {
 				return namespace;
 			}
-			const client = getSmitheryClient(token);
-			return await getDefaultNamespace(client);
+			return await getDefaultNamespace();
 		},
 		enabled: !!token,
 	});
@@ -392,12 +392,13 @@ const ServerDisplay = ({
 	);
 };
 
-async function getDefaultNamespace(client: Smithery) {
-	const namespaces = await client.namespaces.list();
-	if (namespaces.namespaces.length === 0) {
+// Uses server action to get namespace (scoped tokens lack namespaces:read)
+async function getDefaultNamespace() {
+	const namespaces = await listNamespaces();
+	if (namespaces.length === 0) {
 		throw new Error("No namespaces found");
 	}
-	return namespaces.namespaces[0].name;
+	return namespaces[0].name;
 }
 
 const getSmitheryClient = (token: string) => {
@@ -550,10 +551,7 @@ const ExternalURLDisplay = ({
 
 	const { data: defaultNamespace } = useQuery({
 		queryKey: ["defaultNamespace", token],
-		queryFn: async () => {
-			const client = getSmitheryClient(token);
-			return await getDefaultNamespace(client);
-		},
+		queryFn: () => getDefaultNamespace(),
 		enabled: !!token,
 	});
 

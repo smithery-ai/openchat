@@ -16,9 +16,9 @@ function getSmitheryClient(apiKey?: string | null) {
 	});
 }
 
-// Helper to get default namespace
-async function getDefaultNamespace(apiKey?: string | null) {
-	const client = getSmitheryClient(apiKey);
+// Helper to get default namespace (always uses root API key since scoped tokens lack namespaces:read)
+async function getDefaultNamespace() {
+	const client = getSmitheryClient();
 	const namespaces = await client.namespaces.list();
 	if (namespaces.namespaces.length === 0) {
 		throw new Error("No namespaces found");
@@ -77,7 +77,7 @@ export const enableServer = async (
 	| { status: "auth_required"; authorizationUrl: string }
 > => {
 	const client = getSmitheryClient(apiKey);
-	const namespace = await getDefaultNamespace(apiKey);
+	const namespace = await getDefaultNamespace();
 	const connectionId = sanitizeConnectionId(serverName);
 	const serverUrl =
 		serverName.startsWith("http://") || serverName.startsWith("https://")
@@ -136,8 +136,9 @@ export const enableServer = async (
 	}
 };
 
-export const listNamespaces = async (apiKey?: string | null) => {
-	const client = getSmitheryClient(apiKey);
+export const listNamespaces = async () => {
+	// Always use root API key since scoped tokens lack namespaces:read
+	const client = getSmitheryClient();
 	const response = await client.namespaces.list();
 	return response.namespaces;
 };
@@ -166,7 +167,7 @@ export const checkConnection = async (
 	apiKey?: string | null,
 ) => {
 	const client = getSmitheryClient(apiKey);
-	const namespace = await getDefaultNamespace(apiKey);
+	const namespace = await getDefaultNamespace();
 	const connectionId = sanitizeConnectionId(server);
 	const serverUrl =
 		server.startsWith("http://") || server.startsWith("https://")
@@ -240,7 +241,7 @@ export const searchTool = async (
 	apiKey?: string | null,
 ): Promise<void> => {
 	const client = getSmitheryClient(apiKey);
-	const namespace = await getDefaultNamespace(apiKey);
+	const namespace = await getDefaultNamespace();
 
 	const tools = await client.beta.connect.tools.search(namespace, {
 		q: prompt,
@@ -255,7 +256,7 @@ export const planAction = async (
 	apiKey?: string | null,
 ) => {
 	const client = getSmitheryClient(apiKey);
-	const namespace = await getDefaultNamespace(apiKey);
+	const namespace = await getDefaultNamespace();
 	// Get tools from all connections
 	const toolsWithConfigs = await Promise.all(
 		serverConfigs.map(async (config) => {

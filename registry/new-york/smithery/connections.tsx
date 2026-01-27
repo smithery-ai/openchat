@@ -25,14 +25,6 @@ import { ToolsPanel } from "@/registry/new-york/smithery/tools-panel";
 // Re-export useConnectionConfig for backward compatibility
 export { useConnectionConfig };
 
-async function getDefaultNamespace(client: Smithery) {
-	const namespaces = await client.namespaces.list();
-	if (namespaces.namespaces.length === 0) {
-		throw new Error("No namespaces found");
-	}
-	return namespaces.namespaces[0].name;
-}
-
 const getSmitheryClient = (token: string) => {
 	return new Smithery({
 		apiKey: token,
@@ -148,11 +140,13 @@ const ConnectionsListInner = ({
 			if (!token) {
 				throw new Error("API token is required");
 			}
+			if (!namespace) {
+				throw new Error("namespace is required");
+			}
 			const client = getSmitheryClient(token);
-			const namespaceToUse = namespace || (await getDefaultNamespace(client));
 			const { connections } =
-				await client.beta.connect.connections.list(namespaceToUse);
-			return { connections, namespace: namespaceToUse };
+				await client.beta.connect.connections.list(namespace);
+			return { connections, namespace };
 		},
 		enabled: !!token,
 	});
@@ -263,12 +257,14 @@ const ActiveConnection = ({
 	const { data, isLoading, error } = useQuery({
 		queryKey: ["connection", connectionId, token, namespace],
 		queryFn: async () => {
+			if (!namespace) {
+				throw new Error("namespace is required");
+			}
 			const client = getSmitheryClient(token);
-			const namespaceToUse = namespace || (await getDefaultNamespace(client));
 			const data = await client.beta.connect.connections.get(connectionId, {
-				namespace: namespaceToUse,
+				namespace,
 			});
-			return { namespace: namespaceToUse, ...data };
+			return { namespace, ...data };
 		},
 		// Poll every 2 seconds when auth_required, stop when connected or error
 		refetchInterval: (query) => {
@@ -323,12 +319,13 @@ const ActiveConnection = ({
 	const clientQuery = useQuery({
 		queryKey: ["mcp-client", token, connectionId, namespace],
 		queryFn: async () => {
-			const namespaceToUse =
-				namespace || (await getDefaultNamespace(getSmitheryClient(token)));
+			if (!namespace) {
+				throw new Error("namespace is required");
+			}
 			const { transport } = await createConnection({
 				client: getSmitheryClient(token),
 				connectionId: connectionId,
-				namespace: namespaceToUse,
+				namespace,
 			});
 			const mcpClient = await createMCPClient({ transport });
 			return mcpClient;

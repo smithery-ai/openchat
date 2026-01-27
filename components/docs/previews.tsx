@@ -18,6 +18,7 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
+import { listNamespaces } from "@/components/smithery/actions";
 import { ConnectionConfigContext } from "@/registry/new-york/smithery/connection-context";
 import { Connections } from "@/registry/new-york/smithery/connections";
 import { SchemaForm } from "@/registry/new-york/smithery/schema-form";
@@ -37,23 +38,20 @@ const getSmitheryClient = (token: string) => {
 	});
 };
 
-async function getDefaultNamespace(client: Smithery) {
-	const namespaces = await client.namespaces.list();
-	if (namespaces.namespaces.length === 0) {
+// Uses server action to get namespace (scoped tokens lack namespaces:read)
+async function getDefaultNamespace() {
+	const namespaces = await listNamespaces();
+	if (namespaces.length === 0) {
 		throw new Error("No namespaces found");
 	}
-	return namespaces.namespaces[0].name;
+	return namespaces[0].name;
 }
 
 // Hook to get the default namespace
 function useDefaultNamespace(token: string | undefined) {
 	return useQuery({
 		queryKey: ["defaultNamespace", token],
-		queryFn: async () => {
-			if (!token) throw new Error("Token required");
-			const client = getSmitheryClient(token);
-			return await getDefaultNamespace(client);
-		},
+		queryFn: () => getDefaultNamespace(),
 		enabled: !!token,
 	});
 }
@@ -64,7 +62,7 @@ function useConnections(token: string | undefined, namespace?: string) {
 		queryFn: async () => {
 			if (!token) throw new Error("Token required");
 			const client = getSmitheryClient(token);
-			const namespaceToUse = namespace || (await getDefaultNamespace(client));
+			const namespaceToUse = namespace || (await getDefaultNamespace());
 			const { connections } =
 				await client.beta.connect.connections.list(namespaceToUse);
 			return { connections, namespace: namespaceToUse };
@@ -83,8 +81,7 @@ function useConnectionTools(
 		queryFn: async () => {
 			if (!token || !connectionId)
 				throw new Error("Token and connection required");
-			const namespaceToUse =
-				namespace || (await getDefaultNamespace(getSmitheryClient(token)));
+			const namespaceToUse = namespace || (await getDefaultNamespace());
 			const { transport } = await createConnection({
 				client: getSmitheryClient(token),
 				connectionId,
@@ -242,12 +239,13 @@ export function ServerSearchPreview() {
 // Connections Preview
 export function ConnectionsPreview() {
 	const apiKey = useAtomValue(selectedTokenAtom);
+	const { data: namespace } = useDefaultNamespace(apiKey?.token);
 
 	return (
 		<PreviewFrame>
 			{apiKey ? (
 				<div className="h-[500px]">
-					<Connections token={apiKey.token} />
+					<Connections token={apiKey.token} namespace={namespace} />
 				</div>
 			) : (
 				<TokenRequiredMessage />
