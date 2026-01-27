@@ -445,7 +445,7 @@ const ActiveConnection = ({
 						</a>
 					</div>
 				)}
-				{toolsQuery.isLoading && (
+				{(toolsQuery.isLoading || toolsQuery.isPending) && (
 					<div className="p-6">
 						<p className="text-muted-foreground">Loading tools...</p>
 					</div>

@@ -3,6 +3,7 @@
 import type { Tool } from "ai";
 import { Search } from "lucide-react";
 import { useMemo, useState } from "react";
+import { estimateTokenCount } from "tokenx";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { ToolCard } from "@/registry/new-york/smithery/tool-card";
@@ -33,6 +34,22 @@ export function ToolsPanel({ tools, onExecute }: ToolsPanelProps) {
 		});
 	}, [tools, searchQuery]);
 
+	const totalToolTokenCount = useMemo(() => {
+		return Object.values(tools)
+			.reduce((total, tool) => {
+				return total + (estimateTokenCount(JSON.stringify(tool)) || 0);
+			}, 0)
+			.toLocaleString();
+	}, [tools]);
+
+	const filteredToolTokenCount = useMemo(() => {
+		return Object.values(filteredTools)
+			.reduce((total, tool) => {
+				return total + (estimateTokenCount(JSON.stringify(tool)) || 0);
+			}, 0)
+			.toLocaleString();
+	}, [filteredTools]);
+
 	const handleExecute = async (
 		toolName: string,
 		params: Record<string, unknown>,
@@ -57,13 +74,17 @@ export function ToolsPanel({ tools, onExecute }: ToolsPanelProps) {
 	return (
 		<div className="flex flex-col h-full">
 			<div className="p-6 border-b">
-				<div className="flex items-center justify-between mb-4">
+				<div className="flex items-center justify-between gap-2 mb-4">
 					<h2 className="text-lg font-semibold">Tools</h2>
-					<span className="text-sm text-muted-foreground">
+					<p className="text-sm text-muted-foreground">
 						{filteredCount === toolCount
 							? `${toolCount} tool${toolCount === 1 ? "" : "s"}`
 							: `${filteredCount} of ${toolCount} tools`}
-					</span>
+						{" · "}
+						{filteredCount === toolCount
+							? `${totalToolTokenCount} input tokens`
+							: `${filteredToolTokenCount} of ${totalToolTokenCount} input tokens`}
+					</p>
 				</div>
 				<Field>
 					<FieldLabel htmlFor="tool-search" className="sr-only">
