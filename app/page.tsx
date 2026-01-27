@@ -1,30 +1,7 @@
-"use server";
-import { Suspense } from "react";
 import { HomePage } from "@/components/home";
-import { Spinner } from "@/components/ui/spinner";
-import { getApiKey, getDefaultNamespace } from "@/lib/actions";
-
-async function HomePageWrapper() {
-	const initialTokenResponse = await getApiKey();
-	const namespace = await getDefaultNamespace();
-	return (
-		<HomePage
-			initialTokenResponse={initialTokenResponse}
-			namespace={namespace}
-		/>
-	);
-}
+import { getDefaultNamespace } from "@/lib/actions";
 
 export default async function Home() {
-	return (
-		<Suspense
-			fallback={
-				<div className="flex items-center justify-center h-screen gap-2">
-					<Spinner className="size-8" /> Fetching API Keys...
-				</div>
-			}
-		>
-			<HomePageWrapper />
-		</Suspense>
-	);
+	const namespace = await getDefaultNamespace();
+	return <HomePage namespace={namespace} />;
 }

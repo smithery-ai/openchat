@@ -1,19 +1,12 @@
 "use client";
 
-import type { CreateTokenResponse } from "@smithery/api/resources/tokens.mjs";
+import { Suspense } from "react";
 import { RegistryBrowser } from "./registry-browser";
 
-export function HomePage({
-	initialTokenResponse,
-	namespace,
-}: {
-	initialTokenResponse: CreateTokenResponse;
-	namespace?: string;
-}) {
+export function HomePage({ namespace }: { namespace?: string }) {
 	return (
-		<RegistryBrowser
-			initialTokenResponse={initialTokenResponse}
-			namespace={namespace}
-		/>
+		<Suspense>
+			<RegistryBrowser namespace={namespace} />
+		</Suspense>
 	);
 }
