@@ -5,7 +5,7 @@ import { Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { ToolCard } from "./tool-card";
+import { ToolCard } from "@/components/smithery/tool-card";
 
 interface ToolsPanelProps {
 	tools: Record<string, Tool>;

@@ -6,7 +6,7 @@ import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { ToolDetailDialog } from "./tool-detail-dialog";
+import { ToolDetailDialog } from "@/components/smithery/tool-detail-dialog";
 
 interface ToolCardProps {
 	name: string;
@@ -26,7 +26,7 @@ export function ToolCard({ name, tool, onExecute }: ToolCardProps) {
 				)}
 				onClick={() => setDialogOpen(true)}
 			>
-				<CardHeader>
+				<CardHeader className="pb-4">
 					<div className="flex items-start justify-between gap-4">
 						<div className="flex-1 min-w-0">
 							<div className="flex items-center gap-2">

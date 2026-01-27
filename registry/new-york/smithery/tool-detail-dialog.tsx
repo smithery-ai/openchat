@@ -8,7 +8,7 @@ import { estimateTokenCount } from "tokenx";
 import {
 	CodeBlock,
 	CodeBlockCopyButton,
-} from "@/components/ai-elements/code-block";
+} from "@/components/smithery/code-block";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -39,7 +39,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { useConnectionConfig } from "./connections";
+import { useConnectionConfig } from "@/components/smithery/connection-context";
 
 interface JSONSchema {
 	type?: string;
@@ -602,8 +602,7 @@ import { SmitheryTransport } from '@smithery/api/mcp';
 const mcpUrl = "${mcpUrl}";
 const namespace = ${namespace};
 const connectionId = ${connectionId};
-${apiKey.includes("v4.public") ? "// This key will expire in 24 hours" : ""}
-${apiKey.includes("v4.public") ? `const apiKey = ${apiKey};` : "const apiKey = process.env.SMITHERY_API_KEY;"}
+const apiKey = ${apiKey};
 
 const transport = new SmitheryTransport({
   client: new Smithery({ apiKey }),

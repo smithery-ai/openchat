@@ -17,16 +17,127 @@
 			]
 		},
 		{
+			"name": "smithery-connection-context",
+			"type": "registry:block",
+			"title": "Smithery Connection Context",
+			"description": "Context provider and hook for sharing connection configuration between Smithery components.",
+			"files": [
+				{
+					"path": "registry/new-york/smithery/connection-context.tsx",
+					"type": "registry:component",
+					"target": "components/smithery/connection-context.tsx"
+				}
+			]
+		},
+		{
+			"name": "smithery-schema-form",
+			"type": "registry:block",
+			"title": "Smithery Schema Form",
+			"description": "A dynamic form component that renders form fields based on JSON Schema definitions.",
+			"dependencies": ["react-hook-form"],
+			"registryDependencies": [
+				"button",
+				"field",
+				"input",
+				"select",
+				"switch",
+				"textarea"
+			],
+			"files": [
+				{
+					"path": "registry/new-york/smithery/schema-form.tsx",
+					"type": "registry:component",
+					"target": "components/smithery/schema-form.tsx"
+				}
+			]
+		},
+		{
+			"name": "smithery-tool-detail-dialog",
+			"type": "registry:block",
+			"title": "Smithery Tool Detail Dialog",
+			"description": "A dialog component for viewing tool details, executing tools with parameters, and displaying code samples.",
+			"dependencies": ["ai", "lucide-react", "react-hook-form", "tokenx", "shiki"],
+			"registryDependencies": [
+				"badge",
+				"button",
+				"dialog",
+				"field",
+				"input",
+				"select",
+				"switch",
+				"tabs",
+				"textarea",
+				"smithery-connection-context"
+			],
+			"files": [
+				{
+					"path": "registry/new-york/smithery/code-block.tsx",
+					"type": "registry:component",
+					"target": "components/smithery/code-block.tsx"
+				},
+				{
+					"path": "registry/new-york/smithery/tool-detail-dialog.tsx",
+					"type": "registry:component",
+					"target": "components/smithery/tool-detail-dialog.tsx"
+				}
+			]
+		},
+		{
+			"name": "smithery-tool-card",
+			"type": "registry:block",
+			"title": "Smithery Tool Card",
+			"description": "A card component for displaying MCP tool information with click-to-open detail dialog.",
+			"dependencies": ["ai", "lucide-react"],
+			"registryDependencies": [
+				"badge",
+				"card",
+				"smithery-tool-detail-dialog"
+			],
+			"files": [
+				{
+					"path": "registry/new-york/smithery/tool-card.tsx",
+					"type": "registry:component",
+					"target": "components/smithery/tool-card.tsx"
+				}
+			]
+		},
+		{
+			"name": "smithery-tools-panel",
+			"type": "registry:block",
+			"title": "Smithery Tools Panel",
+			"description": "A panel component for browsing and searching tools from connected MCP servers.",
+			"dependencies": ["ai", "lucide-react"],
+			"registryDependencies": ["field", "input", "smithery-tool-card"],
+			"files": [
+				{
+					"path": "registry/new-york/smithery/tools-panel.tsx",
+					"type": "registry:component",
+					"target": "components/smithery/tools-panel.tsx"
+				}
+			]
+		},
+		{
 			"name": "smithery-connections",
 			"type": "registry:block",
 			"title": "Smithery Connections",
 			"description": "A component for managing and displaying MCP server connections via Smithery.",
 			"dependencies": [
+				"@ai-sdk/mcp",
 				"@smithery/api",
 				"@tanstack/react-query",
+				"ai",
 				"lucide-react"
 			],
-			"registryDependencies": ["avatar", "button", "card", "separator"],
+			"registryDependencies": [
+				"avatar",
+				"button",
+				"card",
+				"separator",
+				"toggle",
+				"smithery-connection-context",
+				"smithery-server-search",
+				"smithery-tools-panel"
+			],
 			"files": [
 				{
 					"path": "registry/new-york/smithery/connections.tsx",
@@ -45,17 +156,12 @@
 				"@tanstack/react-query",
 				"lucide-react"
 			],
-			"registryDependencies": ["avatar", "button", "combobox", "item"],
+			"registryDependencies": ["avatar", "button", "combobox", "item", "use-debounce"],
 			"files": [
 				{
 					"path": "registry/new-york/smithery/server-search.tsx",
 					"type": "registry:component",
 					"target": "components/smithery/server-search.tsx"
-				},
-				{
-					"path": "registry/new-york/hooks/use-debounce.ts",
-					"type": "registry:hook",
-					"target": "hooks/use-debounce.ts"
 				}
 			]
 		},
@@ -90,23 +196,15 @@
 				"empty",
 				"input",
 				"separator",
-				"spinner"
+				"spinner",
+				"use-debounce",
+				"smithery-server-search"
 			],
 			"files": [
 				{
 					"path": "registry/new-york/smithery/tool-search.tsx",
 					"type": "registry:component",
 					"target": "components/smithery/tool-search.tsx"
-				},
-				{
-					"path": "registry/new-york/smithery/server-search.tsx",
-					"type": "registry:component",
-					"target": "components/smithery/server-search.tsx"
-				},
-				{
-					"path": "registry/new-york/hooks/use-debounce.ts",
-					"type": "registry:hook",
-					"target": "hooks/use-debounce.ts"
 				}
 			]
 		},
@@ -114,27 +212,68 @@
 			"name": "smithery",
 			"type": "registry:block",
 			"title": "Smithery",
-			"description": "Complete Smithery integration for MCP server management - includes connections, server search, token management, and tool search.",
+			"description": "Complete Smithery integration for MCP server management - includes connections, server search, token management, tool search, and tool execution.",
 			"dependencies": [
+				"@ai-sdk/mcp",
 				"@smithery/api",
 				"@tanstack/react-query",
+				"ai",
 				"jotai",
-				"lucide-react"
+				"lucide-react",
+				"react-hook-form",
+				"shiki",
+				"tokenx"
 			],
 			"registryDependencies": [
 				"avatar",
+				"badge",
 				"button",
 				"card",
 				"combobox",
 				"dialog",
 				"empty",
+				"field",
 				"input",
 				"item",
 				"select",
 				"separator",
-				"spinner"
+				"spinner",
+				"switch",
+				"tabs",
+				"textarea",
+				"toggle"
 			],
 			"files": [
+				{
+					"path": "registry/new-york/smithery/connection-context.tsx",
+					"type": "registry:component",
+					"target": "components/smithery/connection-context.tsx"
+				},
+				{
+					"path": "registry/new-york/smithery/code-block.tsx",
+					"type": "registry:component",
+					"target": "components/smithery/code-block.tsx"
+				},
+				{
+					"path": "registry/new-york/smithery/schema-form.tsx",
+					"type": "registry:component",
+					"target": "components/smithery/schema-form.tsx"
+				},
+				{
+					"path": "registry/new-york/smithery/tool-detail-dialog.tsx",
+					"type": "registry:component",
+					"target": "components/smithery/tool-detail-dialog.tsx"
+				},
+				{
+					"path": "registry/new-york/smithery/tool-card.tsx",
+					"type": "registry:component",
+					"target": "components/smithery/tool-card.tsx"
+				},
+				{
+					"path": "registry/new-york/smithery/tools-panel.tsx",
+					"type": "registry:component",
+					"target": "components/smithery/tools-panel.tsx"
+				},
 				{
 					"path": "registry/new-york/smithery/connections.tsx",
 					"type": "registry:component",
