@@ -577,7 +577,7 @@ const connectionId = ${connectionId};
 const apiKey = ${apiKey};
 
 const transport = new SmitheryTransport({
-  client: new Smithery({ apiKey }),
+  client: new Smithery({ apiKey, baseURL: process.env.NEXT_PUBLIC_SMITHERY_API_URL }),
   connectionId, // Leave empty to create a new connection
   namespace,
 });
