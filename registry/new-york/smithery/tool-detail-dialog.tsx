@@ -346,7 +346,7 @@ export function ToolDetailDialog({
 							<TabsContent value="code" className="flex-1 overflow-auto mt-3">
 								<div className="flex flex-col gap-3 h-full">
 									<CodeBlock
-										code="npm install @smithery/api ai @ai-sdk/mcp"
+										code="npm install @smithery/api @modelcontextprotocol/sdk"
 										language="bash"
 									>
 										<CodeBlockCopyButton />
