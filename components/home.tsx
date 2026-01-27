@@ -1,7 +1,12 @@
 "use client";
 
+import { Suspense } from "react";
 import { RegistryBrowser } from "./registry-browser";
 
 export function HomePage({ namespace }: { namespace?: string }) {
-	return <RegistryBrowser namespace={namespace} />;
+	return (
+		<Suspense>
+			<RegistryBrowser namespace={namespace} />
+		</Suspense>
+	);
 }
