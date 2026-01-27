@@ -8,20 +8,19 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ToolExecutionOptions } from "ai";
 import { Plus, RefreshCw, Trash2, X } from "lucide-react";
 import { useEffect, useState } from "react";
-
-import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Toggle } from "@/components/ui/toggle";
-import { ServerSearch } from "@/registry/new-york/smithery/server-search";
-import { ToolsPanel } from "@/registry/new-york/smithery/tools-panel";
+import { cn } from "@/lib/utils";
 import {
 	ConnectionConfigContext,
 	useConnectionConfig,
 } from "@/registry/new-york/smithery/connection-context";
 import { WithQueryClient } from "@/registry/new-york/smithery/query-client-wrapper";
+import { ServerSearch } from "@/registry/new-york/smithery/server-search";
+import { ToolsPanel } from "@/registry/new-york/smithery/tools-panel";
 
 // Re-export useConnectionConfig for backward compatibility
 export { useConnectionConfig };

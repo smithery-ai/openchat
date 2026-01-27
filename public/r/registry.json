@@ -56,7 +56,13 @@
 			"type": "registry:block",
 			"title": "Smithery Tool Detail Dialog",
 			"description": "A dialog component for viewing tool details, executing tools with parameters, and displaying code samples.",
-			"dependencies": ["ai", "lucide-react", "react-hook-form", "tokenx", "shiki"],
+			"dependencies": [
+				"ai",
+				"lucide-react",
+				"react-hook-form",
+				"tokenx",
+				"shiki"
+			],
 			"registryDependencies": [
 				"badge",
 				"button",
@@ -91,7 +97,13 @@
 			"type": "registry:block",
 			"title": "Smithery Tool Card",
 			"description": "A card component for displaying MCP tool information with click-to-open detail dialog.",
-			"dependencies": ["ai", "lucide-react", "react-hook-form", "tokenx", "shiki"],
+			"dependencies": [
+				"ai",
+				"lucide-react",
+				"react-hook-form",
+				"tokenx",
+				"shiki"
+			],
 			"registryDependencies": [
 				"badge",
 				"button",
@@ -132,7 +144,13 @@
 			"type": "registry:block",
 			"title": "Smithery Tools Panel",
 			"description": "A panel component for browsing and searching tools from connected MCP servers.",
-			"dependencies": ["ai", "lucide-react", "react-hook-form", "tokenx", "shiki"],
+			"dependencies": [
+				"ai",
+				"lucide-react",
+				"react-hook-form",
+				"tokenx",
+				"shiki"
+			],
 			"registryDependencies": [
 				"badge",
 				"button",

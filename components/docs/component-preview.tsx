@@ -4,15 +4,11 @@ import { createMCPClient } from "@ai-sdk/mcp";
 import Smithery from "@smithery/api";
 import { SmitheryTransport } from "@smithery/api/mcp";
 import type { Connection } from "@smithery/api/resources/beta/connect/connections.mjs";
-import type { CreateTokenResponse } from "@smithery/api/resources/tokens.mjs";
 import { useQuery } from "@tanstack/react-query";
 import type { Tool, ToolExecutionOptions } from "ai";
 import { useAtomValue } from "jotai";
 import { AlertCircle } from "lucide-react";
 import { useState } from "react";
-import { selectedTokenAtom } from "@/registry/new-york/smithery/tokens";
-import { ConnectionConfigContext } from "@/registry/new-york/smithery/connection-context";
-import { Spinner } from "@/components/ui/spinner";
 import {
 	Select,
 	SelectContent,
@@ -20,6 +16,9 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import { Spinner } from "@/components/ui/spinner";
+import { ConnectionConfigContext } from "@/registry/new-york/smithery/connection-context";
+import { selectedTokenAtom } from "@/registry/new-york/smithery/tokens";
 import { PreviewFrame } from "./preview-frame";
 
 const DEFAULT_MCP_URL = "https://mcp.exa.ai";
@@ -46,7 +45,8 @@ function useConnections(token: string | undefined, namespace?: string) {
 			if (!token) throw new Error("Token required");
 			const client = getSmitheryClient(token);
 			const namespaceToUse = namespace || (await getDefaultNamespace(client));
-			const { connections } = await client.beta.connect.connections.list(namespaceToUse);
+			const { connections } =
+				await client.beta.connect.connections.list(namespaceToUse);
 			return { connections, namespace: namespaceToUse };
 		},
 		enabled: !!token,
@@ -61,8 +61,10 @@ function useConnectionTools(
 	const clientQuery = useQuery({
 		queryKey: ["mcp-client", token, connectionId, namespace],
 		queryFn: async () => {
-			if (!token || !connectionId) throw new Error("Token and connection required");
-			const namespaceToUse = namespace || (await getDefaultNamespace(getSmitheryClient(token)));
+			if (!token || !connectionId)
+				throw new Error("Token and connection required");
+			const namespaceToUse =
+				namespace || (await getDefaultNamespace(getSmitheryClient(token)));
 			const transport = new SmitheryTransport({
 				client: getSmitheryClient(token),
 				connectionId,
@@ -83,7 +85,10 @@ function useConnectionTools(
 		enabled: !!clientQuery.data,
 	});
 
-	const handleExecute = async (toolName: string, params: Record<string, unknown>) => {
+	const handleExecute = async (
+		toolName: string,
+		params: Record<string, unknown>,
+	) => {
 		if (!toolsQuery.data) throw new Error("Tools not available");
 		const tool = toolsQuery.data[toolName];
 		if (!tool) throw new Error(`Tool ${toolName} not found`);
@@ -138,7 +143,9 @@ function ConnectionSelector({
 			<div className="flex items-center gap-2 text-sm text-muted-foreground">
 				<AlertCircle className="h-4 w-4" />
 				No connections found. Connect to{" "}
-				<code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono">{DEFAULT_MCP_URL}</code>{" "}
+				<code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono">
+					{DEFAULT_MCP_URL}
+				</code>{" "}
 				first.
 			</div>
 		);
@@ -156,7 +163,10 @@ function ConnectionSelector({
 				</SelectTrigger>
 				<SelectContent>
 					{data.connections.map((connection: Connection) => (
-						<SelectItem key={connection.connectionId} value={connection.connectionId}>
+						<SelectItem
+							key={connection.connectionId}
+							value={connection.connectionId}
+						>
 							{connection.name}
 						</SelectItem>
 					))}
@@ -169,18 +179,23 @@ function ConnectionSelector({
 interface ComponentPreviewProps {
 	component: string;
 	requiresConnection?: boolean;
-	children: React.ReactNode | ((props: {
-		tools: Record<string, Tool>;
-		handleExecute: (toolName: string, params: Record<string, unknown>) => Promise<unknown>;
-		connectionConfig: {
-			mcpUrl: string;
-			apiKey: string;
-			namespace: string;
-			connectionId: string;
-		};
-		selectedToolName: string | null;
-		setSelectedToolName: (name: string | null) => void;
-	}) => React.ReactNode);
+	children:
+		| React.ReactNode
+		| ((props: {
+				tools: Record<string, Tool>;
+				handleExecute: (
+					toolName: string,
+					params: Record<string, unknown>,
+				) => Promise<unknown>;
+				connectionConfig: {
+					mcpUrl: string;
+					apiKey: string;
+					namespace: string;
+					connectionId: string;
+				};
+				selectedToolName: string | null;
+				setSelectedToolName: (name: string | null) => void;
+		  }) => React.ReactNode);
 }
 
 export function ComponentPreview({
@@ -189,18 +204,16 @@ export function ComponentPreview({
 	children,
 }: ComponentPreviewProps) {
 	const apiKey = useAtomValue(selectedTokenAtom);
-	const [selectedConnectionId, setSelectedConnectionId] = useState<string | null>(null);
+	const [selectedConnectionId, setSelectedConnectionId] = useState<
+		string | null
+	>(null);
 	const [selectedToolName, setSelectedToolName] = useState<string | null>(null);
 
 	const isRenderFunction = typeof children === "function";
 
 	// Components that don't need any token and have static children
 	if (!requiresConnection && !isRenderFunction) {
-		return (
-			<PreviewFrame>
-				{children}
-			</PreviewFrame>
-		);
+		return <PreviewFrame>{children}</PreviewFrame>;
 	}
 
 	// Components with render functions need a token
@@ -239,11 +252,7 @@ export function ComponentPreview({
 
 	// Static children with token available (but not requiring connection)
 	if (!isRenderFunction) {
-		return (
-			<PreviewFrame>
-				{children}
-			</PreviewFrame>
-		);
+		return <PreviewFrame>{children}</PreviewFrame>;
 	}
 
 	// Fallback - shouldn't normally reach here
@@ -271,7 +280,10 @@ function ToolComponentPreviewInner({
 	setSelectedToolName: (name: string | null) => void;
 	children: (props: {
 		tools: Record<string, Tool>;
-		handleExecute: (toolName: string, params: Record<string, unknown>) => Promise<unknown>;
+		handleExecute: (
+			toolName: string,
+			params: Record<string, unknown>,
+		) => Promise<unknown>;
 		connectionConfig: {
 			mcpUrl: string;
 			apiKey: string;
@@ -282,11 +294,13 @@ function ToolComponentPreviewInner({
 		setSelectedToolName: (name: string | null) => void;
 	}) => React.ReactNode;
 }) {
-	const { tools, isLoading, error, handleExecute, namespace: resolvedNamespace } = useConnectionTools(
-		token,
-		connectionId,
-		namespace,
-	);
+	const {
+		tools,
+		isLoading,
+		error,
+		handleExecute,
+		namespace: resolvedNamespace,
+	} = useConnectionTools(token, connectionId, namespace);
 
 	if (!connectionId) {
 		return (
@@ -330,7 +344,13 @@ function ToolComponentPreviewInner({
 
 	return (
 		<ConnectionConfigContext.Provider value={connectionConfig}>
-			{children({ tools, handleExecute, connectionConfig, selectedToolName, setSelectedToolName })}
+			{children({
+				tools,
+				handleExecute,
+				connectionConfig,
+				selectedToolName,
+				setSelectedToolName,
+			})}
 		</ConnectionConfigContext.Provider>
 	);
 }

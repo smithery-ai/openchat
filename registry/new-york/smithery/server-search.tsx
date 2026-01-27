@@ -13,7 +13,6 @@ import {
 	Lock,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useDebounce } from "@/hooks/use-debounce";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -31,6 +30,7 @@ import {
 	ItemMedia,
 	ItemTitle,
 } from "@/components/ui/item";
+import { useDebounce } from "@/hooks/use-debounce";
 import { WithQueryClient } from "@/registry/new-york/smithery/query-client-wrapper";
 
 interface AuthRequiredBannerProps {

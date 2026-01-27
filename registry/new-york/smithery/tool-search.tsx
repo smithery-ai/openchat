@@ -5,13 +5,18 @@ import type { ToolSearchResponse } from "@smithery/api/resources/beta/connect/to
 import { useQuery } from "@tanstack/react-query";
 import { WrenchIcon } from "lucide-react";
 import { useState } from "react";
-import { useDebounce } from "@/hooks/use-debounce";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
-import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
+import {
+	Empty,
+	EmptyDescription,
+	EmptyHeader,
+	EmptyTitle,
+} from "@/components/ui/empty";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Spinner } from "@/components/ui/spinner";
+import { useDebounce } from "@/hooks/use-debounce";
 import { WithQueryClient } from "@/registry/new-york/smithery/query-client-wrapper";
 import { ServerSearch } from "@/registry/new-york/smithery/server-search";
 
