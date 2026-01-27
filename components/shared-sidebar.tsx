@@ -1,6 +1,5 @@
 "use client";
 
-import type { CreateTokenResponse } from "@smithery/api/resources/tokens.mjs";
 import {
 	Blocks,
 	FileJson,
@@ -58,14 +57,12 @@ export const componentItems = [
 export type NavigationSection = "connections" | "chat";
 
 interface SharedSidebarProps {
-	initialTokenResponse: CreateTokenResponse;
 	activeNav?: NavigationSection;
 	onNavChange?: (nav: NavigationSection) => void;
 	children: React.ReactNode;
 }
 
 export function SharedSidebar({
-	initialTokenResponse,
 	activeNav,
 	onNavChange,
 	children,
@@ -136,9 +133,40 @@ export function SharedSidebar({
 					<header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
 						<SidebarTrigger />
 						<Tokens
-							initialTokenResponse={initialTokenResponse}
-							onCreateToken={async () => {
-								return await createToken({
+							getOrCreateToken={async ({ hasExistingTokens, forceCreate }) => {
+								// Force create skips whoami
+								if (forceCreate) {
+									return createToken({
+										ttlSeconds: 60 * 60 * 24,
+										userId: crypto.randomUUID(),
+									});
+								}
+
+								// Try localhost whoami first
+								try {
+									const response = await fetch(
+										"http://localhost:4260/whoami",
+									);
+									if (response.ok) {
+										const data = await response.json();
+										if (data.SMITHERY_API_KEY) {
+											return {
+												token: data.SMITHERY_API_KEY,
+												expiresAt: data.expiresAt ?? "never",
+											};
+										}
+									}
+								} catch {
+									// whoami not available
+								}
+
+								// If we have existing tokens, don't mint
+								if (hasExistingTokens) {
+									return null;
+								}
+
+								// Mint a new token
+								return createToken({
 									ttlSeconds: 60 * 60 * 24,
 									userId: crypto.randomUUID(),
 								});
