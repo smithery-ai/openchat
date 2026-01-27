@@ -602,7 +602,8 @@ import { SmitheryTransport } from '@smithery/api/mcp';
 const mcpUrl = "${mcpUrl}";
 const namespace = ${namespace};
 const connectionId = ${connectionId};
-const apiKey = ${apiKey};
+${apiKey.includes("v4.public") ? "// This key will expire in 24 hours" : ""}
+${apiKey.includes("v4.public") ? `const apiKey = ${apiKey};` : "const apiKey = process.env.SMITHERY_API_KEY;"}
 
 const transport = new SmitheryTransport({
   client: new Smithery({ apiKey }),

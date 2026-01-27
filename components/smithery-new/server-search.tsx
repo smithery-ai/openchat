@@ -155,7 +155,7 @@ const ConnectionButton = ({
 			return (
 				<Button variant="secondary" size="sm" className="flex-1" disabled>
 					<Loader2 className="size-4 animate-spin" />
-					Pending authorization...
+					Pending...
 				</Button>
 			);
 		case "existing_connection_warning":
