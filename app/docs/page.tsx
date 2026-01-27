@@ -36,12 +36,6 @@ const components = [
 		icon: Link2,
 	},
 	{
-		title: "Tool Search",
-		slug: "tool-search",
-		description: "Search for tools across all connected servers.",
-		icon: Search,
-	},
-	{
 		title: "Tools Panel",
 		slug: "tools-panel",
 		description: "Display and interact with a collection of tools.",

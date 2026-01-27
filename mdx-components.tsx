@@ -8,7 +8,6 @@ import {
 	ServerSearchPreview,
 	ToolCardPreview,
 	ToolDetailDialogPreview,
-	ToolSearchPreview,
 	ToolsPanelPreview,
 } from "@/components/docs/previews";
 
@@ -20,7 +19,6 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
 		PreviewFrame,
 		ServerSearchPreview,
 		ConnectionsPreview,
-		ToolSearchPreview,
 		ToolsPanelPreview,
 		ToolCardPreview,
 		ToolDetailDialogPreview,

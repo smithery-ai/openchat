@@ -45,7 +45,6 @@ export const componentItems = [
 	{ title: "Tokens", slug: "tokens", icon: Key },
 	{ title: "Server Search", slug: "server-search", icon: Search },
 	{ title: "Connections", slug: "connections", icon: Link2 },
-	{ title: "Tool Search", slug: "tool-search", icon: Search },
 	{ title: "Tools Panel", slug: "tools-panel", icon: LayoutGrid },
 	{ title: "Tool Card", slug: "tool-card", icon: Square },
 	{

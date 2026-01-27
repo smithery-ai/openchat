@@ -25,7 +25,6 @@ import { ServerSearch } from "@/registry/new-york/smithery/server-search";
 import { selectedTokenAtom } from "@/registry/new-york/smithery/tokens";
 import { ToolCard } from "@/registry/new-york/smithery/tool-card";
 import { ToolDetailDialog } from "@/registry/new-york/smithery/tool-detail-dialog";
-import { ToolSearch } from "@/registry/new-york/smithery/tool-search";
 import { ToolsPanel } from "@/registry/new-york/smithery/tools-panel";
 import { PreviewFrame } from "./preview-frame";
 
@@ -249,23 +248,6 @@ export function ConnectionsPreview() {
 			{apiKey ? (
 				<div className="h-[500px]">
 					<Connections token={apiKey.token} />
-				</div>
-			) : (
-				<TokenRequiredMessage />
-			)}
-		</PreviewFrame>
-	);
-}
-
-// Tool Search Preview
-export function ToolSearchPreview() {
-	const apiKey = useAtomValue(selectedTokenAtom);
-
-	return (
-		<PreviewFrame>
-			{apiKey ? (
-				<div className="p-4">
-					<ToolSearch token={apiKey.token} />
 				</div>
 			) : (
 				<TokenRequiredMessage />

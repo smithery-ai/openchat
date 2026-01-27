@@ -6,7 +6,6 @@ import { useState } from "react";
 import { Connections } from "@/registry/new-york/smithery/connections";
 import { ServerSearch } from "@/registry/new-york/smithery/server-search";
 import { selectedTokenAtom } from "@/registry/new-york/smithery/tokens";
-import { ToolSearch } from "@/registry/new-york/smithery/tool-search";
 import { type NavigationSection, SharedSidebar } from "./shared-sidebar";
 
 export function RegistryBrowser({
@@ -33,7 +32,12 @@ export function RegistryBrowser({
 					{activeNav === "connections" && (
 						<Connections token={apiKey.token} namespace={namespace} />
 					)}
-					{activeNav === "tools" && <ToolSearch token={apiKey.token} />}
+					{activeNav === "tools" && (
+						<div className="p-6 text-muted-foreground">
+							Tool search is not available in this view. Use the Connections tab
+							to browse tools from connected servers.
+						</div>
+					)}
 				</div>
 			) : (
 				<div className="p-6 text-muted-foreground">
