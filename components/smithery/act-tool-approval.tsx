@@ -344,7 +344,7 @@ export function ActToolApproval({
 			}
 
 			try {
-				const namespaces = await listNamespaces(apiKey);
+				const namespaces = await listNamespaces();
 				console.log("Loaded namespaces:", namespaces);
 				if (namespaces.length > 0) {
 					console.log("Setting default namespace:", namespaces[0].name);

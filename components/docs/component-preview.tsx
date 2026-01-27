@@ -17,6 +17,7 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
+import { listNamespaces } from "@/components/smithery/actions";
 import { ConnectionConfigContext } from "@/registry/new-york/smithery/connection-context";
 import { selectedTokenAtom } from "@/registry/new-york/smithery/tokens";
 import { PreviewFrame } from "./preview-frame";
@@ -30,12 +31,13 @@ const getSmitheryClient = (token: string) => {
 	});
 };
 
-async function getDefaultNamespace(client: Smithery) {
-	const namespaces = await client.namespaces.list();
-	if (namespaces.namespaces.length === 0) {
+// Uses server action to get namespace (scoped tokens lack namespaces:read)
+async function getDefaultNamespace() {
+	const namespaces = await listNamespaces();
+	if (namespaces.length === 0) {
 		throw new Error("No namespaces found");
 	}
-	return namespaces.namespaces[0].name;
+	return namespaces[0].name;
 }
 
 function useConnections(token: string | undefined, namespace?: string) {
@@ -44,7 +46,7 @@ function useConnections(token: string | undefined, namespace?: string) {
 		queryFn: async () => {
 			if (!token) throw new Error("Token required");
 			const client = getSmitheryClient(token);
-			const namespaceToUse = namespace || (await getDefaultNamespace(client));
+			const namespaceToUse = namespace || (await getDefaultNamespace());
 			const { connections } =
 				await client.beta.connect.connections.list(namespaceToUse);
 			return { connections, namespace: namespaceToUse };
@@ -63,8 +65,7 @@ function useConnectionTools(
 		queryFn: async () => {
 			if (!token || !connectionId)
 				throw new Error("Token and connection required");
-			const namespaceToUse =
-				namespace || (await getDefaultNamespace(getSmitheryClient(token)));
+			const namespaceToUse = namespace || (await getDefaultNamespace());
 			const { transport } = await createConnection({
 				client: getSmitheryClient(token),
 				connectionId,
