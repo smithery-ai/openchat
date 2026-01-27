@@ -4,10 +4,11 @@
 	"private": true,
 	"scripts": {
 		"dev": "next dev",
-		"build": "next build",
+		"build": "pnpm check && next build",
 		"start": "next start",
 		"lint": "biome lint",
 		"lint:fix": "biome lint --fix",
+		"check": "biome check",
 		"fmt": "biome check --write --unsafe",
 		"registry:build": "shadcn build ./registry/registry.json"
 	},

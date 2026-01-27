@@ -1,15 +1,15 @@
 {
-  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
-  "name": "use-debounce",
-  "title": "useDebounce",
-  "description": "A hook that debounces a value by a specified delay.",
-  "files": [
-    {
-      "path": "registry/new-york/hooks/use-debounce.ts",
-      "content": "import { useEffect, useState } from \"react\";\n\nexport function useDebounce<T>(value: T, delay: number): T {\n\tconst [debouncedValue, setDebouncedValue] = useState<T>(value);\n\n\tuseEffect(() => {\n\t\tconst handler = setTimeout(() => {\n\t\t\tsetDebouncedValue(value);\n\t\t}, delay);\n\n\t\treturn () => {\n\t\t\tclearTimeout(handler);\n\t\t};\n\t}, [value, delay]);\n\n\treturn debouncedValue;\n}\n",
-      "type": "registry:hook",
-      "target": "hooks/use-debounce.ts"
-    }
-  ],
-  "type": "registry:hook"
+	"$schema": "https://ui.shadcn.com/schema/registry-item.json",
+	"name": "use-debounce",
+	"title": "useDebounce",
+	"description": "A hook that debounces a value by a specified delay.",
+	"files": [
+		{
+			"path": "registry/new-york/hooks/use-debounce.ts",
+			"content": "import { useEffect, useState } from \"react\";\n\nexport function useDebounce<T>(value: T, delay: number): T {\n\tconst [debouncedValue, setDebouncedValue] = useState<T>(value);\n\n\tuseEffect(() => {\n\t\tconst handler = setTimeout(() => {\n\t\t\tsetDebouncedValue(value);\n\t\t}, delay);\n\n\t\treturn () => {\n\t\t\tclearTimeout(handler);\n\t\t};\n\t}, [value, delay]);\n\n\treturn debouncedValue;\n}\n",
+			"type": "registry:hook",
+			"target": "hooks/use-debounce.ts"
+		}
+	],
+	"type": "registry:hook"
 }

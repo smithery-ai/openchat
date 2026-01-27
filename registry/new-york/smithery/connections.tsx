@@ -138,8 +138,9 @@ const ConnectionsListInner = ({
 		queryKey: ["connections", token],
 		queryFn: async () => {
 			const client = getSmitheryClient(token);
-			const { connections } =
-				await client.beta.connect.connections.list(namespace!);
+			const { connections } = await client.beta.connect.connections.list(
+				namespace!,
+			);
 			return { connections, namespace: namespace! };
 		},
 		enabled: !!token && !!namespace,
