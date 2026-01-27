@@ -11,7 +11,7 @@ interface InstallCommandProps {
 
 export function InstallCommand({ name }: InstallCommandProps) {
 	const baseUrl =
-		process.env.NEXT_PUBLIC_SITE_URL || "https://openchat.smithery.ai";
+		process.env.NEXT_PUBLIC_SITE_URL || "https://openchat-smithery.vercel.app";
 	const command = `npx shadcn@latest add "${baseUrl}/r/${name}.json"`;
 
 	return (

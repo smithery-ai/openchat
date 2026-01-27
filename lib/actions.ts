@@ -49,10 +49,10 @@ export async function createToken({
 }
 
 export async function getApiKey(): Promise<CreateTokenResponse> {
-	if (process.env.NODE_ENV === "development" && process.env.SMITHERY_API_KEY)
-		return {
-			token: process.env.SMITHERY_API_KEY,
-			expiresAt: "never",
-		};
+	// if (process.env.NODE_ENV === "development" && process.env.SMITHERY_API_KEY)
+	// 	return {
+	// 		token: process.env.SMITHERY_API_KEY,
+	// 		expiresAt: "never",
+	// 	};
 	return await createToken({ ttlSeconds: 60 * 60 * 24, userId: randomUUID() });
 }

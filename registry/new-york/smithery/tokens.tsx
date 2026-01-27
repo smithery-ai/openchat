@@ -3,7 +3,7 @@
 import type { CreateTokenResponse } from "@smithery/api/resources/tokens.mjs";
 import { atom, useAtom } from "jotai";
 import { atomWithStorage } from "jotai/utils";
-import { Trash2 } from "lucide-react";
+import { Loader2, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -38,6 +38,7 @@ export function Tokens({
 	const [tokensCreated, setTokensCreated] = useAtom(tokensCreatedAtom);
 	const [selectedToken, setSelectedToken] = useAtom(selectedTokenAtom);
 	const [isOpen, setIsOpen] = useState(false);
+	const [isCreating, setIsCreating] = useState(false);
 
 	useEffect(() => {
 		setTokensCreated((prev) => {
@@ -148,16 +149,28 @@ export function Tokens({
 						<div className="flex  gap-2">
 							{onCreateToken && (
 								<Button
-									onClick={() => {
-										onCreateToken().then((tokenResponse) => {
+									onClick={async () => {
+										setIsCreating(true);
+										try {
+											const tokenResponse = await onCreateToken();
 											setTokensCreated([...tokensCreated, tokenResponse]);
 											setSelectedToken(tokenResponse);
-										});
+										} finally {
+											setIsCreating(false);
+										}
 									}}
 									variant="secondary"
 									className="flex-1"
+									disabled={isCreating}
 								>
-									Create New Token
+									{isCreating ? (
+										<>
+											<Loader2 className="size-4 animate-spin" />
+											Creating...
+										</>
+									) : (
+										"Create New Token"
+									)}
 								</Button>
 							)}
 							<Button onClick={() => setIsOpen(false)} className="flex-1">
