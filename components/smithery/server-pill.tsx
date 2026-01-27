@@ -12,14 +12,12 @@ import {
 } from "@/components/ui/tooltip";
 import { checkConnection } from "./actions";
 import type { ConnectionConfig } from "./types";
+import { Connection } from "@smithery/api/resources/beta/connect/connections.mjs";
 
 type ConnectionStatus = "connecting" | "connected" | "auth_required" | "error";
 
 type ServerPillProps = {
-	server: {
-		connectionConfig: ConnectionConfig;
-		server?: ServerListResponse;
-	};
+	connection: Connection;
 	onRemove?: (serverId: string) => void;
 	enablePolling?: boolean;
 	apiKey?: string | null;
@@ -48,7 +46,7 @@ function getServerUrl(
 }
 
 export function ServerPill({
-	server,
+	connection,
 	onRemove,
 	apiKey,
 	enablePolling = true,
@@ -60,14 +58,12 @@ export function ServerPill({
 
 	const serverInfo = useMemo(
 		() => ({
-			id: server.connectionConfig.configId,
-			name: getServerName(server.connectionConfig, server.server),
-			url: getServerUrl(server.connectionConfig, server.server),
-			iconUrl: server.server?.iconUrl ?? null,
-			verified: server.server?.verified ?? false,
-			useCount: server.server?.useCount ?? null,
+			id: connection.connectionId,
+			name: connection.serverInfo?.title ?? connection.serverInfo?.name ?? connection.name,
+			url: connection.mcpUrl,
+			iconUrl: connection.serverInfo?.icons?.[0]?.src ?? null,
 		}),
-		[server],
+		[connection],
 	);
 
 	const startPolling = useCallback(() => {
@@ -181,11 +177,6 @@ export function ServerPill({
 					)}
 					{statusIcon}
 					<span className="max-w-[150px] truncate">{serverInfo.name}</span>
-					{serverInfo.verified && (
-						<span className="text-green-500 text-xs" title="Verified">
-							✓
-						</span>
-					)}
 					{onRemove && (
 						<button
 							type="button"
@@ -201,9 +192,7 @@ export function ServerPill({
 				<div className="space-y-1 text-xs">
 					<div className="font-medium">{serverInfo.name}</div>
 					<div className="text-muted-foreground">
-						{server.server
-							? `${server.server.qualifiedName}${serverInfo.useCount ? ` • ${serverInfo.useCount.toLocaleString()} uses` : ""}`
-							: `URL: ${server.connectionConfig.serverUrl}`}
+						{connection.mcpUrl}
 					</div>
 					<div className="flex items-center gap-1">
 						<span>Status:</span>

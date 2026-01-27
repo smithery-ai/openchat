@@ -1,5 +1,4 @@
 "use client";
-import type { ServerListResponse } from "@smithery/api/resources/index.mjs";
 import {
 	CopyIcon,
 	DatabaseIcon,
@@ -81,6 +80,7 @@ import {
 } from "@/components/ui/empty";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useChatContext } from "@/contexts/chat-context";
+import { Connection } from "@smithery/api/resources/beta/connect/connections.mjs";
 
 const models = [
 	{
@@ -116,12 +116,7 @@ interface ChatBlockProps {
 export function ChatBlock({ token, namespace }: ChatBlockProps) {
 	const [input, setInput] = useState("");
 	const [model, setModel] = useState<string>(models[0].value);
-	const [servers, setServers] = useState<
-		{
-			connectionConfig: ConnectionConfig;
-			server?: ServerListResponse;
-		}[]
-	>([]);
+	const [connections, setConnections] = useState<Connection[]>([]);
 	const { messages, sendMessage, status, regenerate, addToolOutput } =
 		useChatContext();
 
@@ -130,19 +125,19 @@ export function ChatBlock({ token, namespace }: ChatBlockProps) {
 			message: PromptInputMessage,
 			bodyOverrides?: {
 				model?: string;
-				servers?: typeof servers;
+				connections?: typeof connections;
 			},
 		) => {
 			sendMessage(message, {
 				body: {
 					model: model,
-					servers: servers,
+					connections: connections,
 					apiKey: token,
 					...bodyOverrides,
 				},
 			});
 		},
-		[model, servers, token, sendMessage],
+		[model, connections, token, sendMessage],
 	);
 
 	const connectionActions: ConnectionAction[] = [
@@ -169,13 +164,8 @@ export function ChatBlock({ token, namespace }: ChatBlockProps) {
 			name: "Use in Chat",
 			icon: <PlusIcon className="size-4" />,
 			onClick: (connection) => {
-				const connectionConfig: ConnectionConfig = {
-					serverUrl: connection.mcpUrl,
-					configId: connection.connectionId,
-				};
-
-				const alreadyAdded = servers.some(
-					(s) => "configId" in s && s.configId === connection.connectionId,
+				const alreadyAdded = connections.some(
+					(s) => s.connectionId === connection.connectionId,
 				);
 
 				if (alreadyAdded) {
@@ -183,7 +173,7 @@ export function ChatBlock({ token, namespace }: ChatBlockProps) {
 					return;
 				}
 
-				setServers([...servers, { connectionConfig }]);
+				setConnections([...connections, connection]);
 				toast.success(`Added ${connection.name} to chat`);
 			},
 		},
@@ -232,17 +222,7 @@ export function ChatBlock({ token, namespace }: ChatBlockProps) {
 										</EmptyDescription>
 									</EmptyHeader>
 									<EmptyContent>
-										<ServerSearch
-											token={token}
-											namespace={namespace}
-											onExistingConnection="warn"
-											query="gmail"
-											onServerConnect={(connection) => {
-												console.log("onServerConnect", connection);
-											}}
-											hideSearchAfterConnect={true}
-										/>
-										{/* <div className="flex-row gap-4 justify-center w-full bg-red-100">
+										<div className="flex-row gap-4 justify-center w-full">
 											{emptyStateCards.map((card, _idx) => (
 												<Card
 													key={card.title}
@@ -262,7 +242,7 @@ export function ChatBlock({ token, namespace }: ChatBlockProps) {
 													</CardHeader>
 												</Card>
 											))}
-										</div> */}
+										</div>
 									</EmptyContent>
 								</Empty>
 							</div>
@@ -398,23 +378,25 @@ export function ChatBlock({ token, namespace }: ChatBlockProps) {
 														className="mt-4"
 													>
 														<ServerSearch
+															hideSearchAfterConnect={true}
 															query={searchPart.input.query}
+															namespace={namespace}
 															token={token}
-															onServerConnect={(server, connectionConfig) => {
+															onServerConnect={(connection) => {
 																// Notify AI SDK that server was connected
-																const newServers = [
-																	...servers,
-																	{ connectionConfig, server },
+																const newConnections = [
+																	...connections,
+																	connection,
 																];
-																setServers(newServers);
+																setConnections(newConnections);
 																addToolOutput({
 																	tool: "useServer",
 																	toolCallId: part.toolCallId,
 																	output: {
 																		connectedServer: {
-																			name: server.displayName,
-																			description: server.description,
-																			connectionId: connectionConfig.configId,
+																			name: connection.serverInfo?.title ?? connection.serverInfo?.name ?? connection.name,
+																			description: connection.serverInfo?.description ?? "",
+																			connectionId: connection.connectionId,
 																		},
 																		status: "connected",
 																	},
@@ -424,7 +406,7 @@ export function ChatBlock({ token, namespace }: ChatBlockProps) {
 																		text: "",
 																		files: [],
 																	},
-																	{ servers: newServers },
+																	{ connections: newConnections },
 																);
 															}}
 														/>
@@ -500,7 +482,7 @@ export function ChatBlock({ token, namespace }: ChatBlockProps) {
 																		text: "",
 																		files: [],
 																	},
-																	{ servers },
+																	{ connections },
 																);
 															}}
 															onReject={() => {
@@ -521,7 +503,7 @@ export function ChatBlock({ token, namespace }: ChatBlockProps) {
 																		text: "",
 																		files: [],
 																	},
-																	{ servers },
+																	{ connections },
 																);
 															}}
 														/>
@@ -588,27 +570,27 @@ export function ChatBlock({ token, namespace }: ChatBlockProps) {
 						</PromptInputAttachments>
 						<TooltipProvider>
 							<div className="flex flex-wrap gap-1">
-								{servers
+								{connections
 									.filter(
-										(server, index, self) =>
+										(connection, index, self) =>
 											index ===
 											self.findIndex(
-												(s) =>
-													s.connectionConfig.configId ===
-													server.connectionConfig.configId,
+												(c) =>
+													c.connectionId ===
+													connection.connectionId,
 											),
 									)
-									.map((server, _i) => {
-										const serverId = server.connectionConfig.configId;
+									.map((connection, _i) => {
+										const connectionId = connection.connectionId;
 
 										return (
 											<ServerPill
-												key={`server-${serverId}`}
-												server={server}
+												key={`connection-${connectionId}`}
+												connection={connection}
 												onRemove={(id) => {
-													setServers(
-														servers.filter((s) => {
-															return s.connectionConfig.configId !== id;
+													setConnections(
+														connections.filter((c) => {
+															return c.connectionId !== id;
 														}),
 													);
 												}}

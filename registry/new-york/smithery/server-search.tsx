@@ -916,9 +916,9 @@ const ServerSearchInner = ({
 };
 
 export const ServerSearch = (props: {
+	token: string;
+	namespace: string;
 	query?: string;
-	token?: string;
-	namespace?: string;
 	onExistingConnection?: OnExistingConnectionMode;
 	hideSearchAfterConnect?: boolean;
 	onServerConnect?: (connection: Connection) => void;
