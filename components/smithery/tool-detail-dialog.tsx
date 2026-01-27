@@ -1,2 +1,2 @@
-// Re-export from smithery-new for backwards compatibility
-export { ToolDetailDialog } from "../smithery-new/tool-detail-dialog";
+// Re-export from registry for backwards compatibility
+export { ToolDetailDialog } from "@/registry/new-york/smithery/tool-detail-dialog";

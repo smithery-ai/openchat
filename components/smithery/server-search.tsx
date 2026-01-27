@@ -1,2 +1,2 @@
-// Re-export from smithery-new for backwards compatibility
-export { ServerSearch } from "../smithery-new/server-search";
+// Re-export from registry for backwards compatibility
+export { ServerSearch } from "@/registry/new-york/smithery/server-search";

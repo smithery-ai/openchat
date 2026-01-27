@@ -1,3 +1,3 @@
-// Re-export from smithery-new for backwards compatibility
-export { Tokens } from "../smithery-new/tokens";
+// Re-export from registry for backwards compatibility
+export { Tokens } from "@/registry/new-york/smithery/tokens";
 // Note: tokensCreatedAtom and selectedTokenAtom are in @/lib/atoms

@@ -23,15 +23,15 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { selectedTokenAtom } from "@/lib/atoms";
-import { Connections } from "./smithery-new/connections";
-import { ServerSearch } from "./smithery-new/server-search";
-import { Tokens } from "./smithery-new/tokens";
-import { ToolSearch } from "./smithery-new/tool-search";
-import { ToolsPanel } from "./smithery-new/tools-panel";
-import { ToolCard } from "./smithery-new/tool-card";
-import { ToolDetailDialog } from "./smithery-new/tool-detail-dialog";
-import { SchemaForm } from "./smithery-new/schema-form";
-import { ConnectionConfigContext } from "./smithery/connection-context";
+import { Connections } from "@/registry/new-york/smithery/connections";
+import { ServerSearch } from "@/registry/new-york/smithery/server-search";
+import { Tokens } from "@/registry/new-york/smithery/tokens";
+import { ToolSearch } from "@/registry/new-york/smithery/tool-search";
+import { ToolsPanel } from "@/registry/new-york/smithery/tools-panel";
+import { ToolCard } from "@/registry/new-york/smithery/tool-card";
+import { ToolDetailDialog } from "@/registry/new-york/smithery/tool-detail-dialog";
+import { SchemaForm } from "@/registry/new-york/smithery/schema-form";
+import { ConnectionConfigContext } from "@/registry/new-york/smithery/connection-context";
 import {
 	Sidebar,
 	SidebarContent,

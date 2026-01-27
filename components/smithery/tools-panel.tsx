@@ -1,2 +1,2 @@
-// Re-export from smithery-new for backwards compatibility
-export { ToolsPanel } from "../smithery-new/tools-panel";
+// Re-export from registry for backwards compatibility
+export { ToolsPanel } from "@/registry/new-york/smithery/tools-panel";

@@ -1,2 +1,2 @@
-// Re-export from smithery-new for backwards compatibility
-export { ToolCard } from "../smithery-new/tool-card";
+// Re-export from registry for backwards compatibility
+export { ToolCard } from "@/registry/new-york/smithery/tool-card";
