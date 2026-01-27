@@ -1,0 +1,71 @@
+# Connection Card
+
+A reusable card component for displaying individual MCP server connection details with delete functionality.
+
+<ConnectionCardPreview />
+
+## Installation
+
+<InstallCommand name="smithery-connection-card" />
+
+## Usage
+
+```tsx
+import { ConnectionCard } from "@/components/smithery/connection-card"
+
+export function MyComponent() {
+  return (
+    <ConnectionCard
+      connection={connection}
+      token="your-smithery-api-token"
+      namespace="your-namespace"
+      className="hover:bg-muted"
+      onClick={() => handleClick(connection.connectionId)}
+    />
+  )
+}
+```
+
+## Props
+
+- `connection` (required): The connection object from Smithery API
+- `token` (required): Your Smithery API token for authentication
+- `namespace` (required): The namespace the connection belongs to
+- `className` (optional): Additional CSS classes for styling
+- `onClick` (optional): Click handler for the card
+- All standard HTML div attributes are also supported
+
+## Features
+
+- Displays connection avatar with icon or fallback initials
+- Shows connection name, ID, MCP URL, and creation date
+- Metadata display if available
+- Built-in delete button with mutation handling
+- Fully clickable card for selection
+- Query invalidation on successful deletion
+
+## Connection Object
+
+The `connection` prop should be a Smithery Connection object:
+
+```typescript
+interface Connection {
+  connectionId: string
+  name: string
+  iconUrl?: string
+  mcpUrl: string
+  createdAt?: string
+  metadata?: Record<string, unknown>
+  serverInfo?: {
+    name?: string
+    title?: string
+  }
+}
+```
+
+## Use Cases
+
+- Display connections in a list view
+- Allow users to select active connections
+- Quick access to delete unwanted connections
+- Part of the ConnectionsList component

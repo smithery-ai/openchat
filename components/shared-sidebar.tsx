@@ -2,11 +2,14 @@
 
 import type { CreateTokenResponse } from "@smithery/api/resources/tokens.mjs";
 import {
+	Activity,
 	Blocks,
+	CreditCard,
 	FileJson,
 	Key,
 	LayoutGrid,
 	Link2,
+	List,
 	Search,
 	Settings2,
 	Square,
@@ -40,6 +43,9 @@ export const componentItems = [
 	{ title: "Tokens", slug: "tokens", icon: Key },
 	{ title: "Server Search", slug: "server-search", icon: Search },
 	{ title: "Connections", slug: "connections", icon: Link2 },
+	{ title: "Connection Card", slug: "connection-card", icon: CreditCard },
+	{ title: "Connections List", slug: "connections-list", icon: List },
+	{ title: "Active Connection", slug: "active-connection", icon: Activity },
 	{ title: "Tools Panel", slug: "tools-panel", icon: LayoutGrid },
 	{ title: "Tool Card", slug: "tool-card", icon: Square },
 	{

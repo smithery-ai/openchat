@@ -1,0 +1,93 @@
+# Active Connection
+
+A component for viewing active connection details, handling OAuth authentication flow, and displaying available tools with execution capabilities.
+
+<ActiveConnectionPreview />
+
+## Installation
+
+<InstallCommand name="smithery-active-connection" />
+
+## Usage
+
+```tsx
+import { ActiveConnection } from "@/components/smithery/active-connection"
+
+export function MyApp() {
+  const [connectionId, setConnectionId] = useState("conn_123")
+
+  return (
+    <ActiveConnection
+      token="your-smithery-api-token"
+      namespace="your-namespace" // optional
+      connectionId={connectionId}
+    />
+  )
+}
+```
+
+## Props
+
+- `token` (required): Your Smithery API token for authentication
+- `namespace` (optional): The namespace the connection belongs to. Defaults to the first available namespace
+- `connectionId` (required): The ID of the connection to display
+
+## Features
+
+### Connection Details
+- Server avatar and name display
+- Website link if available
+- Server description
+- Connection creation timestamp
+- Connection ID display
+- Metadata viewer for custom connection data
+
+### Authentication Flow
+- Automatic detection of `auth_required` state
+- 5-second countdown before auto-redirect
+- Opens authentication in new window
+- Polls connection status every 2 seconds during auth
+- Manual authentication link fallback
+
+### Tools Panel Integration
+- Creates MCP client with SmitheryTransport
+- Fetches available tools from the connection
+- Integrates ToolsPanel for tool browsing and execution
+- Provides ConnectionConfigContext for code generation
+
+## Authentication States
+
+The component handles three connection states:
+
+1. **Loading**: Initial connection fetch
+2. **Auth Required**: Displays countdown and authorization link
+3. **Connected**: Shows tools panel with full functionality
+
+## MCP Client Setup
+
+The component automatically:
+- Creates SmitheryTransport instance
+- Initializes AI SDK MCP client
+- Fetches tools list
+- Handles tool execution with proper options
+
+## Context Provider
+
+Wraps ToolsPanel in ConnectionConfigContext with:
+- `mcpUrl`: The MCP server URL
+- `apiKey`: Your Smithery API token
+- `namespace`: The connection namespace
+- `connectionId`: The connection ID
+
+## Use Cases
+
+- Right panel in split-pane connection manager
+- Standalone tool browser for a specific connection
+- OAuth authentication handler for MCP servers
+- Tool execution interface with context
+
+## Related Components
+
+- Pairs with ConnectionsList for full management UI
+- Uses ToolsPanel for tool display and execution
+- Part of the full Connections component

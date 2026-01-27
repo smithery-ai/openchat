@@ -3,6 +3,9 @@ import { ComponentPreview } from "@/components/docs/component-preview";
 import { InstallCommand } from "@/components/docs/install-command";
 import { PreviewFrame } from "@/components/docs/preview-frame";
 import {
+	ActiveConnectionPreview,
+	ConnectionCardPreview,
+	ConnectionsListPreview,
 	ConnectionsPreview,
 	SchemaFormPreview,
 	ServerSearchPreview,
@@ -19,6 +22,9 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
 		PreviewFrame,
 		ServerSearchPreview,
 		ConnectionsPreview,
+		ConnectionCardPreview,
+		ConnectionsListPreview,
+		ActiveConnectionPreview,
 		ToolsPanelPreview,
 		ToolCardPreview,
 		ToolDetailDialogPreview,

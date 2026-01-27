@@ -235,6 +235,11 @@
 					"target": "components/smithery/query-client-wrapper.tsx"
 				},
 				{
+					"path": "registry/new-york/smithery/smithery-utils.ts",
+					"type": "registry:lib",
+					"target": "lib/smithery/smithery-utils.ts"
+				},
+				{
 					"path": "registry/new-york/smithery/connection-context.tsx",
 					"type": "registry:component",
 					"target": "components/smithery/connection-context.tsx"
@@ -258,6 +263,21 @@
 					"path": "registry/new-york/smithery/tools-panel.tsx",
 					"type": "registry:component",
 					"target": "components/smithery/tools-panel.tsx"
+				},
+				{
+					"path": "registry/new-york/smithery/connection-card.tsx",
+					"type": "registry:component",
+					"target": "components/smithery/connection-card.tsx"
+				},
+				{
+					"path": "registry/new-york/smithery/connections-list.tsx",
+					"type": "registry:component",
+					"target": "components/smithery/connections-list.tsx"
+				},
+				{
+					"path": "registry/new-york/smithery/active-connection.tsx",
+					"type": "registry:component",
+					"target": "components/smithery/active-connection.tsx"
 				},
 				{
 					"path": "registry/new-york/smithery/server-search.tsx",
@@ -297,6 +317,159 @@
 					"path": "registry/new-york/smithery/server-search.tsx",
 					"type": "registry:component",
 					"target": "components/smithery/server-search.tsx"
+				}
+			]
+		},
+		{
+			"name": "smithery-utils",
+			"type": "registry:block",
+			"title": "Smithery Utils",
+			"description": "Utility functions for Smithery API client instantiation and namespace management.",
+			"dependencies": ["@smithery/api"],
+			"files": [
+				{
+					"path": "registry/new-york/smithery/smithery-utils.ts",
+					"type": "registry:lib",
+					"target": "lib/smithery/smithery-utils.ts"
+				}
+			]
+		},
+		{
+			"name": "smithery-connection-card",
+			"type": "registry:block",
+			"title": "Smithery Connection Card",
+			"description": "A reusable card component for displaying individual MCP server connection details.",
+			"dependencies": [
+				"@smithery/api",
+				"@tanstack/react-query",
+				"lucide-react"
+			],
+			"registryDependencies": ["avatar", "button", "card"],
+			"files": [
+				{
+					"path": "registry/new-york/smithery/query-client-wrapper.tsx",
+					"type": "registry:component",
+					"target": "components/smithery/query-client-wrapper.tsx"
+				},
+				{
+					"path": "registry/new-york/smithery/smithery-utils.ts",
+					"type": "registry:lib",
+					"target": "lib/smithery/smithery-utils.ts"
+				},
+				{
+					"path": "registry/new-york/smithery/connection-card.tsx",
+					"type": "registry:component",
+					"target": "components/smithery/connection-card.tsx"
+				}
+			]
+		},
+		{
+			"name": "smithery-connections-list",
+			"type": "registry:block",
+			"title": "Smithery Connections List",
+			"description": "A list component for browsing and managing MCP server connections with search functionality.",
+			"dependencies": [
+				"@smithery/api",
+				"@tanstack/react-query",
+				"lucide-react"
+			],
+			"registryDependencies": ["button", "separator", "toggle"],
+			"files": [
+				{
+					"path": "registry/new-york/smithery/query-client-wrapper.tsx",
+					"type": "registry:component",
+					"target": "components/smithery/query-client-wrapper.tsx"
+				},
+				{
+					"path": "registry/new-york/smithery/smithery-utils.ts",
+					"type": "registry:lib",
+					"target": "lib/smithery/smithery-utils.ts"
+				},
+				{
+					"path": "registry/new-york/smithery/connection-card.tsx",
+					"type": "registry:component",
+					"target": "components/smithery/connection-card.tsx"
+				},
+				{
+					"path": "registry/new-york/smithery/server-search.tsx",
+					"type": "registry:component",
+					"target": "components/smithery/server-search.tsx"
+				},
+				{
+					"path": "registry/new-york/smithery/connections-list.tsx",
+					"type": "registry:component",
+					"target": "components/smithery/connections-list.tsx"
+				}
+			]
+		},
+		{
+			"name": "smithery-active-connection",
+			"type": "registry:block",
+			"title": "Smithery Active Connection",
+			"description": "A component for viewing active connection details, handling authentication flow, and displaying available tools.",
+			"dependencies": [
+				"@ai-sdk/mcp",
+				"@smithery/api",
+				"@tanstack/react-query",
+				"ai",
+				"lucide-react",
+				"react-hook-form",
+				"tokenx",
+				"shiki"
+			],
+			"registryDependencies": [
+				"avatar",
+				"badge",
+				"button",
+				"card",
+				"dialog",
+				"field",
+				"input",
+				"select",
+				"switch",
+				"tabs",
+				"textarea"
+			],
+			"files": [
+				{
+					"path": "registry/new-york/smithery/query-client-wrapper.tsx",
+					"type": "registry:component",
+					"target": "components/smithery/query-client-wrapper.tsx"
+				},
+				{
+					"path": "registry/new-york/smithery/smithery-utils.ts",
+					"type": "registry:lib",
+					"target": "lib/smithery/smithery-utils.ts"
+				},
+				{
+					"path": "registry/new-york/smithery/connection-context.tsx",
+					"type": "registry:component",
+					"target": "components/smithery/connection-context.tsx"
+				},
+				{
+					"path": "registry/new-york/smithery/code-block.tsx",
+					"type": "registry:component",
+					"target": "components/smithery/code-block.tsx"
+				},
+				{
+					"path": "registry/new-york/smithery/tool-detail-dialog.tsx",
+					"type": "registry:component",
+					"target": "components/smithery/tool-detail-dialog.tsx"
+				},
+				{
+					"path": "registry/new-york/smithery/tool-card.tsx",
+					"type": "registry:component",
+					"target": "components/smithery/tool-card.tsx"
+				},
+				{
+					"path": "registry/new-york/smithery/tools-panel.tsx",
+					"type": "registry:component",
+					"target": "components/smithery/tools-panel.tsx"
+				},
+				{
+					"path": "registry/new-york/smithery/active-connection.tsx",
+					"type": "registry:component",
+					"target": "components/smithery/active-connection.tsx"
 				}
 			]
 		},
@@ -357,6 +530,11 @@
 					"target": "components/smithery/query-client-wrapper.tsx"
 				},
 				{
+					"path": "registry/new-york/smithery/smithery-utils.ts",
+					"type": "registry:lib",
+					"target": "lib/smithery/smithery-utils.ts"
+				},
+				{
 					"path": "registry/new-york/smithery/connection-context.tsx",
 					"type": "registry:component",
 					"target": "components/smithery/connection-context.tsx"
@@ -385,6 +563,21 @@
 					"path": "registry/new-york/smithery/tools-panel.tsx",
 					"type": "registry:component",
 					"target": "components/smithery/tools-panel.tsx"
+				},
+				{
+					"path": "registry/new-york/smithery/connection-card.tsx",
+					"type": "registry:component",
+					"target": "components/smithery/connection-card.tsx"
+				},
+				{
+					"path": "registry/new-york/smithery/connections-list.tsx",
+					"type": "registry:component",
+					"target": "components/smithery/connections-list.tsx"
+				},
+				{
+					"path": "registry/new-york/smithery/active-connection.tsx",
+					"type": "registry:component",
+					"target": "components/smithery/active-connection.tsx"
 				},
 				{
 					"path": "registry/new-york/smithery/connections.tsx",

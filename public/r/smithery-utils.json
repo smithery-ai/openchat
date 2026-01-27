@@ -1,0 +1,18 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "smithery-utils",
+  "title": "Smithery Utils",
+  "description": "Utility functions for Smithery API client instantiation and namespace management.",
+  "dependencies": [
+    "@smithery/api"
+  ],
+  "files": [
+    {
+      "path": "registry/new-york/smithery/smithery-utils.ts",
+      "content": "import Smithery from \"@smithery/api\";\n\nexport async function getDefaultNamespace(client: Smithery) {\n\tconst namespaces = await client.namespaces.list();\n\tif (namespaces.namespaces.length === 0) {\n\t\tthrow new Error(\"No namespaces found\");\n\t}\n\treturn namespaces.namespaces[0].name;\n}\n\nexport const getSmitheryClient = (token: string) => {\n\treturn new Smithery({\n\t\tapiKey: token,\n\t\tbaseURL: process.env.NEXT_PUBLIC_SMITHERY_API_URL,\n\t});\n};\n",
+      "type": "registry:lib",
+      "target": "lib/smithery/smithery-utils.ts"
+    }
+  ],
+  "type": "registry:block"
+}

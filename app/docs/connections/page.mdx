@@ -37,32 +37,32 @@ export function MyApp() {
 - Browse and execute tools from the selected connection
 - Real-time refresh of connection status
 
-## Sub-components
+## Architecture
+
+The Connections component is built from three modular sub-components that can be used independently:
 
 ### ConnectionCard
 
-Individual connection card with delete functionality:
+A reusable card for displaying individual connection details. [See full documentation →](/docs/connection-card)
 
 ```tsx
-import { ConnectionCard } from "@/components/smithery/connections"
-
-<ConnectionCard
-  connection={connection}
-  token="your-token"
-  namespace="your-namespace"
-/>
+import { ConnectionCard } from "@/components/smithery/connection-card"
 ```
 
 ### ConnectionsList
 
-Just the connections list without the tools panel:
+The connections list panel with search and management features. [See full documentation →](/docs/connections-list)
 
 ```tsx
-import { ConnectionsList } from "@/components/smithery/connections"
-
-<ConnectionsList
-  token="your-token"
-  namespace="your-namespace"
-  onActiveConnectionIdChange={(id) => console.log(id)}
-/>
+import { ConnectionsList } from "@/components/smithery/connections-list"
 ```
+
+### ActiveConnection
+
+The active connection viewer with auth flow and tools panel. [See full documentation →](/docs/active-connection)
+
+```tsx
+import { ActiveConnection } from "@/components/smithery/active-connection"
+```
+
+Each of these components can be installed and used independently, or together via the `smithery-connections` package.
