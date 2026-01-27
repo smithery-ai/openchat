@@ -358,7 +358,7 @@ export function ActToolApproval({
 		};
 
 		loadDefaultNamespace();
-	}, [providedNamespace, apiKey]);
+	}, [providedNamespace]);
 
 	// Load full connection details when IDs change
 	useEffect(() => {

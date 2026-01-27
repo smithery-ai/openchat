@@ -325,7 +325,7 @@ export const ConnectionsManager = ({
 				err instanceof Error ? err.message : "Failed to load namespaces",
 			);
 		}
-	}, [selectedNamespace, apiKey]);
+	}, [selectedNamespace]);
 
 	const loadConnections = useCallback(async () => {
 		if (!selectedNamespace) return;

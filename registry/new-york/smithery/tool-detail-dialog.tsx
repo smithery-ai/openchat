@@ -557,7 +557,7 @@ function generateToolExecuteCode(
 	config: ConnectionConfig | null,
 ): string {
 	const mcpUrl = config?.mcpUrl || "process.env.MCP_URL";
-	const namespace = config?.namespace
+	const _namespace = config?.namespace
 		? `"${config.namespace}"`
 		: "process.env.SMITHERY_NAMESPACE";
 	const connectionId = config?.connectionId

@@ -13,6 +13,7 @@ import {
 	Lock,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { listNamespaces } from "@/components/smithery/actions";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -30,7 +31,6 @@ import {
 	ItemMedia,
 	ItemTitle,
 } from "@/components/ui/item";
-import { listNamespaces } from "@/components/smithery/actions";
 import { useDebounce } from "@/hooks/use-debounce";
 import { WithQueryClient } from "@/registry/new-york/smithery/query-client-wrapper";
 
