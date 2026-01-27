@@ -1,0 +1,69 @@
+# Connections List
+
+A list component for browsing and managing MCP server connections with integrated server search functionality.
+
+<ConnectionsListPreview />
+
+## Installation
+
+<InstallCommand name="smithery-connections-list" />
+
+## Usage
+
+```tsx
+import { ConnectionsList } from "@/components/smithery/connections-list"
+
+export function MyApp() {
+  const [activeConnectionId, setActiveConnectionId] = useState<string | null>(null)
+
+  return (
+    <ConnectionsList
+      token="your-smithery-api-token"
+      namespace="your-namespace" // optional
+      onActiveConnectionIdChange={setActiveConnectionId}
+      defaultShowSearchServers={false}
+      defaultActiveConnectionId={activeConnectionId || undefined}
+    />
+  )
+}
+```
+
+## Props
+
+- `token` (required): Your Smithery API token for authentication
+- `namespace` (optional): The namespace to manage connections in. Defaults to the first available namespace
+- `onActiveConnectionIdChange` (required): Callback when active connection changes
+- `defaultActiveConnectionId` (optional): Initial active connection ID
+- `defaultShowSearchServers` (optional): Whether to show server search by default. Defaults to `true`
+
+## Features
+
+- List all connections in a scrollable panel
+- Search and add new connections via ServerSearch toggle
+- Refresh connections with loading state
+- Click to select active connection with visual feedback
+- Auto-selects first connection if none selected
+- Delete connections directly from the list
+- Query-based data fetching with automatic updates
+
+## Layout
+
+The component renders in a vertical layout with:
+- Header with "Connections" title and action buttons
+- Toggle button to show/hide server search
+- Refresh button with loading spinner
+- Scrollable list of ConnectionCard components
+- Visual selection state for active connection
+
+## Use Cases
+
+- Standalone connection browser
+- Left sidebar in split-pane layouts
+- Part of the full Connections component
+- Custom connection management interfaces
+
+## Related Components
+
+- Works with ConnectionCard for individual items
+- Integrates ServerSearch for adding connections
+- Pairs with ActiveConnection for full management UI

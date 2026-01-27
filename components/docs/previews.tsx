@@ -18,8 +18,11 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
+import { ActiveConnection } from "@/registry/new-york/smithery/active-connection";
+import { ConnectionCard } from "@/registry/new-york/smithery/connection-card";
 import { ConnectionConfigContext } from "@/registry/new-york/smithery/connection-context";
 import { Connections } from "@/registry/new-york/smithery/connections";
+import { ConnectionsList } from "@/registry/new-york/smithery/connections-list";
 import { SchemaForm } from "@/registry/new-york/smithery/schema-form";
 import { ServerSearch } from "@/registry/new-york/smithery/server-search";
 import { selectedTokenAtom } from "@/registry/new-york/smithery/tokens";
@@ -659,6 +662,139 @@ function SchemaFormInner({
 			<div className="border rounded-lg p-4">
 				<SchemaForm schema={firstTool.inputSchema} onSubmit={handleSubmit} />
 			</div>
+		</div>
+	);
+}
+
+// Connection Card Preview
+export function ConnectionCardPreview() {
+	const apiKey = useAtomValue(selectedTokenAtom);
+	const { data, isLoading, error } = useConnections(apiKey?.token);
+
+	if (!apiKey) {
+		return (
+			<PreviewFrame>
+				<TokenRequiredMessage />
+			</PreviewFrame>
+		);
+	}
+
+	if (isLoading) {
+		return (
+			<PreviewFrame>
+				<div className="flex items-center gap-2 p-6 text-muted-foreground">
+					<Spinner className="h-4 w-4" /> Loading connections...
+				</div>
+			</PreviewFrame>
+		);
+	}
+
+	if (error) {
+		return (
+			<PreviewFrame>
+				<div className="p-6 text-destructive">Error: {error.message}</div>
+			</PreviewFrame>
+		);
+	}
+
+	if (!data?.connections.length) {
+		return (
+			<PreviewFrame>
+				<div className="flex items-center gap-2 p-6 text-muted-foreground">
+					<AlertCircle className="h-4 w-4" />
+					No connections. Connect to{" "}
+					<code className="bg-muted px-1 py-0.5 rounded text-xs">
+						{DEFAULT_MCP_URL}
+					</code>{" "}
+					first.
+				</div>
+			</PreviewFrame>
+		);
+	}
+
+	return (
+		<PreviewFrame>
+			<div className="p-4 space-y-4">
+				{data.connections.slice(0, 2).map((connection: Connection) => (
+					<ConnectionCard
+						key={connection.connectionId}
+						connection={connection}
+						token={apiKey.token}
+						namespace={data.namespace}
+					/>
+				))}
+			</div>
+		</PreviewFrame>
+	);
+}
+
+// Connections List Preview
+export function ConnectionsListPreview() {
+	const apiKey = useAtomValue(selectedTokenAtom);
+	const [activeConnectionId, setActiveConnectionId] = useState<string | null>(
+		null,
+	);
+
+	if (!apiKey) {
+		return (
+			<PreviewFrame>
+				<TokenRequiredMessage />
+			</PreviewFrame>
+		);
+	}
+
+	return (
+		<PreviewFrame>
+			<div className="h-[400px] overflow-auto">
+				<ConnectionsList
+					token={apiKey.token}
+					onActiveConnectionIdChange={setActiveConnectionId}
+					defaultShowSearchServers={false}
+				/>
+			</div>
+		</PreviewFrame>
+	);
+}
+
+// Active Connection Preview
+export function ActiveConnectionPreview() {
+	const apiKey = useAtomValue(selectedTokenAtom);
+	const [selectedConnectionId, setSelectedConnectionId] = useState<
+		string | null
+	>(null);
+
+	if (!apiKey) {
+		return (
+			<PreviewFrame>
+				<TokenRequiredMessage />
+			</PreviewFrame>
+		);
+	}
+
+	return (
+		<div className="space-y-4">
+			<div className="flex items-center gap-2">
+				<span className="text-sm text-muted-foreground">Connection:</span>
+				<ConnectionSelector
+					token={apiKey.token}
+					selectedConnectionId={selectedConnectionId}
+					onSelect={setSelectedConnectionId}
+				/>
+			</div>
+			<PreviewFrame>
+				{selectedConnectionId ? (
+					<div className="h-[500px]">
+						<ActiveConnection
+							token={apiKey.token}
+							connectionId={selectedConnectionId}
+						/>
+					</div>
+				) : (
+					<div className="p-6 text-muted-foreground">
+						Select a connection above.
+					</div>
+				)}
+			</PreviewFrame>
 		</div>
 	);
 }

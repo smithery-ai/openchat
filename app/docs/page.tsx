@@ -1,8 +1,11 @@
 import {
+	Activity,
+	CreditCard,
 	FileJson,
 	Key,
 	LayoutGrid,
 	Link2,
+	List,
 	Search,
 	Settings2,
 	Square,
@@ -34,6 +37,24 @@ const components = [
 		slug: "connections",
 		description: "Manage MCP server connections with tool browsing.",
 		icon: Link2,
+	},
+	{
+		title: "Connection Card",
+		slug: "connection-card",
+		description: "Display individual connection details with delete functionality.",
+		icon: CreditCard,
+	},
+	{
+		title: "Connections List",
+		slug: "connections-list",
+		description: "Browse and manage connections with search integration.",
+		icon: List,
+	},
+	{
+		title: "Active Connection",
+		slug: "active-connection",
+		description: "View connection details with auth flow and tools panel.",
+		icon: Activity,
 	},
 	{
 		title: "Tools Panel",
