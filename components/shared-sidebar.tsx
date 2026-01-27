@@ -8,11 +8,9 @@ import {
 	LayoutGrid,
 	Link2,
 	Search,
-	Server,
 	Settings2,
 	Square,
 	SquareArrowOutUpRight,
-	Wrench,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -34,12 +32,8 @@ import { Tokens } from "@/registry/new-york/smithery/tokens";
 export const navigationItems: {
 	title: string;
 	value: NavigationSection;
-	icon: typeof Server;
-}[] = [
-	{ title: "Servers", value: "servers", icon: Server },
-	{ title: "Connections", value: "connections", icon: Link2 },
-	{ title: "Tools", value: "tools", icon: Wrench },
-];
+	icon: typeof Link2;
+}[] = [{ title: "Connections", value: "connections", icon: Link2 }];
 
 export const componentItems = [
 	{ title: "Tokens", slug: "tokens", icon: Key },
@@ -56,7 +50,7 @@ export const componentItems = [
 	{ title: "Connection Context", slug: "connection-context", icon: Settings2 },
 ];
 
-export type NavigationSection = "servers" | "connections" | "tools";
+export type NavigationSection = "connections";
 
 interface SharedSidebarProps {
 	initialTokenResponse: CreateTokenResponse;
@@ -88,7 +82,7 @@ export function SharedSidebar({
 			<Sidebar>
 				<SidebarContent>
 					<SidebarGroup>
-						<SidebarGroupLabel>Navigation</SidebarGroupLabel>
+						<SidebarGroupLabel>Blocks</SidebarGroupLabel>
 						<SidebarGroupContent>
 							<SidebarMenu>
 								{navigationItems.map((item) => (
