@@ -7,6 +7,7 @@ import {
 	Key,
 	LayoutGrid,
 	Link2,
+	MessageSquare,
 	Search,
 	Settings2,
 	Square,
@@ -34,7 +35,10 @@ export const navigationItems: {
 	title: string;
 	value: NavigationSection;
 	icon: typeof Link2;
-}[] = [{ title: "Connections", value: "connections", icon: Link2 }];
+}[] = [
+	{ title: "Connections", value: "connections", icon: Link2 },
+	{ title: "Chat", value: "chat", icon: MessageSquare },
+];
 
 export const componentItems = [
 	{ title: "Tokens", slug: "tokens", icon: Key },
@@ -51,7 +55,7 @@ export const componentItems = [
 	{ title: "Connection Context", slug: "connection-context", icon: Settings2 },
 ];
 
-export type NavigationSection = "connections";
+export type NavigationSection = "connections" | "chat";
 
 interface SharedSidebarProps {
 	initialTokenResponse: CreateTokenResponse;
