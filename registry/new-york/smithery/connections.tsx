@@ -76,7 +76,9 @@ const ConnectionCardInner = ({
 				</Avatar>
 				<div className="flex-1 min-w-0">
 					<h3 className="font-medium truncate flex items-center gap-2">
-						{connection.name}
+						{connection.serverInfo?.title ??
+							connection.serverInfo?.name ??
+							connection.name}
 						{connection.connectionId && (
 							<span className="ml-2 text-xs font-mono text-muted-foreground bg-muted px-2 py-0.5 rounded">
 								{"•".repeat(Math.min(connection.connectionId.length - 10, 4))}
