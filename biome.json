@@ -6,13 +6,21 @@
 		"useIgnoreFile": true
 	},
 	"files": {
-		"ignoreUnknown": false,
-		"ignore": [".pnpm-store/**"]
+		"ignoreUnknown": false
 	},
 	"overrides": [
 		{
 			"includes": ["components/ui/**", "components/ai-elements/**"],
 			"linter": {
+				"enabled": false
+			}
+		},
+		{
+			"includes": [".pnpm-store/**"],
+			"linter": {
+				"enabled": false
+			},
+			"formatter": {
 				"enabled": false
 			}
 		}
