@@ -35,7 +35,7 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
-import { Act } from "@/registry/new-york/smithery/act";
+import { ToolSearch } from "@/registry/new-york/smithery/tool-search";
 import { ConnectionConfigContext } from "@/registry/new-york/smithery/connection-context";
 import { Connections } from "@/registry/new-york/smithery/connections";
 import { SchemaForm } from "@/registry/new-york/smithery/schema-form";
@@ -45,6 +45,8 @@ import { ToolCard } from "@/registry/new-york/smithery/tool-card";
 import { ToolDetailDialog } from "@/registry/new-york/smithery/tool-detail-dialog";
 import { ToolsPanel } from "@/registry/new-york/smithery/tools-panel";
 import { PreviewFrame } from "./preview-frame";
+import { ToolSearchResult } from "@/registry/new-york/smithery/types";
+import { Dialog, DialogContent, DialogDescription, DialogTitle, DialogTrigger } from "../ui/dialog";
 
 const DEFAULT_MCP_URL = "https://mcp.exa.ai";
 
@@ -785,11 +787,14 @@ function SchemaFormInner({
 	);
 }
 
-// Act Preview - config OUTSIDE preview frame
-export function ActPreview() {
+// Tool Search Preview - config OUTSIDE preview frame
+export function ToolSearchPreview() {
 	const apiKey = useAtomValue(selectedTokenAtom);
 	const [action, setAction] = useState("Create");
 	const { data, isLoading, error } = useConnections(apiKey?.token);
+	const [searchResults, setSearchResults] = useState<ToolSearchResult | null>(
+		null,
+	);
 
 	if (!apiKey) {
 		return (
@@ -835,38 +840,30 @@ export function ActPreview() {
 					className="w-[280px]"
 					placeholder="Enter action text"
 				/>
+				{searchResults && <Dialog>
+					<DialogTrigger asChild><Button>Search Results</Button></DialogTrigger>
+					<DialogContent className="max-h-[80vh] overflow-auto">
+						<DialogTitle>Search Results</DialogTitle>
+						<DialogDescription>
+							Search results for the action: &quot;{action}&quot;
+						</DialogDescription>
+						<pre className="rounded-md bg-muted p-4 text-sm overflow-auto">
+							{JSON.stringify(searchResults, null, 2)}
+						</pre>
+					</DialogContent>
+				</Dialog>}
 			</div>
 			<PreviewFrame>
-				<ActInner
-					token={apiKey.token}
-					connections={data.connections}
-					namespace={data.namespace}
-					action={action}
-				/>
+				<div className="p-4">
+					<ToolSearch
+						defaultAction={action}
+						connections={data.connections}
+						namespace={data.namespace}
+						apiKey={apiKey.token}
+						onSearchComplete={setSearchResults}
+					/>
+				</div>
 			</PreviewFrame>
-		</div>
-	);
-}
-
-function ActInner({
-	token,
-	connections,
-	namespace,
-	action,
-}: {
-	token: string;
-	connections: Connection[];
-	action: string;
-	namespace: string;
-}) {
-	return (
-		<div className="p-4">
-			<Act
-				defaultAction={action}
-				connections={connections}
-				namespace={namespace}
-				apiKey={token}
-			/>
 		</div>
 	);
 }

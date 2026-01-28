@@ -31,6 +31,7 @@ import {
 	PopoverTrigger,
 } from "@/components/ui/popover";
 import { Pencil } from "lucide-react";
+import { ToolSearchResult } from "./types";
 
 const getServerTitle = (connection: Connection) => {
 	return (
@@ -40,16 +41,18 @@ const getServerTitle = (connection: Connection) => {
 	);
 };
 
-export function Act({
+export function ToolSearch({
 	defaultAction,
 	connections,
 	namespace,
 	apiKey,
+	onSearchComplete,
 }: {
 	defaultAction: string;
 	connections: Connection[];
 	namespace: string;
 	apiKey: string;
+	onSearchComplete: (result: ToolSearchResult) => void;
 }) {
 	const [selectedConnectionIds, setSelectedConnectionIds] = useState<string[]>(
 		connections.map((connection: Connection) => connection.connectionId),
@@ -76,9 +79,9 @@ export function Act({
 					action,
 				}),
 			});
-			return response.json() satisfies Promise<{
-				searchResults: Tool[];
-			}>;
+			const result = await response.json() satisfies Promise<ToolSearchResult>;
+			onSearchComplete(result);
+			return result;
 		},
 		enabled: false,
 	});
@@ -263,11 +266,6 @@ export function Act({
 			</Button>
 
 			{isLoading && <p className="text-muted-foreground">Loading...</p>}
-			{data && (
-				<pre className="rounded-md bg-muted p-4 text-sm overflow-auto">
-					{JSON.stringify(data, null, 2)}
-				</pre>
-			)}
 		</div>
 	);
 }

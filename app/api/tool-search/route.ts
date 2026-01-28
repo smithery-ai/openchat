@@ -1,3 +1,4 @@
+import { ToolSearchResult } from "@/registry/new-york/smithery/types";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import type { Tool } from "@modelcontextprotocol/sdk/types.js";
 import { Smithery } from "@smithery/api";
@@ -21,9 +22,9 @@ export async function POST(request: Request) {
 		// e.g. match "flexsearch" when query "flex"
 		tokenize: "forward",
 	});
-	const connectionLatencies: Record<string, number> = {};
-	const connectionStatuses: Record<string, "connected" | "failed"> = {};
+	const connectionStats: Record<string, ToolSearchResult> = {};
 	const toolMap: Record<string, Tool> = {};
+	let toolsTokenCount = 0;
 
 	const allTools = await Promise.all(
 		connections.map(async (connection) => {
@@ -44,25 +45,32 @@ export async function POST(request: Request) {
 
 				// Use the MCP SDK's ergonomic API
 				const { tools: mcpTools } = await mcpClient.listTools();
-				console.log(JSON.stringify(tools, null, 2));
+				const serverToolsTokenCount = estimateTokenCount(JSON.stringify(mcpTools, null, 2));
 				mcpTools.forEach((tool) => {
 					const indexKey = `${connection.connectionId}::${tool.name}`;
 					toolMap[indexKey] = tool;
 					index.add(indexKey, JSON.stringify(tool));
 					tools.push(tool);
 				});
-				connectionStatuses[connection.connectionId] = "connected";
+				const connectionLatency = performance.now() - startTime;
+				connectionStats[connection.connectionId] = {
+					connectionStatus: "connected",
+					connectionLatency,
+					toolsTokenCount: serverToolsTokenCount,
+				};
+				toolsTokenCount += serverToolsTokenCount;
 			} catch (error) {
-				connectionStatuses[connection.connectionId] = "failed";
+				connectionStats[connection.connectionId] = {
+					connectionStatus: "failed",
+					connectionLatency: performance.now() - startTime,
+					error: error instanceof Error ? error.message : "Unknown error",
+				};
 				console.error(
 					"Error connecting to connection:",
 					connection.connectionId,
 					error,
 				);
 			}
-			const endTime = performance.now();
-			connectionLatencies[connection.connectionId] = endTime - startTime;
-			console.log("Connection latencies after update:", connectionLatencies);
 		}),
 	);
 
@@ -85,11 +93,7 @@ export async function POST(request: Request) {
 	const totalTools = allTools.flat().length;
 
 	// Calculate tokens processed for all tools
-	const toolsTokenCount = allTools.flat().reduce((total, tool) => {
-		return total + (estimateTokenCount(JSON.stringify(tool)) || 0);
-	}, 0);
-
-	console.log("Final connectionLatencies:", connectionLatencies);
+	console.log("Final toolsTokenCount:", toolsTokenCount);
 
 	const responseBody = {
 		action,
@@ -97,8 +101,7 @@ export async function POST(request: Request) {
 		latency,
 		totalTools,
 		tokensProcessed: toolsTokenCount,
-		connectionLatencies,
-		connectionStatuses,
+		connectionStats,
 	};
 
 	console.log("Response body:", JSON.stringify(responseBody, null, 2));
