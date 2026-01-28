@@ -8,10 +8,24 @@ import { useQuery } from "@tanstack/react-query";
 import type { ToolExecutionOptions } from "ai";
 import { useAtomValue } from "jotai";
 import { AlertCircle } from "lucide-react";
+import * as React from "react";
 import { useState } from "react";
 import { listNamespaces } from "@/components/smithery/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+	Combobox,
+	ComboboxChip,
+	ComboboxChips,
+	ComboboxChipsInput,
+	ComboboxContent,
+	ComboboxEmpty,
+	ComboboxItem,
+	ComboboxList,
+	ComboboxTrigger,
+	ComboboxValue,
+	useComboboxAnchor,
+} from "@/components/ui/combobox";
 import {
 	Select,
 	SelectContent,
@@ -130,15 +144,23 @@ function useConnectionTools(
 function ConnectionSelector({
 	token,
 	namespace,
-	selectedConnectionId,
-	onSelect,
+	selectedConnectionIds,
+	onSelectMultiple,
+	multiple = false,
 }: {
 	token: string;
 	namespace?: string;
-	selectedConnectionId: string | null;
-	onSelect: (connectionId: string | null) => void;
+	selectedConnectionIds: string[];
+	onSelectMultiple: (connectionIds: string[]) => void;
+	multiple?: boolean;
 }) {
 	const { data, isLoading, error } = useConnections(token, namespace);
+	const anchor = useComboboxAnchor();
+	const connections = data?.connections ?? [];
+	const connectionItems = React.useMemo(
+		() => connections.map((c: Connection) => c.connectionId),
+		[connections],
+	);
 
 	if (isLoading) {
 		return (
@@ -155,7 +177,7 @@ function ConnectionSelector({
 		);
 	}
 
-	if (!data?.connections.length) {
+	if (!connections.length) {
 		return (
 			<div className="flex items-center gap-2 text-sm text-muted-foreground">
 				<AlertCircle className="h-4 w-4" />
@@ -168,25 +190,88 @@ function ConnectionSelector({
 		);
 	}
 
+	if (multiple) {
+		return (
+			<Combobox
+				multiple
+				autoHighlight
+				items={connectionItems}
+				value={selectedConnectionIds}
+				onValueChange={(values) => {
+					onSelectMultiple(values ?? []);
+				}}
+			>
+				<ComboboxChips ref={anchor} className="w-[280px]">
+					<ComboboxValue>
+						{(values) => (
+							<React.Fragment>
+								{values.map((value: string) => {
+									const connection = connections.find(
+										(c: Connection) => c.connectionId === value,
+									);
+									return (
+										<ComboboxChip key={value}>
+											{connection?.name || value}
+										</ComboboxChip>
+									);
+								})}
+								<ComboboxChipsInput placeholder="Select connections" />
+							</React.Fragment>
+						)}
+					</ComboboxValue>
+				</ComboboxChips>
+				<ComboboxContent anchor={anchor}>
+					<ComboboxEmpty>No connections found.</ComboboxEmpty>
+					<ComboboxList>
+						{(item) => {
+							const connection = connections.find(
+								(c: Connection) => c.connectionId === item,
+							);
+							return (
+								<ComboboxItem key={item} value={item}>
+									{connection?.name || item}
+								</ComboboxItem>
+							);
+						}}
+					</ComboboxList>
+				</ComboboxContent>
+			</Combobox>
+		);
+	}
+
 	return (
-		<Select
-			value={selectedConnectionId || ""}
-			onValueChange={(value) => onSelect(value || null)}
+		<Combobox
+			value={selectedConnectionIds[0] ?? null}
+			onValueChange={(value) => onSelectMultiple(value ? [value] : [])}
 		>
-			<SelectTrigger className="w-[280px]">
-				<SelectValue placeholder="Select a connection" />
-			</SelectTrigger>
-			<SelectContent>
-				{data.connections.map((connection: Connection) => (
-					<SelectItem
-						key={connection.connectionId}
-						value={connection.connectionId}
-					>
-						{connection.name}
-					</SelectItem>
-				))}
-			</SelectContent>
-		</Select>
+			<ComboboxTrigger className="border-input data-[placeholder]:text-muted-foreground [&_svg:not([class*='text-'])]:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:bg-input/30 dark:hover:bg-input/50 flex w-[280px] items-center justify-between gap-2 rounded-md border bg-transparent px-3 py-2 text-sm whitespace-nowrap shadow-xs transition-[color,box-shadow] outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50 h-9">
+				<ComboboxValue placeholder="Select a connection">
+					{(value) => {
+						const connection = connections.find(
+							(c: Connection) => c.connectionId === value,
+						);
+						return (
+							<span className="line-clamp-1 flex items-center gap-2">
+								{connection?.name || ""}
+							</span>
+						);
+					}}
+				</ComboboxValue>
+			</ComboboxTrigger>
+			<ComboboxContent>
+				<ComboboxEmpty>No connections found.</ComboboxEmpty>
+				<ComboboxList>
+					{connections.map((connection: Connection) => (
+						<ComboboxItem
+							key={connection.connectionId}
+							value={connection.connectionId}
+						>
+							{connection.name}
+						</ComboboxItem>
+					))}
+				</ComboboxList>
+			</ComboboxContent>
+		</Combobox>
 	);
 }
 
@@ -218,6 +303,16 @@ export function ServerSearchPreview() {
 			<PreviewFrame>
 				<div className="flex items-center gap-2 p-6 text-muted-foreground">
 					<Spinner className="h-4 w-4" /> Loading...
+				</div>
+			</PreviewFrame>
+		);
+	}
+	
+	if (!namespace) {
+		return (
+			<PreviewFrame>
+				<div className="flex items-center gap-2 p-6 text-muted-foreground">
+					<AlertCircle className="h-4 w-4" /> No namespace found.
 				</div>
 			</PreviewFrame>
 		);
@@ -285,9 +380,9 @@ export function ConnectionsPreview() {
 // Tools Panel Preview - config OUTSIDE preview frame
 export function ToolsPanelPreview() {
 	const apiKey = useAtomValue(selectedTokenAtom);
-	const [selectedConnectionId, setSelectedConnectionId] = useState<
-		string | null
-	>(null);
+	const [selectedConnectionIds, setSelectedConnectionIds] = useState<string[]>(
+		[],
+	);
 
 	if (!apiKey) {
 		return (
@@ -303,14 +398,14 @@ export function ToolsPanelPreview() {
 				<span className="text-sm text-muted-foreground">Connection:</span>
 				<ConnectionSelector
 					token={apiKey.token}
-					selectedConnectionId={selectedConnectionId}
-					onSelect={setSelectedConnectionId}
+					selectedConnectionIds={selectedConnectionIds}
+					onSelectMultiple={setSelectedConnectionIds}
 				/>
 			</div>
 			<PreviewFrame>
 				<ToolsPanelInner
 					token={apiKey.token}
-					connectionId={selectedConnectionId}
+					connectionId={selectedConnectionIds[0] ?? null}
 				/>
 			</PreviewFrame>
 		</div>
@@ -370,9 +465,9 @@ function ToolsPanelInner({
 // Tool Card Preview - config OUTSIDE preview frame
 export function ToolCardPreview() {
 	const apiKey = useAtomValue(selectedTokenAtom);
-	const [selectedConnectionId, setSelectedConnectionId] = useState<
-		string | null
-	>(null);
+	const [selectedConnectionIds, setSelectedConnectionIds] = useState<string[]>(
+		[],
+	);
 
 	if (!apiKey) {
 		return (
@@ -388,14 +483,14 @@ export function ToolCardPreview() {
 				<span className="text-sm text-muted-foreground">Connection:</span>
 				<ConnectionSelector
 					token={apiKey.token}
-					selectedConnectionId={selectedConnectionId}
-					onSelect={setSelectedConnectionId}
+					selectedConnectionIds={selectedConnectionIds}
+					onSelectMultiple={setSelectedConnectionIds}
 				/>
 			</div>
 			<PreviewFrame>
 				<ToolCardInner
 					token={apiKey.token}
-					connectionId={selectedConnectionId}
+					connectionId={selectedConnectionIds[0] ?? null}
 				/>
 			</PreviewFrame>
 		</div>
@@ -464,9 +559,9 @@ function ToolCardInner({
 // Tool Detail Dialog Preview - config OUTSIDE preview frame
 export function ToolDetailDialogPreview() {
 	const apiKey = useAtomValue(selectedTokenAtom);
-	const [selectedConnectionId, setSelectedConnectionId] = useState<
-		string | null
-	>(null);
+	const [selectedConnectionIds, setSelectedConnectionIds] = useState<string[]>(
+		[],
+	);
 
 	if (!apiKey) {
 		return (
@@ -482,14 +577,14 @@ export function ToolDetailDialogPreview() {
 				<span className="text-sm text-muted-foreground">Connection:</span>
 				<ConnectionSelector
 					token={apiKey.token}
-					selectedConnectionId={selectedConnectionId}
-					onSelect={setSelectedConnectionId}
+					selectedConnectionIds={selectedConnectionIds}
+					onSelectMultiple={setSelectedConnectionIds}
 				/>
 			</div>
 			<PreviewFrame>
 				<ToolDetailDialogInner
 					token={apiKey.token}
-					connectionId={selectedConnectionId}
+					connectionId={selectedConnectionIds[0] ?? null}
 				/>
 			</PreviewFrame>
 		</div>
@@ -582,9 +677,9 @@ function ToolDetailDialogInner({
 // Schema Form Preview - config OUTSIDE preview frame
 export function SchemaFormPreview() {
 	const apiKey = useAtomValue(selectedTokenAtom);
-	const [selectedConnectionId, setSelectedConnectionId] = useState<
-		string | null
-	>(null);
+	const [selectedConnectionIds, setSelectedConnectionIds] = useState<string[]>(
+		[],
+	);
 
 	if (!apiKey) {
 		return (
@@ -600,14 +695,14 @@ export function SchemaFormPreview() {
 				<span className="text-sm text-muted-foreground">Connection:</span>
 				<ConnectionSelector
 					token={apiKey.token}
-					selectedConnectionId={selectedConnectionId}
-					onSelect={setSelectedConnectionId}
+					selectedConnectionIds={selectedConnectionIds}
+					onSelectMultiple={setSelectedConnectionIds}
 				/>
 			</div>
 			<PreviewFrame>
 				<SchemaFormInner
 					token={apiKey.token}
-					connectionId={selectedConnectionId}
+					connectionId={selectedConnectionIds[0] ?? null}
 				/>
 			</PreviewFrame>
 		</div>
@@ -693,9 +788,9 @@ function SchemaFormInner({
 export function ActPreview() {
 	const apiKey = useAtomValue(selectedTokenAtom);
 	const [action, setAction] = useState("Approve tool execution");
-	const [selectedConnectionId, setSelectedConnectionId] = useState<
-		string | null
-	>(null);
+	const [selectedConnectionIds, setSelectedConnectionIds] = useState<string[]>(
+		[],
+	);
 
 	if (!apiKey) {
 		return (
@@ -720,14 +815,15 @@ export function ActPreview() {
 				<span className="text-sm text-muted-foreground">Connection:</span>
 				<ConnectionSelector
 					token={apiKey.token}
-					selectedConnectionId={selectedConnectionId}
-					onSelect={setSelectedConnectionId}
+					selectedConnectionIds={selectedConnectionIds}
+					onSelectMultiple={setSelectedConnectionIds}
+					multiple={true}
 				/>
 			</div>
 			<PreviewFrame>
 				<ActInner
 					token={apiKey.token}
-					connectionId={selectedConnectionId}
+					connectionIds={selectedConnectionIds}
 					action={action}
 				/>
 			</PreviewFrame>
@@ -737,16 +833,16 @@ export function ActPreview() {
 
 function ActInner({
 	token,
-	connectionId,
+	connectionIds,
 	action,
 }: {
 	token: string;
-	connectionId: string | null;
+	connectionIds: string[];
 	action: string;
 }) {
 	const { data, isLoading } = useConnections(token);
 
-	if (!connectionId) {
+	if (connectionIds.length === 0) {
 		return (
 			<div className="p-6 text-muted-foreground">
 				Select a connection above.
@@ -762,11 +858,11 @@ function ActInner({
 		);
 	}
 
-	const selectedConnection = data?.connections.find(
-		(c) => c.connectionId === connectionId,
+	const selectedConnections = data?.connections.filter((c) =>
+		connectionIds.includes(c.connectionId),
 	);
 
-	if (!selectedConnection || !data?.namespace) {
+	if (!selectedConnections?.length || !data?.namespace) {
 		return (
 			<div className="p-6 text-muted-foreground">Connection not found.</div>
 		);
@@ -776,7 +872,7 @@ function ActInner({
 		<div className="p-4">
 			<Act
 				action={action}
-				connections={[selectedConnection]}
+				connections={selectedConnections}
 				namespace={data.namespace}
 				apiKey={token}
 			/>
