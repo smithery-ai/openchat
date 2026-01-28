@@ -23,6 +23,7 @@ export async function POST(request: Request) {
 	});
 	const connectionLatencies: Record<string, number> = {};
 	const connectionStatuses: Record<string, "connected" | "failed"> = {};
+	const toolMap: Record<string, Tool> = {};
 
 	const allTools = await Promise.all(
 		connections.map(async (connection) => {
@@ -45,10 +46,9 @@ export async function POST(request: Request) {
 				const { tools: mcpTools } = await mcpClient.listTools();
 				console.log(JSON.stringify(tools, null, 2));
 				mcpTools.forEach((tool) => {
-					index.add(
-						`${connection.connectionId}::${tool.name}`,
-						JSON.stringify(tool),
-					);
+					const indexKey = `${connection.connectionId}::${tool.name}`;
+					toolMap[indexKey] = tool;
+					index.add(indexKey, JSON.stringify(tool));
 					tools.push(tool);
 				});
 				connectionStatuses[connection.connectionId] = "connected";
@@ -67,6 +67,14 @@ export async function POST(request: Request) {
 	);
 
 	const searchResults = index.search(action);
+	const output = searchResults.map((result) => {
+		const [connectionId, _toolName] = result.toString().split("::");
+		const tool = toolMap[result];
+		return {
+			connectionId,
+			tool,
+		};
+	}).filter((result) => result.tool !== undefined);
 
 	console.log(JSON.stringify(searchResults, null, 2));
 
@@ -85,7 +93,7 @@ export async function POST(request: Request) {
 
 	const responseBody = {
 		action,
-		searchResults,
+		searchResults: output,
 		latency,
 		totalTools,
 		tokensProcessed: toolsTokenCount,

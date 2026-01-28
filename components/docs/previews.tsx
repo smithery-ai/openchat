@@ -788,7 +788,7 @@ function SchemaFormInner({
 // Act Preview - config OUTSIDE preview frame
 export function ActPreview() {
 	const apiKey = useAtomValue(selectedTokenAtom);
-	const [action, setAction] = useState("Approve tool execution");
+	const [action, setAction] = useState("Create");
 	const { data, isLoading, error } = useConnections(apiKey?.token);
 
 	if (!apiKey) {
