@@ -789,14 +789,40 @@ function SchemaFormInner({
 export function ActPreview() {
 	const apiKey = useAtomValue(selectedTokenAtom);
 	const [action, setAction] = useState("Approve tool execution");
-	const [selectedConnectionIds, setSelectedConnectionIds] = useState<string[]>(
-		[],
-	);
+	const { data, isLoading, error } = useConnections(apiKey?.token);
 
 	if (!apiKey) {
 		return (
 			<PreviewFrame>
 				<TokenRequiredMessage />
+			</PreviewFrame>
+		);
+	}
+
+	if (isLoading) {
+		return (
+			<PreviewFrame>
+				<div className="flex items-center gap-2 p-6 text-muted-foreground">
+					<Spinner className="h-4 w-4" /> Loading...
+				</div>
+			</PreviewFrame>
+		);
+	}
+
+	if (error) {
+		return (
+			<PreviewFrame>
+				<div className="p-6 text-destructive">Error: {error.message}</div>
+			</PreviewFrame>
+		);
+	}
+
+	if (!data) {
+		return (
+			<PreviewFrame>
+				<div className="p-6 text-muted-foreground">
+					No connections found.
+				</div>
 			</PreviewFrame>
 		);
 	}
@@ -812,19 +838,11 @@ export function ActPreview() {
 					placeholder="Enter action text"
 				/>
 			</div>
-			<div className="flex items-center gap-2">
-				<span className="text-sm text-muted-foreground">Connection(s):</span>
-				<ConnectionSelector
-					token={apiKey.token}
-					selectedConnectionIds={selectedConnectionIds}
-					onSelectMultiple={setSelectedConnectionIds}
-					multiple={true}
-				/>
-			</div>
 			<PreviewFrame>
 				<ActInner
 					token={apiKey.token}
-					connectionIds={selectedConnectionIds}
+					connections={data.connections}
+					namespace={data.namespace}
 					action={action}
 				/>
 			</PreviewFrame>
@@ -834,47 +852,21 @@ export function ActPreview() {
 
 function ActInner({
 	token,
-	connectionIds,
+	connections,
+	namespace,
 	action,
 }: {
 	token: string;
-	connectionIds: string[];
+	connections: Connection[];
 	action: string;
+	namespace: string;
 }) {
-	const { data, isLoading } = useConnections(token);
-
-	if (connectionIds.length === 0) {
-		return (
-			<div className="p-6 text-muted-foreground">
-				Select a connection above.
-			</div>
-		);
-	}
-
-	if (isLoading) {
-		return (
-			<div className="flex items-center gap-2 p-6 text-muted-foreground">
-				<Spinner className="h-4 w-4" /> Loading...
-			</div>
-		);
-	}
-
-	const selectedConnections = data?.connections.filter((c) =>
-		connectionIds.includes(c.connectionId),
-	);
-
-	if (!selectedConnections?.length || !data?.namespace) {
-		return (
-			<div className="p-6 text-muted-foreground">Connection not found.</div>
-		);
-	}
-
 	return (
 		<div className="p-4">
 			<Act
 				action={action}
-				connections={selectedConnections}
-				namespace={data.namespace}
+				connections={connections}
+				namespace={namespace}
 				apiKey={token}
 			/>
 		</div>
