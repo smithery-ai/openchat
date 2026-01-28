@@ -53,7 +53,7 @@ export const componentItems = [
 	},
 	{ title: "Schema Form", slug: "schema-form", icon: FileJson },
 	{ title: "Connection Context", slug: "connection-context", icon: Settings2 },
-	{ title: "Act", slug: "act", icon: MousePointerClick },
+	{ title: "Tool Search", slug: "tool-search", icon: MousePointerClick },
 ];
 
 export type NavigationSection = "connections" | "chat";
