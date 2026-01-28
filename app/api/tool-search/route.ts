@@ -1,10 +1,10 @@
+import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import type { Tool } from "@modelcontextprotocol/sdk/types.js";
 import { Smithery } from "@smithery/api";
 import { createConnection } from "@smithery/api/lib/mcp-transport.mjs";
 import type { Connection } from "@smithery/api/resources/beta/connect/connections";
 import { Index } from "flexsearch";
-import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { estimateTokenCount } from "tokenx";
-import { Tool } from "@modelcontextprotocol/sdk/types.js";
 
 export async function POST(request: Request) {
 	const startTime = performance.now();
@@ -27,7 +27,7 @@ export async function POST(request: Request) {
 	const allTools = await Promise.all(
 		connections.map(async (connection) => {
 			const startTime = performance.now();
-			let tools: Tool[] = [];
+			const tools: Tool[] = [];
 			try {
 				const { transport } = await createConnection({
 					client: new Smithery({ apiKey }),

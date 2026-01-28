@@ -1,8 +1,8 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import type { Connection } from "@smithery/api/resources/beta/connect/connections";
 import { useQuery } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
 
 const _ToolApproval = () => {
 	return (
@@ -32,12 +32,12 @@ export function Act({
 				body: JSON.stringify({ connections, apiKey, namespace, action }),
 			});
 			return response.json() as Promise<{
-			searchResults: any[];
-			latency: number;
-			totalTools: number;
-			tokensProcessed: number;
-			connectionLatencies: Record<string, number>;
-		}>;
+				searchResults: any[];
+				latency: number;
+				totalTools: number;
+				tokensProcessed: number;
+				connectionLatencies: Record<string, number>;
+			}>;
 		},
 	});
 
@@ -53,7 +53,9 @@ export function Act({
 					.map((connection) => JSON.stringify(connection))
 					.join(", ")}
 			</p> */}
-			<Button type="button" onClick={() => refetch()} disabled={isFetching}>Refresh</Button>
+			<Button type="button" onClick={() => refetch()} disabled={isFetching}>
+				Refresh
+			</Button>
 			{isFetching && <p>Loading...</p>}
 			{data && <pre>{JSON.stringify(data, null, 2)}</pre>}
 		</div>

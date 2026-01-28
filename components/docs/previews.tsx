@@ -26,6 +26,7 @@ import {
 	ComboboxValue,
 	useComboboxAnchor,
 } from "@/components/ui/combobox";
+import { Input } from "@/components/ui/input";
 import {
 	Select,
 	SelectContent,
@@ -307,7 +308,7 @@ export function ServerSearchPreview() {
 			</PreviewFrame>
 		);
 	}
-	
+
 	if (!namespace) {
 		return (
 			<PreviewFrame>
