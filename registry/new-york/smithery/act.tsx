@@ -30,6 +30,7 @@ import {
 	PopoverContent,
 	PopoverTrigger,
 } from "@/components/ui/popover";
+import { Pencil } from "lucide-react";
 
 const getServerTitle = (connection: Connection) => {
 	return (
@@ -97,18 +98,21 @@ export function Act({
 
 	return (
 		<div className="space-y-4">
-			<div className="flex flex-wrap items-center gap-1.5 text-lg">
+			<div className="flex flex-wrap items-center gap-1.5">
 				<span className="text-muted-foreground">Searching for</span>
 
 				{/* Action - editable inline */}
 				<Popover open={isEditingAction} onOpenChange={setIsEditingAction}>
 					<PopoverTrigger asChild>
-						<button
-							type="button"
-							className="rounded-md bg-muted px-2 py-0.5 hover:bg-muted/80 transition-colors"
-						>
-							{action || "action"}
-						</button>
+						<div className="inline-flex items-center gap-1">
+							<button
+								type="button"
+								className="rounded-md bg-muted px-2 py-0.5 hover:bg-muted/80 transition-colors"
+							>
+								{action || "action"}
+							</button>
+							<Pencil className="size-3" />
+						</div>
 					</PopoverTrigger>
 					<PopoverContent className="w-64 p-2" align="start">
 						<Input
@@ -144,14 +148,14 @@ export function Act({
 								selectedConnections.map((connection) => (
 									<span
 										key={connection.connectionId}
-										className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-0.5 text-sm font-medium pointer-events-none"
+										className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-0.5 font-medium pointer-events-none"
 									>
 										<Avatar className="size-3 rounded-sm">
 											<AvatarImage
 												src={connection.iconUrl ?? ""}
 												alt={getServerTitle(connection) ?? ""}
 											/>
-											<AvatarFallback className="rounded-sm bg-background text-[8px]">
+											<AvatarFallback className="rounded-sm bg-background">
 												{getServerTitle(connection).charAt(0) ?? ""}
 											</AvatarFallback>
 										</Avatar>
@@ -163,6 +167,7 @@ export function Act({
 									select connections
 								</span>
 							)}
+							<Pencil className="size-3" />
 						</button>
 					</PopoverTrigger>
 					<PopoverContent className="max-w-md p-2" align="start">
@@ -189,7 +194,7 @@ export function Act({
 																src={connection?.iconUrl ?? ""}
 																alt={connection?.name ?? ""}
 															/>
-															<AvatarFallback className="rounded-sm bg-muted text-[8px]">
+															<AvatarFallback className="rounded-sm bg-muted">
 																{getServerTitle(connection).charAt(0) ?? ""}
 															</AvatarFallback>
 														</Avatar>
