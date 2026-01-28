@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import {
 	Combobox,
 	ComboboxChip,
+	ComboboxChips,
 	ComboboxChipsInput,
 	ComboboxContent,
 	ComboboxEmpty,
@@ -129,13 +130,13 @@ export function Act({
 					<PopoverTrigger asChild>
 						<button
 							type="button"
-							className="inline-flex flex-wrap items-center gap-1 rounded-md hover:bg-muted/50 transition-colors px-1 py-0.5"
+							className="inline-flex flex-wrap items-center gap-1 rounded-md transition-colors px-1 py-0.5 cursor-pointer hover:opacity-80"
 						>
 							{selectedConnections.length > 0 ? (
 								selectedConnections.map((connection) => (
 									<span
 										key={connection.connectionId}
-										className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-0.5 text-sm font-medium"
+										className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-0.5 text-sm font-medium pointer-events-none"
 									>
 										<Avatar className="size-3 rounded-sm">
 											<AvatarImage
@@ -164,7 +165,7 @@ export function Act({
 							value={selectedConnectionIds}
 							onValueChange={handleSelectionChange}
 						>
-							<div className="flex flex-wrap items-center gap-1 rounded-md border bg-background p-1.5">
+							<ComboboxChips className="flex flex-wrap items-center gap-1 rounded-md border bg-background p-1.5">
 								<ComboboxValue>
 									{(values) => (
 										<Fragment>
@@ -196,7 +197,7 @@ export function Act({
 										</Fragment>
 									)}
 								</ComboboxValue>
-							</div>
+							</ComboboxChips>
 							<ComboboxContent>
 								<ComboboxEmpty>No connections found.</ComboboxEmpty>
 								<ComboboxList>
