@@ -31,6 +31,10 @@ import {
 	PopoverTrigger,
 } from "@/components/ui/popover";
 
+const getServerTitle = (connection: Connection) => {
+	return connection.serverInfo?.title ?? connection.serverInfo?.name ?? connection.name;
+}
+
 export function Act({
 	defaultAction,
 	connections,
@@ -104,7 +108,7 @@ export function Act({
 					</PopoverTrigger>
 					<PopoverContent className="w-64 p-2" align="start">
 						<Input
-							value={action}
+							defaultValue={defaultAction}
 							onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
 								setAction(e.target.value)
 							}
@@ -141,13 +145,13 @@ export function Act({
 										<Avatar className="size-3 rounded-sm">
 											<AvatarImage
 												src={connection.iconUrl ?? ""}
-												alt={connection.name ?? ""}
+												alt={getServerTitle(connection) ?? ""}
 											/>
 											<AvatarFallback className="rounded-sm bg-background text-[8px]">
-												{connection.name?.charAt(0) ?? ""}
+												{getServerTitle(connection).charAt(0) ?? ""}
 											</AvatarFallback>
 										</Avatar>
-										{connection.name}
+										{getServerTitle(connection)}
 									</span>
 								))
 							) : (
@@ -157,7 +161,7 @@ export function Act({
 							)}
 						</button>
 					</PopoverTrigger>
-					<PopoverContent className="w-72 p-2" align="start">
+					<PopoverContent className="max-w-md p-2" align="start">
 						<Combobox
 							multiple
 							autoHighlight
@@ -171,6 +175,9 @@ export function Act({
 										<Fragment>
 											{values.map((id: string) => {
 												const connection = getConnectionById(id);
+												if (!connection) {
+													return null;
+												}
 												return (
 													<ComboboxChip key={id}>
 														<Avatar className="size-3 rounded-sm">
@@ -179,10 +186,10 @@ export function Act({
 																alt={connection?.name ?? ""}
 															/>
 															<AvatarFallback className="rounded-sm bg-muted text-[8px]">
-																{connection?.name?.charAt(0) ?? ""}
+																{getServerTitle(connection).charAt(0) ?? ""}
 															</AvatarFallback>
 														</Avatar>
-														{connection?.name ?? id}
+														{getServerTitle(connection)}
 													</ComboboxChip>
 												);
 											})}
@@ -198,16 +205,16 @@ export function Act({
 									)}
 								</ComboboxValue>
 							</ComboboxChips>
-							<ComboboxContent>
+							<ComboboxContent className="w-[var(--radix-popover-content-available-width)]">
 								<ComboboxEmpty>No connections found.</ComboboxEmpty>
 								<ComboboxList>
 									{(id) => {
 										const connection = getConnectionById(id);
 										return (
 											<ComboboxItem key={id} value={id}>
-												<Item size="sm" className="p-0 min-w-0">
+												<Item size="sm" className="p-0 pr-4 min-w-0">
 													<ItemMedia>
-														<Avatar className="h-8 w-8 rounded-md">
+														<Avatar className="h-6 w-6 rounded-md">
 															<AvatarImage
 																src={connection?.iconUrl ?? ""}
 																alt={connection?.name ?? ""}
@@ -236,7 +243,7 @@ export function Act({
 				</Popover>
 			</div>
 
-			<Button type="button" onClick={() => refetch()} disabled={isFetching}>
+			<Button type="button" onClick={() => refetch()} disabled={isFetching || selectedConnections.length === 0 || action.trim() === ""}>
 				{isFetching ? "Searching..." : "Search"}
 			</Button>
 

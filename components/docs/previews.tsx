@@ -864,7 +864,7 @@ function ActInner({
 	return (
 		<div className="p-4">
 			<Act
-				action={action}
+				defaultAction={action}
 				connections={connections}
 				namespace={namespace}
 				apiKey={token}
