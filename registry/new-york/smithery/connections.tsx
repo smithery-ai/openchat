@@ -466,7 +466,7 @@ const ActiveConnection = ({
 							connectionId: connectionId,
 						}}
 					>
-						<div className="flex-1 overflow-hidden">
+						<div className="flex-1">
 							<ToolsPanel tools={toolsQuery.data} onExecute={handleExecute} />
 						</div>
 					</ConnectionConfigContext.Provider>
