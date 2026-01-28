@@ -1,8 +1,9 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+import { Tool } from "@modelcontextprotocol/sdk/types.js";
 import type { Connection } from "@smithery/api/resources/beta/connect/connections";
 import { useQuery } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
 
 const _ToolApproval = () => {
 	return (
@@ -29,9 +30,9 @@ export function Act({
 			const response = await fetch("/api/tool-search", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ connections, apiKey, namespace }),
+				body: JSON.stringify({ connections, apiKey, namespace, action }),
 			});
-			return response.json() as Promise<{ connections: Connection[] }>;
+			return response.json() as Promise<{ flattenedTools: Tool[] }>;
 		},
 	});
 
