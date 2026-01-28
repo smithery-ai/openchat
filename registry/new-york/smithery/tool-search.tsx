@@ -1,8 +1,8 @@
 "use client";
 
-import type { Tool } from "@modelcontextprotocol/sdk/types.js";
 import type { Connection } from "@smithery/api/resources/beta/connect/connections";
 import { useQuery } from "@tanstack/react-query";
+import { Pencil } from "lucide-react";
 import { Fragment, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -30,8 +30,7 @@ import {
 	PopoverContent,
 	PopoverTrigger,
 } from "@/components/ui/popover";
-import { Pencil } from "lucide-react";
-import { ToolSearchResult } from "./types";
+import type { ToolSearchResult } from "./types";
 
 const getServerTitle = (connection: Connection) => {
 	return (
@@ -79,7 +78,8 @@ export function ToolSearch({
 					action,
 				}),
 			});
-			const result = await response.json() satisfies Promise<ToolSearchResult>;
+			const result =
+				(await response.json()) satisfies Promise<ToolSearchResult>;
 			onSearchComplete(result);
 			return result;
 		},

@@ -1,4 +1,3 @@
-import { ToolSearchResult } from "@/registry/new-york/smithery/types";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import type { Tool } from "@modelcontextprotocol/sdk/types.js";
 import { Smithery } from "@smithery/api";
@@ -6,6 +5,7 @@ import { createConnection } from "@smithery/api/lib/mcp-transport.mjs";
 import type { Connection } from "@smithery/api/resources/beta/connect/connections";
 import { Index } from "flexsearch";
 import { estimateTokenCount } from "tokenx";
+import type { ToolSearchResult } from "@/registry/new-york/smithery/types";
 
 export async function POST(request: Request) {
 	const startTime = performance.now();
@@ -45,7 +45,9 @@ export async function POST(request: Request) {
 
 				// Use the MCP SDK's ergonomic API
 				const { tools: mcpTools } = await mcpClient.listTools();
-				const serverToolsTokenCount = estimateTokenCount(JSON.stringify(mcpTools, null, 2));
+				const serverToolsTokenCount = estimateTokenCount(
+					JSON.stringify(mcpTools, null, 2),
+				);
 				mcpTools.forEach((tool) => {
 					const indexKey = `${connection.connectionId}::${tool.name}`;
 					toolMap[indexKey] = tool;
@@ -75,14 +77,16 @@ export async function POST(request: Request) {
 	);
 
 	const searchResults = index.search(action);
-	const output = searchResults.map((result) => {
-		const [connectionId, _toolName] = result.toString().split("::");
-		const tool = toolMap[result];
-		return {
-			connectionId,
-			tool,
-		};
-	}).filter((result) => result.tool !== undefined);
+	const output = searchResults
+		.map((result) => {
+			const [connectionId, _toolName] = result.toString().split("::");
+			const tool = toolMap[result];
+			return {
+				connectionId,
+				tool,
+			};
+		})
+		.filter((result) => result.tool !== undefined);
 
 	console.log(JSON.stringify(searchResults, null, 2));
 

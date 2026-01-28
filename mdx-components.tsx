@@ -3,12 +3,12 @@ import { ComponentPreview } from "@/components/docs/component-preview";
 import { InstallCommand } from "@/components/docs/install-command";
 import { PreviewFrame } from "@/components/docs/preview-frame";
 import {
-	ToolSearchPreview,
 	ConnectionsPreview,
 	SchemaFormPreview,
 	ServerSearchPreview,
 	ToolCardPreview,
 	ToolDetailDialogPreview,
+	ToolSearchPreview,
 	ToolsPanelPreview,
 } from "@/components/docs/previews";
 

@@ -60,8 +60,8 @@ import {
 	EmptyMedia,
 	EmptyTitle,
 } from "@/components/ui/empty";
-import { ToolSearch } from "@/registry/new-york/smithery/tool-search";
 import { ServerSearch } from "@/registry/new-york/smithery/server-search";
+import { ToolSearch } from "@/registry/new-york/smithery/tool-search";
 import { Card, CardDescription, CardHeader, CardTitle } from "./ui/card";
 
 const models = [
