@@ -1,5 +1,6 @@
 "use client";
 
+import type { Tool } from "@modelcontextprotocol/sdk/types.js";
 import type { Connection } from "@smithery/api/resources/beta/connect/connections";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -32,7 +33,7 @@ export function Act({
 				body: JSON.stringify({ connections, apiKey, namespace, action }),
 			});
 			return response.json() as Promise<{
-				searchResults: any[];
+				searchResults: Tool[];
 				latency: number;
 				totalTools: number;
 				tokensProcessed: number;
