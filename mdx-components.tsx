@@ -3,6 +3,7 @@ import { ComponentPreview } from "@/components/docs/component-preview";
 import { InstallCommand } from "@/components/docs/install-command";
 import { PreviewFrame } from "@/components/docs/preview-frame";
 import {
+	ActPreview,
 	ConnectionsPreview,
 	SchemaFormPreview,
 	ServerSearchPreview,
@@ -23,6 +24,7 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
 		ToolCardPreview,
 		ToolDetailDialogPreview,
 		SchemaFormPreview,
+		ActPreview,
 		// Style headings
 		h1: ({ children }) => (
 			<h1 className="text-3xl font-bold tracking-tight mb-4">{children}</h1>

@@ -62,6 +62,7 @@ import {
 	DefaultChatTransport,
 	lastAssistantMessageIsCompleteWithToolCalls,
 } from "ai";
+import { Act } from "@/registry/new-york/smithery/act";
 
 const models = [
 	{
@@ -327,15 +328,13 @@ export function ChatBlock({ token, namespace }: ChatBlockProps) {
 															token={token}
 															onServerConnect={async (connection) => {
 																// Notify AI SDK that server was connected
-																const prevConnections = connections;
 																const newConnections = [
 																	...connections,
 																	connection,
 																];
+																// This new connections array won't go to the server!
+																// But it'll be in tool output
 																setConnections(newConnections);
-																await new Promise((resolve) =>
-																	setTimeout(resolve, 1000),
-																);
 																addToolOutput({
 																	tool: "useServer",
 																	toolCallId: part.toolCallId,
@@ -393,7 +392,14 @@ export function ChatBlock({ token, namespace }: ChatBlockProps) {
 													<div
 														key={`tool-act-input-available-${message.id}-${messagePartIndex}`}
 													>
-														{JSON.stringify(part)}
+														<Act
+															action={actPart.input.action}
+															connections={connections}
+															namespace={namespace}
+															apiKey={token}
+														/>
+														<br />
+														<p>{JSON.stringify(part)}</p>
 													</div>
 												);
 											}
