@@ -820,9 +820,7 @@ export function ActPreview() {
 	if (!data) {
 		return (
 			<PreviewFrame>
-				<div className="p-6 text-muted-foreground">
-					No connections found.
-				</div>
+				<div className="p-6 text-muted-foreground">No connections found.</div>
 			</PreviewFrame>
 		);
 	}

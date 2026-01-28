@@ -17,6 +17,7 @@ import {
 	ComboboxList,
 	ComboboxValue,
 } from "@/components/ui/combobox";
+import { Input } from "@/components/ui/input";
 import {
 	Item,
 	ItemContent,
@@ -24,7 +25,6 @@ import {
 	ItemMedia,
 	ItemTitle,
 } from "@/components/ui/item";
-import { Input } from "@/components/ui/input";
 import {
 	Popover,
 	PopoverContent,
@@ -32,8 +32,12 @@ import {
 } from "@/components/ui/popover";
 
 const getServerTitle = (connection: Connection) => {
-	return connection.serverInfo?.title ?? connection.serverInfo?.name ?? connection.name;
-}
+	return (
+		connection.serverInfo?.title ??
+		connection.serverInfo?.name ??
+		connection.name
+	);
+};
 
 export function Act({
 	defaultAction,
@@ -243,7 +247,13 @@ export function Act({
 				</Popover>
 			</div>
 
-			<Button type="button" onClick={() => refetch()} disabled={isFetching || selectedConnections.length === 0 || action.trim() === ""}>
+			<Button
+				type="button"
+				onClick={() => refetch()}
+				disabled={
+					isFetching || selectedConnections.length === 0 || action.trim() === ""
+				}
+			>
 				{isFetching ? "Searching..." : "Search"}
 			</Button>
 
