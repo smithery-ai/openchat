@@ -1,7 +1,6 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Tool } from "@modelcontextprotocol/sdk/types.js";
 import type { Connection } from "@smithery/api/resources/beta/connect/connections";
 import { useQuery } from "@tanstack/react-query";
 
@@ -24,7 +23,7 @@ export function Act({
 	namespace: string;
 	apiKey: string;
 }) {
-	const { data, isLoading, refetch } = useQuery({
+	const { data, isLoading, isFetching, refetch } = useQuery({
 		queryKey: ["tool-search", namespace, apiKey],
 		queryFn: async () => {
 			const response = await fetch("/api/tool-search", {
@@ -32,7 +31,13 @@ export function Act({
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({ connections, apiKey, namespace, action }),
 			});
-			return response.json() as Promise<{ flattenedTools: Tool[] }>;
+			return response.json() as Promise<{
+			searchResults: any[];
+			latency: number;
+			totalTools: number;
+			tokensProcessed: number;
+			connectionLatencies: Record<string, number>;
+		}>;
 		},
 	});
 
@@ -48,10 +53,8 @@ export function Act({
 					.map((connection) => JSON.stringify(connection))
 					.join(", ")}
 			</p> */}
-			<Button type="button" onClick={() => refetch()}>
-				Refresh
-			</Button>
-			{isLoading && <p>Loading...</p>}
+			<Button type="button" onClick={() => refetch()} disabled={isFetching}>Refresh</Button>
+			{isFetching && <p>Loading...</p>}
 			{data && <pre>{JSON.stringify(data, null, 2)}</pre>}
 		</div>
 	);
