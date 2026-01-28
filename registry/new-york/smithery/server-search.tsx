@@ -255,6 +255,7 @@ const ServerDisplay = ({
 		onSuccess: (data) => {
 			if (data.status === "connected" && onServerConnect) {
 				onServerConnect(data.connection);
+				console.log("connected to server", data.connection);
 			}
 			queryClient.invalidateQueries({ queryKey: ["connections"] });
 		},
@@ -327,7 +328,7 @@ const ServerDisplay = ({
 	}, [authConnectionId, token, activeNamespace, connectAsync]);
 
 	return (
-		<div className="mt-4 p-4 border rounded-md flex flex-col gap-4 text-left">
+		<div className="p-4 border rounded-md flex flex-col gap-4 text-left">
 			<div className="flex items-center gap-3">
 				<Avatar className="h-10 w-10 rounded-md">
 					<AvatarImage src={server.iconUrl || ""} />
@@ -805,7 +806,7 @@ const ServerSearchInner = ({
 	const shouldHideSearch = hideSearchAfterConnect && isConnected;
 
 	return (
-		<div className="max-w-md mx-auto">
+		<div className="max-w-md mx-auto flex flex-col gap-2">
 			{!shouldHideSearch && (
 				<Combobox<ServerListResponse>
 					value={selectedServer}

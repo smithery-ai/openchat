@@ -58,6 +58,10 @@ import {
 import { ServerSearch } from "@/registry/new-york/smithery/server-search";
 import { Card, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { useChat } from "@ai-sdk/react";
+import {
+	DefaultChatTransport,
+	lastAssistantMessageIsCompleteWithToolCalls,
+} from "ai";
 
 const models = [
 	{
@@ -94,28 +98,32 @@ export function ChatBlock({ token, namespace }: ChatBlockProps) {
 	const [input, setInput] = useState("");
 	const [model, setModel] = useState<string>(models[0].value);
 	const [connections, setConnections] = useState<Connection[]>([]);
-	const { messages, sendMessage, status, regenerate, addToolOutput } =
-		useChat();
 
-	const submitMessage = useCallback(
-		(
-			message: PromptInputMessage,
-			bodyOverrides?: {
-				model?: string;
-				connections?: typeof connections;
+	const updateBody = useCallback(() => {
+		return {
+				model: model,
+				connections: connections,
+				apiKey: token,
+		};
+	}, [model, connections, token]);
+
+	const { messages, sendMessage, status, regenerate, addToolOutput } = useChat({
+		transport: new DefaultChatTransport({
+			api: "/api/chat",
+			prepareSendMessagesRequest: (options) => {
+				return {
+					body: {
+						...(options.body || {}),
+						...updateBody(),
+						messages: options.messages,
+					},
+					headers: options.headers,
+					credentials: options.credentials,
+				};
 			},
-		) => {
-			sendMessage(message, {
-				body: {
-					model: model,
-					connections: connections,
-					apiKey: token,
-					...bodyOverrides,
-				},
-			});
-		},
-		[model, connections, token, sendMessage],
-	);
+		}),
+		sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithToolCalls,
+	});
 
 	const handleSubmit = (message: PromptInputMessage) => {
 		const hasText = Boolean(message.text);
@@ -123,7 +131,7 @@ export function ChatBlock({ token, namespace }: ChatBlockProps) {
 		if (!(hasText || hasAttachments)) {
 			return;
 		}
-		submitMessage({
+		sendMessage({
 			text: message.text || "Sent with attachments",
 			files: message.files,
 		});
@@ -289,7 +297,6 @@ export function ChatBlock({ token, namespace }: ChatBlockProps) {
 													return (
 														<div
 															key={`tool-useServer-input-formulating-${message.id}-${messagePartIndex}`}
-															className="mt-4"
 														>
 															<p>Formulating...</p>
 														</div>
@@ -300,7 +307,6 @@ export function ChatBlock({ token, namespace }: ChatBlockProps) {
 													return (
 														<div
 															key={`tool-useServer-input-streaming-${message.id}-${messagePartIndex}`}
-															className="mt-4"
 														>
 															<p>
 																Searching for servers with query:{" "}
@@ -313,20 +319,23 @@ export function ChatBlock({ token, namespace }: ChatBlockProps) {
 												return (
 													<div
 														key={`tool-useServer-input-available-${message.id}-${messagePartIndex}`}
-														className="mt-4"
 													>
 														<ServerSearch
 															hideSearchAfterConnect={true}
 															query={searchPart.input.query}
 															namespace={namespace}
 															token={token}
-															onServerConnect={(connection) => {
+															onServerConnect={async (connection) => {
 																// Notify AI SDK that server was connected
+																const prevConnections = connections;
 																const newConnections = [
 																	...connections,
 																	connection,
 																];
 																setConnections(newConnections);
+																await new Promise((resolve) =>
+																	setTimeout(resolve, 1000),
+																);
 																addToolOutput({
 																	tool: "useServer",
 																	toolCallId: part.toolCallId,
@@ -344,13 +353,6 @@ export function ChatBlock({ token, namespace }: ChatBlockProps) {
 																		status: "connected",
 																	},
 																});
-																submitMessage(
-																	{
-																		text: "",
-																		files: [],
-																	},
-																	{ connections: newConnections },
-																);
 															}}
 														/>
 													</div>
@@ -371,7 +373,6 @@ export function ChatBlock({ token, namespace }: ChatBlockProps) {
 													return (
 														<div
 															key={`tool-act-input-formulating-${message.id}-${messagePartIndex}`}
-															className="mt-4"
 														>
 															<p>Formulating action...</p>
 														</div>
@@ -382,7 +383,6 @@ export function ChatBlock({ token, namespace }: ChatBlockProps) {
 													return (
 														<div
 															key={`tool-act-input-streaming-${message.id}-${messagePartIndex}`}
-															className="mt-4"
 														>
 															<p>Preparing action: {actPart.input.action}</p>
 														</div>
@@ -392,7 +392,6 @@ export function ChatBlock({ token, namespace }: ChatBlockProps) {
 												return (
 													<div
 														key={`tool-act-input-available-${message.id}-${messagePartIndex}`}
-														className="mt-4"
 													>
 														{JSON.stringify(part)}
 													</div>
@@ -411,7 +410,7 @@ export function ChatBlock({ token, namespace }: ChatBlockProps) {
 													return (
 														<div
 															key={`tool-date-${message.id}-${messagePartIndex}`}
-															className="mt-4 p-3 border rounded-md bg-muted/50"
+															className="p-3 border rounded-md bg-muted/50"
 														>
 															<div className="flex items-center gap-2 text-sm">
 																<span className="font-medium">Date:</span>
