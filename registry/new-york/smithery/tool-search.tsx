@@ -3,7 +3,7 @@
 import type { Connection } from "@smithery/api/resources/beta/connect/connections";
 import { useQuery } from "@tanstack/react-query";
 import { Pencil, SearchIcon } from "lucide-react";
-import { Fragment, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -30,6 +30,7 @@ import {
 	PopoverContent,
 	PopoverTrigger,
 } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 import type { ToolSearchResult } from "./types";
 
 const getServerTitle = (connection: Connection) => {
@@ -53,20 +54,23 @@ export function ToolSearch({
 	apiKey: string;
 	onSearchComplete: (result: ToolSearchResult) => void;
 }) {
-	const [selectedConnectionIds, setSelectedConnectionIds] = useState<string[]>(
-		connections.map((connection: Connection) => connection.connectionId),
+	const defaultConnectionIds = connections.map(
+		(connection: Connection) => connection.connectionId,
 	);
+	const [selectedConnectionIds, setSelectedConnectionIds] =
+		useState<string[]>(defaultConnectionIds);
 	const [inputValue, setInputValue] = useState("");
 	const [action, setAction] = useState(defaultAction);
 	const [isEditingAction, setIsEditingAction] = useState(false);
 	const [isEditingConnections, setIsEditingConnections] = useState(false);
+	const [hasSearched, setHasSearched] = useState(false);
 
 	const selectedConnections = connections.filter((connection: Connection) =>
 		selectedConnectionIds.includes(connection.connectionId),
 	);
 
 	const { isLoading, isFetching, refetch } = useQuery({
-		queryKey: ["tool-search", namespace, apiKey],
+		queryKey: ["tool-search", namespace, apiKey, selectedConnectionIds, action],
 		queryFn: async () => {
 			const response = await fetch("/api/tool-search", {
 				method: "POST",
@@ -85,6 +89,13 @@ export function ToolSearch({
 		},
 		enabled: false,
 	});
+
+	useEffect(() => {
+		if (!hasSearched) {
+			refetch();
+			setHasSearched(true);
+		}
+	}, [hasSearched, refetch]);
 
 	const connectionIds = connections.map(
 		(connection: Connection) => connection.connectionId,
@@ -110,7 +121,10 @@ export function ToolSearch({
 						<div className="inline-flex items-center gap-1">
 							<button
 								type="button"
-								className="rounded-md bg-muted px-2 py-0.5 hover:bg-muted/80 transition-colors"
+								className={cn(
+									"rounded-md bg-muted px-2 py-0.5 hover:bg-muted/80 transition-colors",
+									isFetching && "opacity-50",
+								)}
 								disabled={isFetching}
 							>
 								{action || "action"}
@@ -153,7 +167,10 @@ export function ToolSearch({
 								selectedConnections.map((connection) => (
 									<span
 										key={connection.connectionId}
-										className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-0.5 font-medium pointer-events-none"
+										className={cn(
+											"inline-flex items-center gap-1 rounded-md bg-muted px-2 py-0.5 font-medium pointer-events-none",
+											isFetching && "opacity-50",
+										)}
 									>
 										<Avatar className="size-3 rounded-sm">
 											<AvatarImage
@@ -269,8 +286,6 @@ export function ToolSearch({
 					{isFetching ? "Searching..." : "Search"}
 				</Button>
 			</div>
-
-			{isLoading && <p className="text-muted-foreground">Loading...</p>}
 		</div>
 	);
 }
