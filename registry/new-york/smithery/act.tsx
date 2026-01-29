@@ -1,10 +1,10 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import type { Connection } from "@smithery/api/resources/beta/connect/connections";
 import { useQuery } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
 
-const ToolApproval = () => {
+const _ToolApproval = () => {
 	return (
 		<div>
 			<p>Tool Approval</p>
@@ -47,7 +47,9 @@ export function Act({
 					.map((connection) => JSON.stringify(connection))
 					.join(", ")}
 			</p> */}
-			<Button type="button" onClick={() => refetch()}>Refresh</Button>
+			<Button type="button" onClick={() => refetch()}>
+				Refresh
+			</Button>
 			{isLoading && <p>Loading...</p>}
 			{data && <pre>{JSON.stringify(data, null, 2)}</pre>}
 		</div>

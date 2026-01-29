@@ -1,5 +1,10 @@
 "use client";
+import { useChat } from "@ai-sdk/react";
 import type { Connection } from "@smithery/api/resources/beta/connect/connections.mjs";
+import {
+	DefaultChatTransport,
+	lastAssistantMessageIsCompleteWithToolCalls,
+} from "ai";
 import { CopyIcon, MessageSquareIcon, RefreshCcwIcon } from "lucide-react";
 import { useCallback, useState } from "react";
 import {
@@ -55,14 +60,9 @@ import {
 	EmptyMedia,
 	EmptyTitle,
 } from "@/components/ui/empty";
+import { Act } from "@/registry/new-york/smithery/act";
 import { ServerSearch } from "@/registry/new-york/smithery/server-search";
 import { Card, CardDescription, CardHeader, CardTitle } from "./ui/card";
-import { useChat } from "@ai-sdk/react";
-import {
-	DefaultChatTransport,
-	lastAssistantMessageIsCompleteWithToolCalls,
-} from "ai";
-import { Act } from "@/registry/new-york/smithery/act";
 
 const models = [
 	{
@@ -102,9 +102,9 @@ export function ChatBlock({ token, namespace }: ChatBlockProps) {
 
 	const updateBody = useCallback(() => {
 		return {
-				model: model,
-				connections: connections,
-				apiKey: token,
+			model: model,
+			connections: connections,
+			apiKey: token,
 		};
 	}, [model, connections, token]);
 

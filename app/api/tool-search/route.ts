@@ -10,19 +10,21 @@ export async function POST(request: Request) {
 		namespace: string;
 	};
 
-    const allTools = await Promise.all(connections.map(async (connection) => {
-        const { transport } = await createConnection({
-            client: new Smithery({ apiKey }),
-            connectionId: connection.connectionId,
-            namespace,
-        });
-        const mcpClient = await createMCPClient({ transport });
-        return mcpClient.tools();
-    }));
+	const allTools = await Promise.all(
+		connections.map(async (connection) => {
+			const { transport } = await createConnection({
+				client: new Smithery({ apiKey }),
+				connectionId: connection.connectionId,
+				namespace,
+			});
+			const mcpClient = await createMCPClient({ transport });
+			return mcpClient.tools();
+		}),
+	);
 
-    const flattenedTools = allTools.flat();
+	const flattenedTools = allTools.flat();
 
-    console.log(JSON.stringify(flattenedTools, null, 2));
+	console.log(JSON.stringify(flattenedTools, null, 2));
 
-    return Response.json({ flattenedTools });
+	return Response.json({ flattenedTools });
 }
