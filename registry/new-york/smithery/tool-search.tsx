@@ -106,20 +106,21 @@ export function ToolSearch({
 
 				{/* Action - editable inline */}
 				<Popover open={isEditingAction} onOpenChange={setIsEditingAction}>
-					<PopoverTrigger asChild>
+					<PopoverTrigger asChild disabled={isFetching}>
 						<div className="inline-flex items-center gap-1">
 							<button
 								type="button"
 								className="rounded-md bg-muted px-2 py-0.5 hover:bg-muted/80 transition-colors"
+								disabled={isFetching}
 							>
 								{action || "action"}
 							</button>
-							<Pencil className="size-3" />
+							{!isFetching && <Pencil className="size-3" />}
 						</div>
 					</PopoverTrigger>
 					<PopoverContent className="w-64 p-2" align="start">
 						<Input
-							defaultValue={defaultAction}
+							defaultValue={action}
 							onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
 								setAction(e.target.value)
 							}
@@ -142,10 +143,11 @@ export function ToolSearch({
 					open={isEditingConnections}
 					onOpenChange={setIsEditingConnections}
 				>
-					<PopoverTrigger asChild>
+					<PopoverTrigger asChild disabled={isFetching}>
 						<button
 							type="button"
 							className="inline-flex flex-wrap items-center gap-1 rounded-md transition-colors px-1 py-0.5 cursor-pointer hover:opacity-80"
+							disabled={isFetching}
 						>
 							{selectedConnections.length > 0 ? (
 								selectedConnections.map((connection) => (
@@ -170,7 +172,7 @@ export function ToolSearch({
 									select connections
 								</span>
 							)}
-							<Pencil className="size-3" />
+							{!isFetching && <Pencil className="size-3" />}
 						</button>
 					</PopoverTrigger>
 					<PopoverContent className="max-w-md p-2" align="start">
