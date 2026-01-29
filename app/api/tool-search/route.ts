@@ -5,7 +5,10 @@ import { createConnection } from "@smithery/api/lib/mcp-transport.mjs";
 import type { Connection } from "@smithery/api/resources/beta/connect/connections";
 import { Index } from "flexsearch";
 import { estimateTokenCount } from "tokenx";
-import type { ToolSearchResult } from "@/registry/new-york/smithery/types";
+import type {
+	FailedToolSearch,
+	SuccessfulToolSearch,
+} from "@/registry/new-york/smithery/types";
 
 export async function POST(request: Request) {
 	const startTime = performance.now();
@@ -22,7 +25,10 @@ export async function POST(request: Request) {
 		// e.g. match "flexsearch" when query "flex"
 		tokenize: "forward",
 	});
-	const connectionStats: Record<string, ToolSearchResult> = {};
+	const connectionStats: Record<
+		string,
+		SuccessfulToolSearch | FailedToolSearch
+	> = {};
 	const toolMap: Record<string, Tool> = {};
 	let toolsTokenCount = 0;
 

@@ -12,7 +12,6 @@ import * as React from "react";
 import { useState } from "react";
 import { listNamespaces } from "@/components/smithery/actions";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
 	Combobox,
 	ComboboxChip,
