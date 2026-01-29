@@ -62,6 +62,8 @@ import {
 } from "@/components/ui/empty";
 import { ServerSearch } from "@/registry/new-york/smithery/server-search";
 import { ToolSearch } from "@/registry/new-york/smithery/tool-search";
+import { ToolSearchResults } from "@/registry/new-york/smithery/tool-search-results";
+import type { ToolSearchResult } from "@/registry/new-york/smithery/types";
 import { Card, CardDescription, CardHeader, CardTitle } from "./ui/card";
 
 const models = [
@@ -99,6 +101,8 @@ export function ChatBlock({ token, namespace }: ChatBlockProps) {
 	const [input, setInput] = useState("");
 	const [model, setModel] = useState<string>(models[0].value);
 	const [connections, setConnections] = useState<Connection[]>([]);
+	const [toolSearchResults, setToolSearchResults] =
+		useState<ToolSearchResult | null>(null);
 
 	const updateBody = useCallback(() => {
 		return {
@@ -397,10 +401,11 @@ export function ChatBlock({ token, namespace }: ChatBlockProps) {
 															connections={connections}
 															namespace={namespace}
 															apiKey={token}
-															onSearchComplete={console.log}
+															onSearchComplete={setToolSearchResults}
 														/>
-														<br />
-														<p>{JSON.stringify(part)}</p>
+														{toolSearchResults && (
+															<ToolSearchResults results={toolSearchResults} />
+														)}
 													</div>
 												);
 											}

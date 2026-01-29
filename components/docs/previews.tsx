@@ -42,15 +42,9 @@ import { selectedTokenAtom } from "@/registry/new-york/smithery/tokens";
 import { ToolCard } from "@/registry/new-york/smithery/tool-card";
 import { ToolDetailDialog } from "@/registry/new-york/smithery/tool-detail-dialog";
 import { ToolSearch } from "@/registry/new-york/smithery/tool-search";
+import { ToolSearchResults } from "@/registry/new-york/smithery/tool-search-results";
 import { ToolsPanel } from "@/registry/new-york/smithery/tools-panel";
 import type { ToolSearchResult } from "@/registry/new-york/smithery/types";
-import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogTitle,
-	DialogTrigger,
-} from "../ui/dialog";
 import { PreviewFrame } from "./preview-frame";
 
 const DEFAULT_MCP_URL = "https://mcp.exa.ai";
@@ -845,22 +839,6 @@ export function ToolSearchPreview() {
 					className="w-[280px]"
 					placeholder="Enter action text"
 				/>
-				{searchResults && (
-					<Dialog>
-						<DialogTrigger asChild>
-							<Button>Search Results</Button>
-						</DialogTrigger>
-						<DialogContent className="max-h-[80vh] overflow-auto">
-							<DialogTitle>Search Results</DialogTitle>
-							<DialogDescription>
-								Search results for the action: &quot;{action}&quot;
-							</DialogDescription>
-							<pre className="rounded-md bg-muted p-4 text-sm overflow-auto">
-								{JSON.stringify(searchResults, null, 2)}
-							</pre>
-						</DialogContent>
-					</Dialog>
-				)}
 			</div>
 			<PreviewFrame>
 				<div className="p-4">
@@ -873,6 +851,11 @@ export function ToolSearchPreview() {
 					/>
 				</div>
 			</PreviewFrame>
+			{searchResults && (
+				<PreviewFrame>
+					<ToolSearchResults results={searchResults} />
+				</PreviewFrame>
+			)}
 		</div>
 	);
 }
