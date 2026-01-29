@@ -199,6 +199,7 @@ interface ServerDisplayProps {
 	token: string;
 	namespace?: string;
 	onExistingConnection: OnExistingConnectionMode;
+	onServerConnect?: (connection: Connection) => void;
 }
 
 const ServerDisplay = ({
@@ -206,6 +207,7 @@ const ServerDisplay = ({
 	token,
 	namespace,
 	onExistingConnection,
+	onServerConnect,
 }: ServerDisplayProps) => {
 	const queryClient = useQueryClient();
 	const [countdown, setCountdown] = useState<number | null>(null);
@@ -233,6 +235,7 @@ const ServerDisplay = ({
 		isPending: isConnecting,
 		data: connectionData,
 		mutateAsync: connectAsync,
+		error: connectionError,
 	} = useMutation({
 		mutationFn: async (
 			overrideMode?: "use" | "create-new",
@@ -249,7 +252,11 @@ const ServerDisplay = ({
 				overrideMode ?? onExistingConnection,
 			);
 		},
-		onSuccess: () => {
+		onSuccess: (data) => {
+			if (data.status === "connected" && onServerConnect) {
+				onServerConnect(data.connection);
+				console.log("connected to server", data.connection);
+			}
 			queryClient.invalidateQueries({ queryKey: ["connections"] });
 		},
 		onError: (error) => {
@@ -321,7 +328,7 @@ const ServerDisplay = ({
 	}, [authConnectionId, token, activeNamespace, connectAsync]);
 
 	return (
-		<div className="mt-4 p-4 border rounded-md flex flex-col gap-4">
+		<div className="p-4 border rounded-md flex flex-col gap-4 text-left">
 			<div className="flex items-center gap-3">
 				<Avatar className="h-10 w-10 rounded-md">
 					<AvatarImage src={server.iconUrl || ""} />
@@ -388,9 +395,21 @@ const ServerDisplay = ({
 				/>
 			)}
 
-			{connectionData?.status === "error" && (
+			{(connectionData?.status === "error" || connectionError) && (
 				<p className="text-destructive text-sm mt-2">
-					Error connecting to server
+					Error connecting to server:{" "}
+					{connectionData?.status === "error"
+						? typeof connectionData.error === "object" &&
+							connectionData.error &&
+							"message" in connectionData.error
+							? ((connectionData.error as { message?: string }).message ??
+								"Unknown error")
+							: String(connectionData.error ?? "Unknown error")
+						: connectionError instanceof Error
+							? connectionError.message
+							: connectionError
+								? String(connectionError)
+								: "Unknown error"}
 				</p>
 			)}
 		</div>
@@ -547,6 +566,7 @@ interface ExternalURLDisplayProps {
 	token: string;
 	namespace?: string;
 	onExistingConnection: OnExistingConnectionMode;
+	onServerConnect?: (connection: Connection) => void;
 }
 
 const ExternalURLDisplay = ({
@@ -554,6 +574,7 @@ const ExternalURLDisplay = ({
 	token,
 	namespace,
 	onExistingConnection,
+	onServerConnect,
 }: ExternalURLDisplayProps) => {
 	const queryClient = useQueryClient();
 	const [countdown, setCountdown] = useState<number | null>(null);
@@ -587,7 +608,10 @@ const ExternalURLDisplay = ({
 				overrideMode ?? onExistingConnection,
 			);
 		},
-		onSuccess: () => {
+		onSuccess: (data) => {
+			if (data.status === "connected" && onServerConnect) {
+				onServerConnect(data.connection);
+			}
 			queryClient.invalidateQueries({ queryKey: ["connections"] });
 		},
 		onError: (error) => {
@@ -717,19 +741,31 @@ const ServerSearchInner = ({
 	token,
 	namespace,
 	onExistingConnection = "warn",
+	onServerConnect,
+	query,
+	hideSearchAfterConnect,
 }: {
 	token?: string;
 	namespace?: string;
 	onExistingConnection?: OnExistingConnectionMode;
+	onServerConnect?: (connection: Connection) => void;
+	query?: string;
+	hideSearchAfterConnect?: boolean;
 }) => {
-	const [query, setQuery] = useState("");
+	const [currentQuery, setCurrentQuery] = useState(query || "");
 	const [selectedServer, setSelectedServer] =
 		useState<ServerListResponse | null>(null);
 	const [selectedExternalUrl, setSelectedExternalUrl] = useState<string | null>(
 		null,
 	);
-	const debouncedQuery = useDebounce(query, 300);
-	const isUrl = isValidUrl(query);
+	const [isConnected, setIsConnected] = useState(false);
+	const debouncedQuery = useDebounce(currentQuery, 300);
+	const isUrl = isValidUrl(currentQuery);
+
+	const handleServerConnect = (connection: Connection) => {
+		setIsConnected(true);
+		onServerConnect?.(connection);
+	};
 
 	const { data, isLoading } = useQuery({
 		queryKey: ["servers", token, debouncedQuery],
@@ -745,7 +781,8 @@ const ServerSearchInner = ({
 			console.log(`servers for ${debouncedQuery}`, servers);
 			return servers;
 		},
-		enabled: !!token,
+		// Don't fetch when a server or external URL is already selected
+		enabled: !!token && !selectedServer && !selectedExternalUrl,
 	});
 
 	const servers = data?.servers ?? [];
@@ -754,111 +791,122 @@ const ServerSearchInner = ({
 		if (e.key === "Enter") {
 			e.preventDefault();
 			if (isUrl) {
-				const urlToConnect = query.trim();
+				const urlToConnect = currentQuery.trim();
 				setSelectedExternalUrl(urlToConnect);
 				setSelectedServer(null);
-				setTimeout(() => setQuery(""), 0);
+				setTimeout(() => setCurrentQuery(""), 0);
 			} else if (servers.length > 0) {
 				setSelectedServer(servers[0]);
 				setSelectedExternalUrl(null);
-				setTimeout(() => setQuery(""), 0);
+				setTimeout(() => setCurrentQuery(""), 0);
 			}
 		}
 	};
 
+	const shouldHideSearch = hideSearchAfterConnect && isConnected;
+
 	return (
-		<div className="max-w-md mx-auto">
-			<Combobox<ServerListResponse>
-				value={selectedServer}
-				onValueChange={(server) => {
-					setSelectedServer(server);
-					// Only clear external URL when a server is actually selected
-					// (not when combobox fires null from closing without selection)
-					if (server) {
-						setSelectedExternalUrl(null);
+		<div className="max-w-md mx-auto flex flex-col gap-2">
+			{!shouldHideSearch && (
+				<Combobox<ServerListResponse>
+					value={selectedServer}
+					onValueChange={(server) => {
+						setSelectedServer(server);
+						// Only clear external URL when a server is actually selected
+						// (not when combobox fires null from closing without selection)
+						if (server) {
+							setSelectedExternalUrl(null);
+							setCurrentQuery("");
+						}
+					}}
+					inputValue={currentQuery}
+					onInputValueChange={(value, eventDetails) => {
+						// Only update query for user input, not when combobox auto-fills from selection
+						if (eventDetails.reason === "input-change") {
+							setCurrentQuery(value);
+						}
+					}}
+					itemToStringLabel={(server) =>
+						server.displayName || server.qualifiedName
 					}
-				}}
-				onInputValueChange={(value) => setQuery(value)}
-				itemToStringLabel={(server) =>
-					server.displayName || server.qualifiedName
-				}
-				defaultOpen={true}
-			>
-				<ComboboxInput
-					placeholder="Search for a server or paste MCP URL..."
-					disabled={!token}
-					onKeyDown={handleKeyDown}
-					autoFocus={true}
-				/>
-				<ComboboxContent side="bottom" align="start">
-					{isUrl ? (
-						<div className="p-1">
-							<button
-								type="button"
-								className="data-highlighted:bg-accent data-highlighted:text-accent-foreground relative flex w-full cursor-pointer items-center gap-2 rounded-sm py-1.5 pr-2 pl-2 text-sm outline-hidden select-none hover:bg-accent hover:text-accent-foreground"
-								onClick={() => {
-									const urlToConnect = query.trim();
-									setSelectedExternalUrl(urlToConnect);
-									setSelectedServer(null);
-									setTimeout(() => setQuery(""), 0);
-								}}
-							>
-								<Item size="sm" className="p-0 min-w-0">
-									<ItemMedia>
-										<Avatar className="h-8 w-8 rounded-md">
-											<AvatarFallback className="rounded-md bg-muted">
-												<Link className="size-4" />
-											</AvatarFallback>
-										</Avatar>
-									</ItemMedia>
-									<ItemContent className="min-w-0">
-										<ItemTitle className="w-full truncate">
-											Connect to external MCP URL
-										</ItemTitle>
-										<ItemDescription className="line-clamp-1 font-mono text-xs">
-											{query.trim()}
-										</ItemDescription>
-									</ItemContent>
-								</Item>
-							</button>
-						</div>
-					) : (
-						<>
-							{servers.length === 0 && (
-								<ComboboxEmpty>
-									{isLoading ? "Loading..." : "No servers found."}
-								</ComboboxEmpty>
-							)}
-							<ComboboxList className="max-h-[200px] overflow-y-auto">
-								{servers.map((server) => (
-									<ComboboxItem key={server.qualifiedName} value={server}>
-										<Item size="sm" className="p-0 min-w-0">
-											<ItemMedia>
-												<Avatar className="h-8 w-8 rounded-md">
-													<AvatarImage src={server.iconUrl || ""} />
-													<AvatarFallback className="rounded-md bg-muted text-xs">
-														{server.displayName?.charAt(0) ||
-															server.qualifiedName?.charAt(0) ||
-															"S"}
-													</AvatarFallback>
-												</Avatar>
-											</ItemMedia>
-											<ItemContent className="min-w-0">
-												<ItemTitle className="w-full truncate">
-													{server.displayName || server.qualifiedName}
-												</ItemTitle>
-												<ItemDescription className="line-clamp-1">
-													{server.description || server.qualifiedName}
-												</ItemDescription>
-											</ItemContent>
-										</Item>
-									</ComboboxItem>
-								))}
-							</ComboboxList>
-						</>
-					)}
-				</ComboboxContent>
-			</Combobox>
+					defaultOpen={true}
+				>
+					<ComboboxInput
+						placeholder="Search for a server or paste MCP URL..."
+						disabled={!token}
+						onKeyDown={handleKeyDown}
+						autoFocus={true}
+					/>
+					<ComboboxContent side="bottom" align="start">
+						{isUrl ? (
+							<div className="p-1">
+								<button
+									type="button"
+									className="data-highlighted:bg-accent data-highlighted:text-accent-foreground relative flex w-full cursor-pointer items-center gap-2 rounded-sm py-1.5 pr-2 pl-2 text-sm outline-hidden select-none hover:bg-accent hover:text-accent-foreground"
+									onClick={() => {
+										const urlToConnect = currentQuery.trim();
+										setSelectedExternalUrl(urlToConnect);
+										setSelectedServer(null);
+										setTimeout(() => setCurrentQuery(""), 0);
+									}}
+								>
+									<Item size="sm" className="p-0 min-w-0">
+										<ItemMedia>
+											<Avatar className="h-8 w-8 rounded-md">
+												<AvatarFallback className="rounded-md bg-muted">
+													<Link className="size-4" />
+												</AvatarFallback>
+											</Avatar>
+										</ItemMedia>
+										<ItemContent className="min-w-0">
+											<ItemTitle className="w-full truncate">
+												Connect to external MCP URL
+											</ItemTitle>
+											<ItemDescription className="line-clamp-1 font-mono text-xs">
+												{currentQuery.trim()}
+											</ItemDescription>
+										</ItemContent>
+									</Item>
+								</button>
+							</div>
+						) : (
+							<>
+								{servers.length === 0 && (
+									<ComboboxEmpty>
+										{isLoading ? "Loading..." : "No servers found."}
+									</ComboboxEmpty>
+								)}
+								<ComboboxList className="max-h-[200px] overflow-y-auto">
+									{servers.map((server) => (
+										<ComboboxItem key={server.qualifiedName} value={server}>
+											<Item size="sm" className="p-0 min-w-0">
+												<ItemMedia>
+													<Avatar className="h-8 w-8 rounded-md">
+														<AvatarImage src={server.iconUrl || ""} />
+														<AvatarFallback className="rounded-md bg-muted text-xs">
+															{server.displayName?.charAt(0) ||
+																server.qualifiedName?.charAt(0) ||
+																"S"}
+														</AvatarFallback>
+													</Avatar>
+												</ItemMedia>
+												<ItemContent className="min-w-0">
+													<ItemTitle className="w-full truncate">
+														{server.displayName || server.qualifiedName}
+													</ItemTitle>
+													<ItemDescription className="line-clamp-1">
+														{server.description || server.qualifiedName}
+													</ItemDescription>
+												</ItemContent>
+											</Item>
+										</ComboboxItem>
+									))}
+								</ComboboxList>
+							</>
+						)}
+					</ComboboxContent>
+				</Combobox>
+			)}
 
 			{selectedServer && token && namespace && (
 				<ServerDisplay
@@ -866,6 +914,7 @@ const ServerSearchInner = ({
 					token={token}
 					namespace={namespace}
 					onExistingConnection={onExistingConnection}
+					onServerConnect={handleServerConnect}
 				/>
 			)}
 
@@ -874,6 +923,7 @@ const ServerSearchInner = ({
 					url={selectedExternalUrl}
 					token={token}
 					onExistingConnection={onExistingConnection}
+					onServerConnect={handleServerConnect}
 				/>
 			)}
 		</div>
@@ -881,9 +931,12 @@ const ServerSearchInner = ({
 };
 
 export const ServerSearch = (props: {
-	token?: string;
-	namespace?: string;
+	token: string;
+	namespace: string;
+	query?: string;
 	onExistingConnection?: OnExistingConnectionMode;
+	hideSearchAfterConnect?: boolean;
+	onServerConnect?: (connection: Connection) => void;
 }) => (
 	<WithQueryClient>
 		<ServerSearchInner {...props} />

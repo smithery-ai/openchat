@@ -1,15 +1,12 @@
 "use client";
-import type { ServerListResponse } from "@smithery/api/resources/index.mjs";
+import { useChat } from "@ai-sdk/react";
+import type { Connection } from "@smithery/api/resources/beta/connect/connections.mjs";
 import {
-	CopyIcon,
-	DatabaseIcon,
-	MessageSquareIcon,
-	PlusIcon,
-	RefreshCcwIcon,
-	WrenchIcon,
-} from "lucide-react";
+	DefaultChatTransport,
+	lastAssistantMessageIsCompleteWithToolCalls,
+} from "ai";
+import { CopyIcon, MessageSquareIcon, RefreshCcwIcon } from "lucide-react";
 import { useCallback, useState } from "react";
-import { toast } from "sonner";
 import {
 	Conversation,
 	ConversationContent,
@@ -55,22 +52,6 @@ import {
 	SourcesContent,
 	SourcesTrigger,
 } from "@/components/ai-elements/sources";
-import { ActToolApproval } from "@/components/smithery/act-tool-approval";
-import { testConnection } from "@/components/smithery/actions";
-import {
-	type ConnectionAction,
-	ConnectionsDialog,
-} from "@/components/smithery/connections-manager";
-import { ServerPill } from "@/components/smithery/server-pill";
-import { ServerSearch } from "@/components/smithery/tool-search";
-import type { ConnectionConfig } from "@/components/smithery/types";
-import { Button } from "@/components/ui/button";
-import {
-	Card,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from "@/components/ui/card";
 import {
 	Empty,
 	EmptyContent,
@@ -79,8 +60,9 @@ import {
 	EmptyMedia,
 	EmptyTitle,
 } from "@/components/ui/empty";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { useChatContext } from "@/contexts/chat-context";
+import { Act } from "@/registry/new-york/smithery/act";
+import { ServerSearch } from "@/registry/new-york/smithery/server-search";
+import { Card, CardDescription, CardHeader, CardTitle } from "./ui/card";
 
 const models = [
 	{
@@ -110,83 +92,39 @@ const emptyStateCards = [
 
 interface ChatBlockProps {
 	token: string | null;
+	namespace: string;
 }
 
-export function ChatBlock({ token }: ChatBlockProps) {
+export function ChatBlock({ token, namespace }: ChatBlockProps) {
 	const [input, setInput] = useState("");
 	const [model, setModel] = useState<string>(models[0].value);
-	const [servers, setServers] = useState<
-		{
-			connectionConfig: ConnectionConfig;
-			server?: ServerListResponse;
-		}[]
-	>([]);
-	const { messages, sendMessage, status, regenerate, addToolOutput } =
-		useChatContext();
+	const [connections, setConnections] = useState<Connection[]>([]);
 
-	const submitMessage = useCallback(
-		(
-			message: PromptInputMessage,
-			bodyOverrides?: {
-				model?: string;
-				servers?: typeof servers;
-			},
-		) => {
-			sendMessage(message, {
-				body: {
-					model: model,
-					servers: servers,
-					apiKey: token,
-					...bodyOverrides,
-				},
-			});
-		},
-		[model, servers, token, sendMessage],
-	);
+	const updateBody = useCallback(() => {
+		return {
+			model: model,
+			connections: connections,
+			apiKey: token,
+		};
+	}, [model, connections, token]);
 
-	const connectionActions: ConnectionAction[] = [
-		{
-			name: "Test Connection",
-			icon: <WrenchIcon className="size-4" />,
-			onClick: async (connection, context) => {
-				const result = await testConnection(
-					connection.connectionId,
-					context.namespace,
-					token,
-				);
-
-				if (result.success) {
-					toast.success(
-						`Connection successful! Found ${result.toolCount} tools.`,
-					);
-				} else {
-					toast.error(`Connection failed: ${result.error}`);
-				}
-			},
-		},
-		{
-			name: "Use in Chat",
-			icon: <PlusIcon className="size-4" />,
-			onClick: (connection) => {
-				const connectionConfig: ConnectionConfig = {
-					serverUrl: connection.mcpUrl,
-					configId: connection.connectionId,
+	const { messages, sendMessage, status, regenerate, addToolOutput } = useChat({
+		transport: new DefaultChatTransport({
+			api: "/api/chat",
+			prepareSendMessagesRequest: (options) => {
+				return {
+					body: {
+						...(options.body || {}),
+						...updateBody(),
+						messages: options.messages,
+					},
+					headers: options.headers,
+					credentials: options.credentials,
 				};
-
-				const alreadyAdded = servers.some(
-					(s) => "configId" in s && s.configId === connection.connectionId,
-				);
-
-				if (alreadyAdded) {
-					toast.info("Server already added to chat");
-					return;
-				}
-
-				setServers([...servers, { connectionConfig }]);
-				toast.success(`Added ${connection.name} to chat`);
 			},
-		},
-	];
+		}),
+		sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithToolCalls,
+	});
 
 	const handleSubmit = (message: PromptInputMessage) => {
 		const hasText = Boolean(message.text);
@@ -194,7 +132,7 @@ export function ChatBlock({ token }: ChatBlockProps) {
 		if (!(hasText || hasAttachments)) {
 			return;
 		}
-		submitMessage({
+		sendMessage({
 			text: message.text || "Sent with attachments",
 			files: message.files,
 		});
@@ -230,26 +168,28 @@ export function ChatBlock({ token }: ChatBlockProps) {
 											questions, request actions, or connect to servers.
 										</EmptyDescription>
 									</EmptyHeader>
-									<EmptyContent className="flex-row gap-4 justify-center">
-										{emptyStateCards.map((card, _idx) => (
-											<Card
-												key={card.title}
-												className="cursor-pointer hover:bg-accent transition-colors min-w-[200px]"
-												onClick={() =>
-													handleSubmit({
-														text: card.text,
-														files: [],
-													})
-												}
-											>
-												<CardHeader>
-													<CardTitle className="flex justify-center items-center gap-2">
-														<span>{card.title}</span>
-													</CardTitle>
-													<CardDescription>{card.text}</CardDescription>
-												</CardHeader>
-											</Card>
-										))}
+									<EmptyContent>
+										<div className="flex-row gap-4 justify-center w-full">
+											{emptyStateCards.map((card, _idx) => (
+												<Card
+													key={card.title}
+													className="cursor-pointer hover:bg-accent transition-colors min-w-[200px]"
+													onClick={() =>
+														handleSubmit({
+															text: card.text,
+															files: [],
+														})
+													}
+												>
+													<CardHeader>
+														<CardTitle className="flex justify-center items-center gap-2">
+															<span>{card.title}</span>
+														</CardTitle>
+														<CardDescription>{card.text}</CardDescription>
+													</CardHeader>
+												</Card>
+											))}
+										</div>
 									</EmptyContent>
 								</Empty>
 							</div>
@@ -358,7 +298,6 @@ export function ChatBlock({ token }: ChatBlockProps) {
 													return (
 														<div
 															key={`tool-useServer-input-formulating-${message.id}-${messagePartIndex}`}
-															className="mt-4"
 														>
 															<p>Formulating...</p>
 														</div>
@@ -369,7 +308,6 @@ export function ChatBlock({ token }: ChatBlockProps) {
 													return (
 														<div
 															key={`tool-useServer-input-streaming-${message.id}-${messagePartIndex}`}
-															className="mt-4"
 														>
 															<p>
 																Searching for servers with query:{" "}
@@ -382,37 +320,38 @@ export function ChatBlock({ token }: ChatBlockProps) {
 												return (
 													<div
 														key={`tool-useServer-input-available-${message.id}-${messagePartIndex}`}
-														className="mt-4"
 													>
 														<ServerSearch
+															hideSearchAfterConnect={true}
 															query={searchPart.input.query}
-															apiKey={token}
-															onServerConnect={(server, connectionConfig) => {
+															namespace={namespace}
+															token={token}
+															onServerConnect={async (connection) => {
 																// Notify AI SDK that server was connected
-																const newServers = [
-																	...servers,
-																	{ connectionConfig, server },
+																const newConnections = [
+																	...connections,
+																	connection,
 																];
-																setServers(newServers);
+																// This new connections array won't go to the server!
+																// But it'll be in tool output
+																setConnections(newConnections);
 																addToolOutput({
 																	tool: "useServer",
 																	toolCallId: part.toolCallId,
 																	output: {
 																		connectedServer: {
-																			name: server.displayName,
-																			description: server.description,
-																			connectionId: connectionConfig.configId,
+																			name:
+																				connection.serverInfo?.title ??
+																				connection.serverInfo?.name ??
+																				connection.name,
+																			description:
+																				connection.serverInfo?.description ??
+																				"",
+																			connectionId: connection.connectionId,
 																		},
 																		status: "connected",
 																	},
 																});
-																submitMessage(
-																	{
-																		text: "",
-																		files: [],
-																	},
-																	{ servers: newServers },
-																);
 															}}
 														/>
 													</div>
@@ -433,7 +372,6 @@ export function ChatBlock({ token }: ChatBlockProps) {
 													return (
 														<div
 															key={`tool-act-input-formulating-${message.id}-${messagePartIndex}`}
-															className="mt-4"
 														>
 															<p>Formulating action...</p>
 														</div>
@@ -444,7 +382,6 @@ export function ChatBlock({ token }: ChatBlockProps) {
 													return (
 														<div
 															key={`tool-act-input-streaming-${message.id}-${messagePartIndex}`}
-															className="mt-4"
 														>
 															<p>Preparing action: {actPart.input.action}</p>
 														</div>
@@ -454,64 +391,15 @@ export function ChatBlock({ token }: ChatBlockProps) {
 												return (
 													<div
 														key={`tool-act-input-available-${message.id}-${messagePartIndex}`}
-														className="mt-4"
 													>
-														<ActToolApproval
-															prompt={actPart.input.action}
-															configId={part.toolCallId}
-															initialConnectionIds={
-																actPart.input.servers?.map((s) => s.configId) ||
-																[]
-															}
+														<Act
+															action={actPart.input.action}
+															connections={connections}
+															namespace={namespace}
 															apiKey={token}
-															onExecute={(prompt, connectionIds, result) => {
-																console.log("Action executed", {
-																	prompt,
-																	connectionIds,
-																	toolCallId: part.toolCallId,
-																});
-																// Add tool output to notify AI SDK
-																addToolOutput({
-																	tool: "act",
-																	toolCallId: part.toolCallId,
-																	output: {
-																		status: "executed",
-																		prompt,
-																		connectionIds,
-																		result,
-																	},
-																});
-																// Continue the conversation
-																submitMessage(
-																	{
-																		text: "",
-																		files: [],
-																	},
-																	{ servers },
-																);
-															}}
-															onReject={() => {
-																console.log("Action rejected", {
-																	toolCallId: part.toolCallId,
-																});
-																// Add tool output to notify AI SDK
-																addToolOutput({
-																	tool: "act",
-																	toolCallId: part.toolCallId,
-																	output: {
-																		status: "rejected",
-																	},
-																});
-																// Continue the conversation
-																submitMessage(
-																	{
-																		text: "",
-																		files: [],
-																	},
-																	{ servers },
-																);
-															}}
 														/>
+														<br />
+														<p>{JSON.stringify(part)}</p>
 													</div>
 												);
 											}
@@ -528,7 +416,7 @@ export function ChatBlock({ token }: ChatBlockProps) {
 													return (
 														<div
 															key={`tool-date-${message.id}-${messagePartIndex}`}
-															className="mt-4 p-3 border rounded-md bg-muted/50"
+															className="p-3 border rounded-md bg-muted/50"
 														>
 															<div className="flex items-center gap-2 text-sm">
 																<span className="font-medium">Date:</span>
@@ -573,39 +461,6 @@ export function ChatBlock({ token }: ChatBlockProps) {
 						<PromptInputAttachments>
 							{(attachment) => <PromptInputAttachment data={attachment} />}
 						</PromptInputAttachments>
-						<TooltipProvider>
-							<div className="flex flex-wrap gap-1">
-								{servers
-									.filter(
-										(server, index, self) =>
-											index ===
-											self.findIndex(
-												(s) =>
-													s.connectionConfig.configId ===
-													server.connectionConfig.configId,
-											),
-									)
-									.map((server, _i) => {
-										const serverId = server.connectionConfig.configId;
-
-										return (
-											<ServerPill
-												key={`server-${serverId}`}
-												server={server}
-												onRemove={(id) => {
-													setServers(
-														servers.filter((s) => {
-															return s.connectionConfig.configId !== id;
-														}),
-													);
-												}}
-												enablePolling={true}
-												apiKey={token}
-											/>
-										);
-									})}
-							</div>
-						</TooltipProvider>
 					</PromptInputHeader>
 					<PromptInputBody>
 						<PromptInputTextarea
@@ -621,12 +476,6 @@ export function ChatBlock({ token }: ChatBlockProps) {
 									<PromptInputActionAddAttachments />
 								</PromptInputActionMenuContent>
 							</PromptInputActionMenu>
-							<ConnectionsDialog actions={connectionActions} apiKey={token}>
-								<Button variant="ghost" size="sm">
-									<DatabaseIcon size={16} />
-									<span>Connections</span>
-								</Button>
-							</ConnectionsDialog>
 							<PromptInputSelect
 								onValueChange={(value) => {
 									setModel(value);

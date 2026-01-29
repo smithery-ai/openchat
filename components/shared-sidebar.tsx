@@ -7,6 +7,7 @@ import {
 	LayoutGrid,
 	Link2,
 	MessageSquare,
+	MousePointerClick,
 	Search,
 	Settings2,
 	Square,
@@ -52,6 +53,7 @@ export const componentItems = [
 	},
 	{ title: "Schema Form", slug: "schema-form", icon: FileJson },
 	{ title: "Connection Context", slug: "connection-context", icon: Settings2 },
+	{ title: "Act", slug: "act", icon: MousePointerClick },
 ];
 
 export type NavigationSection = "connections" | "chat";

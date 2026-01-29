@@ -189,7 +189,13 @@ const ConnectionsListInner = ({
 			<div className="flex-1 flex flex-col">
 				{showSearchServers && (
 					<div className="px-6 pb-4">
-						<ServerSearch token={token} namespace={data?.namespace} />
+						{!data || !data.namespace ? (
+							<p className="text-destructive px-6">
+								Error: Missing namespace or data.
+							</p>
+						) : (
+							<ServerSearch token={token} namespace={data.namespace} />
+						)}
 					</div>
 				)}
 				{isLoading && <p className="text-muted-foreground px-6">Loading...</p>}

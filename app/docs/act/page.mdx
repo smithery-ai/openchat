@@ -1,0 +1,40 @@
+# Act
+
+The Act component enables tool approval and execution for MCP connections. It fetches available tools from the server and displays them for user interaction.
+
+<ActPreview />
+
+## Installation
+
+<InstallCommand name="smithery-act" />
+
+## Usage
+
+```tsx
+import { Act } from "@/components/smithery/act"
+
+export function MyApp() {
+  return (
+    <Act
+      action="Approve tool execution"
+      connections={connections}
+      namespace="my-namespace"
+      apiKey="your-api-key"
+    />
+  )
+}
+```
+
+## Props
+
+- `action` (required): The action description to display
+- `connections` (required): Array of Connection objects from @smithery/api
+- `namespace` (required): The namespace identifier for the tool search
+- `apiKey` (required): API key for authentication
+
+## Features
+
+- Fetches tool data from the server using React Query
+- Displays loading state while fetching
+- Refresh button to refetch tool data
+- Shows connection data in a formatted JSON view

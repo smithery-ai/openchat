@@ -11,6 +11,7 @@ import { AlertCircle } from "lucide-react";
 import { useState } from "react";
 import { listNamespaces } from "@/components/smithery/actions";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
 	Select,
 	SelectContent,
@@ -19,6 +20,7 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
+import { Act } from "@/registry/new-york/smithery/act";
 import { ConnectionConfigContext } from "@/registry/new-york/smithery/connection-context";
 import { Connections } from "@/registry/new-york/smithery/connections";
 import { SchemaForm } from "@/registry/new-york/smithery/schema-form";
@@ -216,6 +218,16 @@ export function ServerSearchPreview() {
 			<PreviewFrame>
 				<div className="flex items-center gap-2 p-6 text-muted-foreground">
 					<Spinner className="h-4 w-4" /> Loading...
+				</div>
+			</PreviewFrame>
+		);
+	}
+
+	if (!namespace) {
+		return (
+			<PreviewFrame>
+				<div className="flex items-center gap-2 p-6 text-muted-foreground">
+					<AlertCircle className="h-4 w-4" /> No namespace found.
 				</div>
 			</PreviewFrame>
 		);
@@ -673,6 +685,101 @@ function SchemaFormInner({
 			<div className="border rounded-lg p-4">
 				<SchemaForm schema={firstTool.inputSchema} onSubmit={handleSubmit} />
 			</div>
+		</div>
+	);
+}
+
+// Act Preview - config OUTSIDE preview frame
+export function ActPreview() {
+	const apiKey = useAtomValue(selectedTokenAtom);
+	const [action, setAction] = useState("Approve tool execution");
+	const [selectedConnectionId, setSelectedConnectionId] = useState<
+		string | null
+	>(null);
+
+	if (!apiKey) {
+		return (
+			<PreviewFrame>
+				<TokenRequiredMessage />
+			</PreviewFrame>
+		);
+	}
+
+	return (
+		<div className="space-y-4">
+			<div className="flex items-center gap-2">
+				<span className="text-sm text-muted-foreground">Action:</span>
+				<Input
+					value={action}
+					onChange={(e) => setAction(e.target.value)}
+					className="w-[280px]"
+					placeholder="Enter action text"
+				/>
+			</div>
+			<div className="flex items-center gap-2">
+				<span className="text-sm text-muted-foreground">Connection:</span>
+				<ConnectionSelector
+					token={apiKey.token}
+					selectedConnectionId={selectedConnectionId}
+					onSelect={setSelectedConnectionId}
+				/>
+			</div>
+			<PreviewFrame>
+				<ActInner
+					token={apiKey.token}
+					connectionId={selectedConnectionId}
+					action={action}
+				/>
+			</PreviewFrame>
+		</div>
+	);
+}
+
+function ActInner({
+	token,
+	connectionId,
+	action,
+}: {
+	token: string;
+	connectionId: string | null;
+	action: string;
+}) {
+	const { data, isLoading } = useConnections(token);
+
+	if (!connectionId) {
+		return (
+			<div className="p-6 text-muted-foreground">
+				Select a connection above.
+			</div>
+		);
+	}
+
+	if (isLoading) {
+		return (
+			<div className="flex items-center gap-2 p-6 text-muted-foreground">
+				<Spinner className="h-4 w-4" /> Loading...
+			</div>
+		);
+	}
+
+	const selectedConnection = data?.connections.find(
+		(c) => c.connectionId === connectionId,
+	);
+
+	if (!selectedConnection || !data?.namespace) {
+		return (
+			<div className="p-6 text-muted-foreground">Connection not found.</div>
+		);
+	}
+
+	return (
+		<div className="p-4">
+			<Act
+				action={action}
+				connections={[selectedConnection]}
+				namespace={data.namespace}
+				apiKey={token}
+			/>
 		</div>
 	);
 }

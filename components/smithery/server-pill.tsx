@@ -1,5 +1,6 @@
 "use client";
 
+import type { Connection } from "@smithery/api/resources/beta/connect/connections.mjs";
 import type { ServerListResponse } from "@smithery/api/resources/index.mjs";
 import { AlertCircle, CheckCircle, X, XCircle } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -16,17 +17,14 @@ import type { ConnectionConfig } from "./types";
 type ConnectionStatus = "connecting" | "connected" | "auth_required" | "error";
 
 type ServerPillProps = {
-	server: {
-		connectionConfig: ConnectionConfig;
-		server?: ServerListResponse;
-	};
+	connection: Connection;
 	onRemove?: (serverId: string) => void;
 	enablePolling?: boolean;
 	apiKey?: string | null;
 };
 
 // Utility functions
-function getServerName(
+function _getServerName(
 	connectionConfig: ConnectionConfig,
 	serverInfo?: ServerListResponse,
 ): string {
@@ -40,7 +38,7 @@ function getServerName(
 	}
 }
 
-function getServerUrl(
+function _getServerUrl(
 	connectionConfig: ConnectionConfig,
 	serverInfo?: ServerListResponse,
 ): string {
@@ -48,7 +46,7 @@ function getServerUrl(
 }
 
 export function ServerPill({
-	server,
+	connection,
 	onRemove,
 	apiKey,
 	enablePolling = true,
@@ -60,14 +58,15 @@ export function ServerPill({
 
 	const serverInfo = useMemo(
 		() => ({
-			id: server.connectionConfig.configId,
-			name: getServerName(server.connectionConfig, server.server),
-			url: getServerUrl(server.connectionConfig, server.server),
-			iconUrl: server.server?.iconUrl ?? null,
-			verified: server.server?.verified ?? false,
-			useCount: server.server?.useCount ?? null,
+			id: connection.connectionId,
+			name:
+				connection.serverInfo?.title ??
+				connection.serverInfo?.name ??
+				connection.name,
+			url: connection.mcpUrl,
+			iconUrl: connection.serverInfo?.icons?.[0]?.src ?? null,
 		}),
-		[server],
+		[connection],
 	);
 
 	const startPolling = useCallback(() => {
@@ -181,11 +180,6 @@ export function ServerPill({
 					)}
 					{statusIcon}
 					<span className="max-w-[150px] truncate">{serverInfo.name}</span>
-					{serverInfo.verified && (
-						<span className="text-green-500 text-xs" title="Verified">
-							✓
-						</span>
-					)}
 					{onRemove && (
 						<button
 							type="button"
@@ -200,11 +194,7 @@ export function ServerPill({
 			<TooltipContent side="top" className="max-w-xs">
 				<div className="space-y-1 text-xs">
 					<div className="font-medium">{serverInfo.name}</div>
-					<div className="text-muted-foreground">
-						{server.server
-							? `${server.server.qualifiedName}${serverInfo.useCount ? ` • ${serverInfo.useCount.toLocaleString()} uses` : ""}`
-							: `URL: ${server.connectionConfig.serverUrl}`}
-					</div>
+					<div className="text-muted-foreground">{connection.mcpUrl}</div>
 					<div className="flex items-center gap-1">
 						<span>Status:</span>
 						<span className={statusColorClass}>{statusText}</span>
