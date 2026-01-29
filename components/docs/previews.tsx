@@ -223,6 +223,16 @@ export function ServerSearchPreview() {
 		);
 	}
 
+	if (!namespace) {
+		return (
+			<PreviewFrame>
+				<div className="flex items-center gap-2 p-6 text-muted-foreground">
+					<AlertCircle className="h-4 w-4" /> No namespace found.
+				</div>
+			</PreviewFrame>
+		);
+	}
+
 	return (
 		<PreviewFrame>
 			<div className="p-4">
