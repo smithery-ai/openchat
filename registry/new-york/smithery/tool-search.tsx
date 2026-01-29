@@ -65,7 +65,7 @@ export function ToolSearch({
 		selectedConnectionIds.includes(connection.connectionId),
 	);
 
-	const { data, isLoading, isFetching, refetch } = useQuery({
+	const { isLoading, isFetching, refetch } = useQuery({
 		queryKey: ["tool-search", namespace, apiKey],
 		queryFn: async () => {
 			const response = await fetch("/api/tool-search", {
