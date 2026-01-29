@@ -119,12 +119,12 @@ function createToolLoopAgent({
 			}),
 			act: tool({
 				description:
-					"Act on the user's request. This is for ONE SINGLE ACTION, think the equivalent of ONE API CALL. It is imperative that when referring to dates, try NOT to use relative dates, but rather use the date tool to get the exact date you need.",
+					"Search for a tool to enact on the user's request. This is for ONE SINGLE ACTION, think the equivalent of ONE API CALL. It is imperative that when referring to dates, try NOT to use relative dates, but rather use the date tool to get the exact date you need.",
 				inputSchema: z.object({
 					action: z
 						.string()
 						.describe(
-							"The action to perform. Think of this as a single API call, like 'create a new task' or 'get the weather' or 'send an email'.",
+							"The action to perform. Think of this as a keyword search for a single API call, like 'fetch emails' or 'get weather' or 'send email'.",
 						),
 					servers: z
 						.array(
@@ -133,7 +133,7 @@ function createToolLoopAgent({
 							}),
 						)
 						.describe(
-							"The candidate servers that can potentially perform the action. You MUST use at least one server to perform the action. If in doubt, you can add multiple servers. Reference the server by connection configuration ID (configId).",
+							"The candidate servers that can potentially perform the action. Use this to refine search or leave empty to search all servers. If in doubt, you can add multiple servers. Reference the server by connection configuration ID (configId).",
 						),
 				}),
 			}),
