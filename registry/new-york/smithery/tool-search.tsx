@@ -2,7 +2,7 @@
 
 import type { Connection } from "@smithery/api/resources/beta/connect/connections";
 import { useQuery } from "@tanstack/react-query";
-import { Pencil } from "lucide-react";
+import { Pencil, SearchIcon } from "lucide-react";
 import { Fragment, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -253,17 +253,20 @@ export function ToolSearch({
 						</Combobox>
 					</PopoverContent>
 				</Popover>
+				<Button
+					type="button"
+					variant="outline"
+					onClick={() => refetch()}
+					disabled={
+						isFetching ||
+						selectedConnections.length === 0 ||
+						action.trim() === ""
+					}
+				>
+					<SearchIcon className="size-4" />
+					{isFetching ? "Searching..." : "Search"}
+				</Button>
 			</div>
-
-			<Button
-				type="button"
-				onClick={() => refetch()}
-				disabled={
-					isFetching || selectedConnections.length === 0 || action.trim() === ""
-				}
-			>
-				{isFetching ? "Searching..." : "Search"}
-			</Button>
 
 			{isLoading && <p className="text-muted-foreground">Loading...</p>}
 		</div>
