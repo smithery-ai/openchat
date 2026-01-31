@@ -16,6 +16,7 @@ import {
 	DialogTrigger,
 } from "@/components/ui/dialog";
 import type { ToolSearchResult } from "./types";
+import { SchemaForm } from "./schema-form";
 
 export const ToolSearchResults = ({
 	results,
@@ -57,8 +58,8 @@ export const ToolSearchResults = ({
 									</DialogTrigger>
 									<DialogContent>
 										<DialogTitle>{result.tool.name}</DialogTitle>
-										<DialogDescription>
-											{result.tool.description}
+										<DialogDescription className="overflow-y-auto max-h-[80vh]">
+											<SchemaForm schema={result.tool.inputSchema} onSubmit={() => {}} isLoading={false} />
 										</DialogDescription>
 									</DialogContent>
 								</Dialog>
