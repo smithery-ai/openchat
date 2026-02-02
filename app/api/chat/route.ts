@@ -6,7 +6,6 @@ import {
 	type UIMessage,
 } from "ai";
 import { z } from "zod";
-import type { ConnectionConfig } from "@/registry/new-york/smithery/types";
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
