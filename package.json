@@ -10,7 +10,11 @@
 		"lint:fix": "biome lint --fix",
 		"check": "biome check",
 		"fmt": "biome check --write --unsafe",
-		"registry:build": "shadcn build ./registry/registry.json"
+		"registry:build": "shadcn build ./registry/registry.json",
+		"debug:env": "tsx scripts/check-env.ts",
+		"debug:smithery": "tsx scripts/debug-smithery.ts",
+		"debug:connection": "tsx scripts/debug-smithery.ts --test-connection",
+		"debug:test-server": "tsx scripts/test-server-connection.ts"
 	},
 	"dependencies": {
 		"@ai-sdk/mcp": "^1.0.13",
@@ -48,7 +52,7 @@
 		"@radix-ui/react-toggle-group": "^1.1.11",
 		"@radix-ui/react-tooltip": "^1.2.8",
 		"@radix-ui/react-use-controllable-state": "^1.2.2",
-		"@smithery/api": "^0.29.0",
+		"@smithery/api": "^0.34.0",
 		"@tanstack/react-query": "^5.90.20",
 		"@tanstack/react-table": "^8.21.3",
 		"@types/mdx": "^2.0.13",
@@ -59,6 +63,7 @@
 		"cmdk": "^1.1.1",
 		"date-fns": "^4.1.0",
 		"embla-carousel-react": "^8.6.0",
+		"flexsearch": "^0.8.212",
 		"input-otp": "^1.4.2",
 		"jotai": "^2.16.2",
 		"lucide-react": "^0.562.0",
@@ -89,8 +94,10 @@
 		"@types/node": "^20",
 		"@types/react": "^19",
 		"@types/react-dom": "^19",
+		"dotenv": "^17.2.3",
 		"shadcn": "^3.7.0",
 		"tailwindcss": "^4",
+		"tsx": "^4.21.0",
 		"tw-animate-css": "^1.4.0",
 		"typescript": "^5"
 	}

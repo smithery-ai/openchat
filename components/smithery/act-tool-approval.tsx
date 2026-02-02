@@ -1,6 +1,6 @@
 "use client";
 
-import type { Connection } from "@smithery/api/resources/beta/connect/connections";
+import type { Connection } from "@smithery/api/resources/experimental/connect/connections";
 import {
 	type ColumnDef,
 	type ColumnFiltersState,

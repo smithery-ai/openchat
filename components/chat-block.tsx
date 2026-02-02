@@ -1,6 +1,6 @@
 "use client";
 import { useChat } from "@ai-sdk/react";
-import type { Connection } from "@smithery/api/resources/beta/connect/connections.mjs";
+import type { Connection } from "@smithery/api/resources/experimental/connect/connections.mjs";
 import {
 	DefaultChatTransport,
 	lastAssistantMessageIsCompleteWithToolCalls,
@@ -60,9 +60,9 @@ import {
 	EmptyMedia,
 	EmptyTitle,
 } from "@/components/ui/empty";
-import { Act } from "@/registry/new-york/smithery/act";
 import { ServerSearch } from "@/registry/new-york/smithery/server-search";
 import { useSmitheryContext } from "@/registry/new-york/smithery/smithery-provider";
+import { ToolSearch } from "@/registry/new-york/smithery/tool-search";
 import { Card, CardDescription, CardHeader, CardTitle } from "./ui/card";
 
 const models = [
@@ -387,9 +387,10 @@ export function ChatBlock() {
 													<div
 														key={`tool-act-input-available-${message.id}-${messagePartIndex}`}
 													>
-														<Act
-															action={actPart.input.action}
+														<ToolSearch
+															defaultAction={actPart.input.action}
 															connections={connections}
+															onSearchComplete={console.log}
 														/>
 														<br />
 														<p>{JSON.stringify(part)}</p>

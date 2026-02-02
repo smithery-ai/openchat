@@ -1,6 +1,6 @@
 "use client";
 
-import type { Connection } from "@smithery/api/resources/beta/connect/connections.mjs";
+import type { Connection } from "@smithery/api/resources/experimental/connect/connections.mjs";
 import type { ServerListResponse } from "@smithery/api/resources/index.mjs";
 import { AlertCircle, CheckCircle, X, XCircle } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";

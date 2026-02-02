@@ -6,7 +6,7 @@ import {
 	createConnection,
 	SmitheryAuthorizationError,
 } from "@smithery/api/mcp";
-import type { Connection } from "@smithery/api/resources/beta/connect/connections.mjs";
+import type { Connection } from "@smithery/api/resources/experimental/connect/connections.mjs";
 import type { ServerListResponse } from "@smithery/api/resources/servers/servers.mjs";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -462,9 +462,12 @@ async function checkConnectionStatus(
 		const tools = await mcpClient.tools();
 		console.log("tools list", tools);
 
-		const connection = await client.beta.connect.connections.get(connectionId, {
-			namespace: namespace,
-		});
+		const connection = await client.experimental.connect.connections.get(
+			connectionId,
+			{
+				namespace: namespace,
+			},
+		);
 
 		return {
 			status: "connected",
@@ -504,9 +507,12 @@ async function getOrCreateConnection(
 	onExistingConnection: OnExistingConnectionMode,
 ): Promise<ConnectionStatus> {
 	// Check for existing connection by name
-	const existingList = await client.beta.connect.connections.list(namespace, {
-		name,
-	});
+	const existingList = await client.experimental.connect.connections.list(
+		namespace,
+		{
+			name,
+		},
+	);
 	const existing = existingList.connections[0];
 
 	if (existing) {
@@ -532,10 +538,13 @@ async function getOrCreateConnection(
 
 	// Create new connection (API auto-generates unique ID)
 	console.log("creating connection", name);
-	const connection = await client.beta.connect.connections.create(namespace, {
-		mcpUrl,
-		name,
-	});
+	const connection = await client.experimental.connect.connections.create(
+		namespace,
+		{
+			mcpUrl,
+			name,
+		},
+	);
 	console.log("connection", connection);
 
 	if (connection.status?.state === "auth_required") {
@@ -543,6 +552,13 @@ async function getOrCreateConnection(
 			status: "auth_required",
 			connectionId: connection.connectionId,
 			authorizationUrl: connection.status?.authorizationUrl,
+		};
+	}
+
+	if (connection.status?.state === "error") {
+		return {
+			status: "error",
+			error: new Error(connection.status?.message || "Connection failed"),
 		};
 	}
 

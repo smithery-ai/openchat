@@ -14,6 +14,15 @@
 			"linter": {
 				"enabled": false
 			}
+		},
+		{
+			"includes": [".pnpm-store/**"],
+			"linter": {
+				"enabled": false
+			},
+			"formatter": {
+				"enabled": false
+			}
 		}
 	],
 	"formatter": {
