@@ -20,6 +20,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import { filterExpiredTokens, isTokenExpired } from "@/lib/utils";
 // Jotai atoms for token state management
 export const tokensCreatedAtom = atomWithStorage<CreateTokenResponse[]>(
 	"tokensCreated",
@@ -47,6 +48,18 @@ export function Tokens({
 	useEffect(() => {
 		setHydrated(true);
 	}, []);
+
+	// Filter expired tokens after hydration
+	useEffect(() => {
+		if (!hydrated) return;
+		setTokensCreated((current) => {
+			const validTokens = filterExpiredTokens(current);
+			if (validTokens.length !== current.length) {
+				return validTokens;
+			}
+			return current;
+		});
+	}, [hydrated, setTokensCreated]);
 
 	// Fetch token after hydration
 	useEffect(() => {
@@ -83,10 +96,12 @@ export function Tokens({
 		tokensCreated.length,
 	]);
 
-	// Select first token if none selected
+	// Select first valid token if none selected or current selection is expired
 	useEffect(() => {
-		if (!selectedToken && tokensCreated.length > 0) {
-			setSelectedToken(tokensCreated[0]);
+		const needsNewSelection = !selectedToken || isTokenExpired(selectedToken);
+		if (needsNewSelection && tokensCreated.length > 0) {
+			const validToken = tokensCreated.find((t) => !isTokenExpired(t));
+			if (validToken) setSelectedToken(validToken);
 		}
 	}, [selectedToken, setSelectedToken, tokensCreated]);
 
