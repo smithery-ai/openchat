@@ -60,8 +60,8 @@ import {
 	EmptyMedia,
 	EmptyTitle,
 } from "@/components/ui/empty";
-import { Act } from "@/registry/new-york/smithery/act";
 import { ServerSearch } from "@/registry/new-york/smithery/server-search";
+import { ToolSearch } from "@/registry/new-york/smithery/tool-search";
 import { Card, CardDescription, CardHeader, CardTitle } from "./ui/card";
 
 const models = [
@@ -392,11 +392,12 @@ export function ChatBlock({ token, namespace }: ChatBlockProps) {
 													<div
 														key={`tool-act-input-available-${message.id}-${messagePartIndex}`}
 													>
-														<Act
-															action={actPart.input.action}
+														<ToolSearch
+															defaultAction={actPart.input.action}
 															connections={connections}
 															namespace={namespace}
 															apiKey={token}
+															onSearchComplete={console.log}
 														/>
 														<br />
 														<p>{JSON.stringify(part)}</p>
