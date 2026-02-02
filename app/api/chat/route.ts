@@ -1,3 +1,4 @@
+import { Connection } from "@smithery/api/resources/experimental/connect/connections.mjs";
 import type { ServerListResponse } from "@smithery/api/resources/servers/servers.mjs";
 import {
 	createAgentUIStreamResponse,
@@ -11,28 +12,25 @@ import { z } from "zod";
 export const maxDuration = 30;
 
 function createToolLoopAgent({
-	instructions = `You are a helpful assistant that can answer questions and help with tasks. 
-	Before calling a tool, you MUST first start a regular text response explaining what you are going to do. After calling a tool, you MUST provide a summary of the result in a regular text response.
-	When calling act(), be VERY CAREFUL with the dates you use. Use the tools/date tool to resolve the date the action should be performed on.`,
 	model = "anthropic/claude-haiku-4.5",
-	servers = [],
+	connections = [],
 }: {
-	instructions?: string;
 	model?: string;
-	servers?: {
-		connectionConfig: ConnectionConfig;
-		server?: ServerListResponse;
-	}[];
+	connections?: Connection[];
 }) {
+	const instructions = `You are a helpful assistant that can answer questions and help with tasks. 
+	Before calling a tool, you MUST first start a regular text response explaining what you are going to do. After calling a tool, you MUST provide a summary of the result in a regular text response.
+	When calling act(), be VERY CAREFUL with the dates you use. Use the tools/date tool to resolve the date the action should be performed on.`;
+
 	return new ToolLoopAgent({
 		model,
 		instructions: `${instructions}\n\nYou have access to the following servers: 
 		<servers>
-		${servers
+		${connections
 			.map(
-				(server) =>
-					`<server configId="${server.connectionConfig.configId}">
-						${server.server ? JSON.stringify(server.server) : server.connectionConfig.serverUrl}
+				(connection) =>
+					`<server configId="${connection.connectionId}">
+						${connection.serverInfo ? JSON.stringify(connection.serverInfo) : connection.mcpUrl}
 					</server>`,
 			)
 			.join("\n")}
@@ -146,19 +144,14 @@ export async function POST(request: Request) {
 	console.log("📦 Full request body:", JSON.stringify(body, null, 2));
 
 	// Extract API key from body or use env var
-	const { model, instructions, servers, apiKey } = body as {
+	const { model, connections, apiKey } = body as {
 		model?: string;
-		instructions?: string;
+		connections?: Connection[];
 		apiKey?: string;
-		servers?: {
-			connectionConfig: ConnectionConfig;
-			server?: ServerListResponse;
-		}[];
 	};
 
 	// Validate API key - accept from body or env
-	const effectiveApiKey = apiKey || process.env.SMITHERY_API_KEY;
-	if (!effectiveApiKey) {
+	if (!apiKey) {
 		return new Response(
 			JSON.stringify({
 				error:
@@ -176,8 +169,7 @@ export async function POST(request: Request) {
 
 	const params = {
 		...(model ? { model } : {}),
-		...(instructions ? { instructions } : {}),
-		...(servers ? { servers } : {}),
+		...(connections ? { connections } : {}),
 	};
 
 	return createAgentUIStreamResponse({
