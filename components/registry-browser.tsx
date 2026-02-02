@@ -1,16 +1,15 @@
 "use client";
 
-import { useAtomValue } from "jotai";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { Connections } from "@/registry/new-york/smithery/connections";
-import { selectedTokenAtom } from "@/registry/new-york/smithery/tokens";
+import { useSmitheryContext } from "@/registry/new-york/smithery/smithery-provider";
 import { ChatBlock } from "./chat-block";
 import { type NavigationSection, SharedSidebar } from "./shared-sidebar";
 
-export function RegistryBrowser({ namespace }: { namespace: string }) {
+export function RegistryBrowser() {
 	const searchParams = useSearchParams();
-	const apiKey = useAtomValue(selectedTokenAtom);
+	const { token } = useSmitheryContext();
 	const [activeNav, setActiveNav] = useState<NavigationSection>(
 		(searchParams.get("nav") as NavigationSection) || "chat",
 	);
@@ -18,9 +17,9 @@ export function RegistryBrowser({ namespace }: { namespace: string }) {
 	return (
 		<SharedSidebar activeNav={activeNav} onNavChange={setActiveNav}>
 			{activeNav === "chat" ? (
-				<ChatBlock token={apiKey?.token ?? null} namespace={namespace} />
-			) : apiKey ? (
-				<Connections token={apiKey.token} namespace={namespace} />
+				<ChatBlock />
+			) : token ? (
+				<Connections />
 			) : (
 				<div className="p-6 text-muted-foreground">
 					No token selected. Please create a token.

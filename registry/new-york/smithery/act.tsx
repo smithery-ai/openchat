@@ -3,6 +3,7 @@
 import type { Connection } from "@smithery/api/resources/beta/connect/connections";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
+import { useSmitheryContext } from "@/registry/new-york/smithery/smithery-provider";
 
 const _ToolApproval = () => {
 	return (
@@ -15,14 +16,17 @@ const _ToolApproval = () => {
 export function Act({
 	action,
 	connections,
-	namespace,
-	apiKey,
+	namespace: namespaceProp,
+	apiKey: apiKeyProp,
 }: {
 	action: string;
 	connections: Connection[];
-	namespace: string;
-	apiKey: string;
+	namespace?: string;
+	apiKey?: string;
 }) {
+	const smitheryContext = useSmitheryContext();
+	const apiKey = apiKeyProp ?? smitheryContext.token;
+	const namespace = namespaceProp ?? smitheryContext.namespace;
 	const { data, isLoading, refetch } = useQuery({
 		queryKey: ["tool-search", namespace, apiKey],
 		queryFn: async () => {

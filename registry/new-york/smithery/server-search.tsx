@@ -38,6 +38,7 @@ import {
 } from "@/components/ui/item";
 import { useDebounce } from "@/hooks/use-debounce";
 import { WithQueryClient } from "@/registry/new-york/smithery/query-client-wrapper";
+import { useSmitheryContext } from "@/registry/new-york/smithery/smithery-provider";
 
 interface AuthRequiredBannerProps {
 	serverName: string;
@@ -196,7 +197,7 @@ type OnExistingConnectionMode = "warn" | "error" | "use" | "create-new";
 
 interface ServerDisplayProps {
 	server: ServerListResponse;
-	token: string;
+	token?: string;
 	namespace?: string;
 	onExistingConnection: OnExistingConnectionMode;
 	onServerConnect?: (connection: Connection) => void;
@@ -204,11 +205,14 @@ interface ServerDisplayProps {
 
 const ServerDisplay = ({
 	server,
-	token,
-	namespace,
+	token: tokenProp,
+	namespace: namespaceProp,
 	onExistingConnection,
 	onServerConnect,
 }: ServerDisplayProps) => {
+	const smitheryContext = useSmitheryContext();
+	const token = tokenProp ?? smitheryContext.token;
+	const namespace = namespaceProp ?? smitheryContext.namespace;
 	const queryClient = useQueryClient();
 	const [countdown, setCountdown] = useState<number | null>(null);
 
@@ -563,7 +567,7 @@ const isValidUrl = (str: string): boolean => {
 
 interface ExternalURLDisplayProps {
 	url: string;
-	token: string;
+	token?: string;
 	namespace?: string;
 	onExistingConnection: OnExistingConnectionMode;
 	onServerConnect?: (connection: Connection) => void;
@@ -571,11 +575,14 @@ interface ExternalURLDisplayProps {
 
 const ExternalURLDisplay = ({
 	url,
-	token,
-	namespace,
+	token: tokenProp,
+	namespace: namespaceProp,
 	onExistingConnection,
 	onServerConnect,
 }: ExternalURLDisplayProps) => {
+	const smitheryContext = useSmitheryContext();
+	const token = tokenProp ?? smitheryContext.token;
+	const namespace = namespaceProp ?? smitheryContext.namespace;
 	const queryClient = useQueryClient();
 	const [countdown, setCountdown] = useState<number | null>(null);
 
@@ -738,8 +745,8 @@ const ExternalURLDisplay = ({
 };
 
 const ServerSearchInner = ({
-	token,
-	namespace,
+	token: tokenProp,
+	namespace: namespaceProp,
 	onExistingConnection = "warn",
 	onServerConnect,
 	query,
@@ -752,6 +759,9 @@ const ServerSearchInner = ({
 	query?: string;
 	hideSearchAfterConnect?: boolean;
 }) => {
+	const smitheryContext = useSmitheryContext();
+	const token = tokenProp ?? smitheryContext.token;
+	const namespace = namespaceProp ?? smitheryContext.namespace;
 	const [currentQuery, setCurrentQuery] = useState(query || "");
 	const [selectedServer, setSelectedServer] =
 		useState<ServerListResponse | null>(null);
@@ -931,8 +941,8 @@ const ServerSearchInner = ({
 };
 
 export const ServerSearch = (props: {
-	token: string;
-	namespace: string;
+	token?: string;
+	namespace?: string;
 	query?: string;
 	onExistingConnection?: OnExistingConnectionMode;
 	hideSearchAfterConnect?: boolean;

@@ -62,6 +62,7 @@ import {
 } from "@/components/ui/empty";
 import { Act } from "@/registry/new-york/smithery/act";
 import { ServerSearch } from "@/registry/new-york/smithery/server-search";
+import { useSmitheryContext } from "@/registry/new-york/smithery/smithery-provider";
 import { Card, CardDescription, CardHeader, CardTitle } from "./ui/card";
 
 const models = [
@@ -90,12 +91,8 @@ const emptyStateCards = [
 	},
 ];
 
-interface ChatBlockProps {
-	token: string | null;
-	namespace: string;
-}
-
-export function ChatBlock({ token, namespace }: ChatBlockProps) {
+export function ChatBlock() {
+	const { token } = useSmitheryContext();
 	const [input, setInput] = useState("");
 	const [model, setModel] = useState<string>(models[0].value);
 	const [connections, setConnections] = useState<Connection[]>([]);
@@ -324,8 +321,6 @@ export function ChatBlock({ token, namespace }: ChatBlockProps) {
 														<ServerSearch
 															hideSearchAfterConnect={true}
 															query={searchPart.input.query}
-															namespace={namespace}
-															token={token}
 															onServerConnect={async (connection) => {
 																// Notify AI SDK that server was connected
 																const newConnections = [
@@ -395,8 +390,6 @@ export function ChatBlock({ token, namespace }: ChatBlockProps) {
 														<Act
 															action={actPart.input.action}
 															connections={connections}
-															namespace={namespace}
-															apiKey={token}
 														/>
 														<br />
 														<p>{JSON.stringify(part)}</p>
