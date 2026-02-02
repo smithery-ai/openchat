@@ -75,6 +75,7 @@ export const enableServer = async (
 ): Promise<
 	| { status: "connected"; connectionConfig: ConnectionConfig }
 	| { status: "auth_required"; authorizationUrl: string }
+	| { status: "error"; error: string }
 > => {
 	const client = getSmitheryClient(apiKey);
 	const namespace = await getDefaultNamespace();
@@ -86,6 +87,7 @@ export const enableServer = async (
 
 	// Get or create connection
 	let mcpUrl = serverUrl;
+	let connectionCreated = false;
 	try {
 		const connection = await client.experimental.connect.connections.get(
 			connectionId,
@@ -105,8 +107,13 @@ export const enableServer = async (
 				},
 			);
 			mcpUrl = connection.mcpUrl;
+			connectionCreated = true;
 		} else {
-			throw error;
+			return {
+				status: "error",
+				error:
+					error instanceof Error ? error.message : "Failed to get connection",
+			};
 		}
 	}
 
@@ -141,8 +148,24 @@ export const enableServer = async (
 				};
 			}
 		}
+
+		// If we just created the connection and it failed, clean it up
+		if (connectionCreated) {
+			try {
+				await client.experimental.connect.connections.delete(connectionId, {
+					namespace,
+				});
+			} catch (deleteError) {
+				console.error("Failed to delete failed connection", deleteError);
+			}
+		}
+
 		console.error("error using server", error);
-		throw error;
+		return {
+			status: "error",
+			error:
+				error instanceof Error ? error.message : "Failed to connect to server",
+		};
 	}
 };
 

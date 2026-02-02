@@ -551,6 +551,13 @@ async function getOrCreateConnection(
 		};
 	}
 
+	if (connection.status?.state === "error") {
+		return {
+			status: "error",
+			error: new Error(connection.status?.message || "Connection failed"),
+		};
+	}
+
 	console.log("established connection", connection.status?.state, connection);
 
 	return {
