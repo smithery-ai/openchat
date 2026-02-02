@@ -215,17 +215,6 @@ const ServerDisplay = ({
 	const queryClient = useQueryClient();
 	const [countdown, setCountdown] = useState<number | null>(null);
 
-	const { data: activeNamespace } = useQuery({
-		queryKey: ["defaultNamespace", token],
-		queryFn: async () => {
-			if (namespace) {
-				return namespace;
-			}
-			return await getDefaultNamespace();
-		},
-		enabled: !!token,
-	});
-
 	const serverUrl =
 		server.qualifiedName.startsWith("http://") ||
 		server.qualifiedName.startsWith("https://")
@@ -243,13 +232,13 @@ const ServerDisplay = ({
 		mutationFn: async (
 			overrideMode?: "use" | "create-new",
 		): Promise<ConnectionStatus> => {
-			if (!token || !activeNamespace) {
+			if (!token || !namespace) {
 				throw new Error("Token and namespace are required");
 			}
 			const client = getSmitheryClient(token);
 			return await getOrCreateConnection(
 				client,
-				activeNamespace,
+				namespace,
 				serverUrl,
 				serverName,
 				overrideMode ?? onExistingConnection,
@@ -265,7 +254,7 @@ const ServerDisplay = ({
 		onError: (error) => {
 			console.error(
 				"error connecting to server",
-				`server: ${server.qualifiedName}, namespace: ${activeNamespace}`,
+				`server: ${server.qualifiedName}, namespace: ${namespace}`,
 				error,
 			);
 		},
@@ -303,7 +292,7 @@ const ServerDisplay = ({
 			: null;
 
 	useEffect(() => {
-		if (!authConnectionId || !token || !activeNamespace) {
+		if (!authConnectionId || !token || !namespace) {
 			return;
 		}
 
@@ -313,7 +302,7 @@ const ServerDisplay = ({
 				const status = await checkConnectionStatus(
 					client,
 					authConnectionId,
-					activeNamespace,
+					namespace,
 				);
 
 				if (status.status === "connected") {
@@ -328,7 +317,7 @@ const ServerDisplay = ({
 		}, 2000); // Check every 2 seconds
 
 		return () => clearInterval(pollInterval);
-	}, [authConnectionId, token, activeNamespace, connectAsync]);
+	}, [authConnectionId, token, namespace, connectAsync]);
 
 	return (
 		<div className="p-4 border rounded-md flex flex-col gap-4 text-left">
@@ -592,14 +581,6 @@ const ExternalURLDisplay = ({
 	const queryClient = useQueryClient();
 	const [countdown, setCountdown] = useState<number | null>(null);
 
-	const { data: defaultNamespace } = useQuery({
-		queryKey: ["defaultNamespace", token],
-		queryFn: () => getDefaultNamespace(),
-		enabled: !!token,
-	});
-
-	const activeNamespace = namespace || defaultNamespace;
-
 	const {
 		mutate: connect,
 		isPending: isConnecting,
@@ -609,13 +590,13 @@ const ExternalURLDisplay = ({
 		mutationFn: async (
 			overrideMode?: "use" | "create-new",
 		): Promise<ConnectionStatus> => {
-			if (!token || !activeNamespace) {
+			if (!token || !namespace) {
 				throw new Error("Token and namespace are required");
 			}
 			const client = getSmitheryClient(token);
 			return await getOrCreateConnection(
 				client,
-				activeNamespace,
+				namespace,
 				url,
 				url,
 				overrideMode ?? onExistingConnection,
@@ -675,7 +656,7 @@ const ExternalURLDisplay = ({
 			: null;
 
 	useEffect(() => {
-		if (!authConnectionId || !token || !activeNamespace) {
+		if (!authConnectionId || !token || !namespace) {
 			return;
 		}
 
@@ -685,7 +666,7 @@ const ExternalURLDisplay = ({
 				const status = await checkConnectionStatus(
 					client,
 					authConnectionId,
-					activeNamespace,
+					namespace,
 				);
 
 				if (status.status === "connected") {
@@ -700,7 +681,7 @@ const ExternalURLDisplay = ({
 		}, 2000); // Check every 2 seconds
 
 		return () => clearInterval(pollInterval);
-	}, [authConnectionId, token, activeNamespace, connectAsync]);
+	}, [authConnectionId, token, namespace, connectAsync]);
 
 	return (
 		<div className="mt-4 p-4 border rounded-md flex flex-col gap-4">
