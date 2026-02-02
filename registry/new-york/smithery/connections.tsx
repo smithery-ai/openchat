@@ -3,7 +3,7 @@
 import { createMCPClient } from "@ai-sdk/mcp";
 import Smithery from "@smithery/api";
 import { createConnection } from "@smithery/api/mcp";
-import type { Connection } from "@smithery/api/resources/beta/connect/connections.mjs";
+import type { Connection } from "@smithery/api/resources/experimental/connect/connections.mjs";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ToolExecutionOptions } from "ai";
 import { Plus, RefreshCw, Trash2, X } from "lucide-react";
@@ -48,9 +48,12 @@ const ConnectionCardInner = ({
 	const deleteMutation = useMutation({
 		mutationFn: async () => {
 			const client = getSmitheryClient(token);
-			await client.beta.connect.connections.delete(connection.connectionId, {
-				namespace: namespace,
-			});
+			await client.experimental.connect.connections.delete(
+				connection.connectionId,
+				{
+					namespace: namespace,
+				},
+			);
 		},
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ["connections"] });
@@ -140,7 +143,7 @@ const ConnectionsListInner = ({
 			if (!namespace) throw new Error("Namespace required");
 			const client = getSmitheryClient(token);
 			const { connections } =
-				await client.beta.connect.connections.list(namespace);
+				await client.experimental.connect.connections.list(namespace);
 			return { connections, namespace };
 		},
 		enabled: !!token && !!namespace,
@@ -260,9 +263,12 @@ const ActiveConnection = ({
 		queryFn: async () => {
 			if (!namespace) throw new Error("Namespace required");
 			const client = getSmitheryClient(token);
-			const data = await client.beta.connect.connections.get(connectionId, {
-				namespace,
-			});
+			const data = await client.experimental.connect.connections.get(
+				connectionId,
+				{
+					namespace,
+				},
+			);
 			return { namespace, ...data };
 		},
 		enabled: !!namespace,

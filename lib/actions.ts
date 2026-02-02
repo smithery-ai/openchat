@@ -1,6 +1,5 @@
 "use server";
 
-import { randomUUID } from "node:crypto";
 import Smithery from "@smithery/api";
 import type { CreateTokenResponse } from "@smithery/api/resources/tokens.mjs";
 
@@ -14,36 +13,17 @@ export async function getDefaultNamespace() {
 	return response.namespaces[0].name;
 }
 
-export async function createToken({
-	ttlSeconds,
-	userId,
-}: {
-	ttlSeconds: number;
-	userId: string;
-}) {
+export async function createToken({ ttlSeconds }: { ttlSeconds: number }) {
 	const namespace = await getDefaultNamespace();
 	const response = await client.tokens.create({
-		allow: {
-			connections: {
-				actions: ["write", "read"],
+		policy: [
+			{
 				namespaces: [namespace],
-				metadata: {
-					userId,
-				},
+				operations: ["read", "write"],
+				resources: ["connections", "namespaces"],
+				ttl: ttlSeconds,
 			},
-			mcp: {
-				actions: ["read", "write"],
-				namespaces: [namespace],
-				metadata: {
-					userId,
-				},
-			},
-			namespaces: {
-				actions: ["read", "write"],
-				namespaces: [namespace],
-			},
-		},
-		ttlSeconds,
+		],
 	});
 	return response;
 }
@@ -54,5 +34,5 @@ export async function getApiKey(): Promise<CreateTokenResponse> {
 	// 		token: process.env.SMITHERY_API_KEY,
 	// 		expiresAt: "never",
 	// 	};
-	return await createToken({ ttlSeconds: 60 * 60 * 24, userId: randomUUID() });
+	return await createToken({ ttlSeconds: 60 * 60 * 24 });
 }

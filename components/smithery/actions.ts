@@ -75,6 +75,7 @@ export const enableServer = async (
 ): Promise<
 	| { status: "connected"; connectionConfig: ConnectionConfig }
 	| { status: "auth_required"; authorizationUrl: string }
+	| { status: "error"; error: string }
 > => {
 	const client = getSmitheryClient(apiKey);
 	const namespace = await getDefaultNamespace();
@@ -86,14 +87,18 @@ export const enableServer = async (
 
 	// Get or create connection
 	let mcpUrl = serverUrl;
+	let connectionCreated = false;
 	try {
-		const connection = await client.beta.connect.connections.get(connectionId, {
-			namespace,
-		});
+		const connection = await client.experimental.connect.connections.get(
+			connectionId,
+			{
+				namespace,
+			},
+		);
 		mcpUrl = connection.mcpUrl;
 	} catch (error) {
 		if (error instanceof NotFoundError) {
-			const connection = await client.beta.connect.connections.set(
+			const connection = await client.experimental.connect.connections.set(
 				connectionId,
 				{
 					namespace,
@@ -102,18 +107,30 @@ export const enableServer = async (
 				},
 			);
 			mcpUrl = connection.mcpUrl;
+			connectionCreated = true;
 		} else {
-			throw error;
+			return {
+				status: "error",
+				error:
+					error instanceof Error ? error.message : "Failed to get connection",
+			};
 		}
 	}
 
 	// Verify auth by calling tools/list
 	try {
-		await client.beta.connect.mcp.call(connectionId, {
-			namespace,
-			jsonrpc: "2.0",
-			method: "tools/list",
-		});
+		await client.experimental.connect.mcp.call(
+			connectionId,
+			{
+				namespace,
+			},
+			{
+				body: {
+					jsonrpc: "2.0",
+					method: "tools/list",
+				},
+			},
+		);
 		return {
 			status: "connected",
 			connectionConfig: {
@@ -131,8 +148,24 @@ export const enableServer = async (
 				};
 			}
 		}
+
+		// If we just created the connection and it failed, clean it up
+		if (connectionCreated) {
+			try {
+				await client.experimental.connect.connections.delete(connectionId, {
+					namespace,
+				});
+			} catch (deleteError) {
+				console.error("Failed to delete failed connection", deleteError);
+			}
+		}
+
 		console.error("error using server", error);
-		throw error;
+		return {
+			status: "error",
+			error:
+				error instanceof Error ? error.message : "Failed to connect to server",
+		};
 	}
 };
 
@@ -148,7 +181,10 @@ export const getConnections = async (
 	apiKey?: string | null,
 ) => {
 	const client = getSmitheryClient(apiKey);
-	const connections = await client.beta.connect.connections.list(namespace, {});
+	const connections = await client.experimental.connect.connections.list(
+		namespace,
+		{},
+	);
 	return connections.connections;
 };
 
@@ -158,7 +194,9 @@ export const deleteConnection = async (
 	apiKey?: string | null,
 ) => {
 	const client = getSmitheryClient(apiKey);
-	await client.beta.connect.connections.delete(connectionId, { namespace });
+	await client.experimental.connect.connections.delete(connectionId, {
+		namespace,
+	});
 	return { success: true };
 };
 
@@ -176,10 +214,12 @@ export const checkConnection = async (
 
 	// Get or create connection
 	try {
-		await client.beta.connect.connections.get(connectionId, { namespace });
+		await client.experimental.connect.connections.get(connectionId, {
+			namespace,
+		});
 	} catch (error) {
 		if (error instanceof NotFoundError) {
-			await client.beta.connect.connections.set(connectionId, {
+			await client.experimental.connect.connections.set(connectionId, {
 				namespace,
 				mcpUrl: serverUrl,
 				name: server,
@@ -191,11 +231,18 @@ export const checkConnection = async (
 
 	// Check auth by calling tools/list
 	try {
-		await client.beta.connect.mcp.call(connectionId, {
-			namespace,
-			jsonrpc: "2.0",
-			method: "tools/list",
-		});
+		await client.experimental.connect.mcp.call(
+			connectionId,
+			{
+				namespace,
+			},
+			{
+				body: {
+					jsonrpc: "2.0",
+					method: "tools/list",
+				},
+			},
+		);
 		return { status: "success" as const };
 	} catch (error) {
 		if (error instanceof AuthenticationError && error.status === 401) {
@@ -212,11 +259,18 @@ export const testConnection = async (
 ) => {
 	try {
 		const client = getSmitheryClient(apiKey);
-		const response = await client.beta.connect.mcp.call(connectionId, {
-			namespace: namespace,
-			jsonrpc: "2.0",
-			method: "tools/list",
-		});
+		const response = await client.experimental.connect.mcp.call(
+			connectionId,
+			{
+				namespace: namespace,
+			},
+			{
+				body: {
+					jsonrpc: "2.0",
+					method: "tools/list",
+				},
+			},
+		);
 
 		const result = response.result as
 			| { tools?: Array<{ name: string }> }
@@ -236,19 +290,6 @@ export const testConnection = async (
 	}
 };
 
-export const searchTool = async (
-	prompt: string,
-	apiKey?: string | null,
-): Promise<void> => {
-	const client = getSmitheryClient(apiKey);
-	const namespace = await getDefaultNamespace();
-
-	const tools = await client.beta.connect.tools.search(namespace, {
-		q: prompt,
-	});
-	console.log("tools", tools);
-};
-
 // Alias for backward compatibility (planAction -> searchTool)
 export const planAction = async (
 	prompt: string,
@@ -260,11 +301,18 @@ export const planAction = async (
 	// Get tools from all connections
 	const toolsWithConfigs = await Promise.all(
 		serverConfigs.map(async (config) => {
-			const response = await client.beta.connect.mcp.call(config.configId, {
-				namespace,
-				jsonrpc: "2.0",
-				method: "tools/list",
-			});
+			const response = await client.experimental.connect.mcp.call(
+				config.configId,
+				{
+					namespace,
+				},
+				{
+					body: {
+						jsonrpc: "2.0",
+						method: "tools/list",
+					},
+				},
+			);
 			const result = response.result as { tools?: MCPTool[] } | undefined;
 			const tools = result?.tools ?? [];
 			return tools.map((t) => ({ tool: t, config }));
@@ -328,12 +376,19 @@ export const runTool = async (
 	apiKey?: string | null,
 ) => {
 	const client = getSmitheryClient(apiKey);
-	const response = await client.beta.connect.mcp.call(configId, {
-		namespace: namespace,
-		jsonrpc: "2.0",
-		method: "tools/call",
-		params: { name: toolName, arguments: args },
-	});
+	const response = await client.experimental.connect.mcp.call(
+		configId,
+		{
+			namespace: namespace,
+		},
+		{
+			body: {
+				jsonrpc: "2.0",
+				method: "tools/call",
+				params: { name: toolName, arguments: args },
+			},
+		},
+	);
 	return response.result;
 };
 
