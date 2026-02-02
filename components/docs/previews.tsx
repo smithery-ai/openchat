@@ -10,7 +10,6 @@ import { useAtomValue } from "jotai";
 import { AlertCircle } from "lucide-react";
 import * as React from "react";
 import { useState } from "react";
-import { listNamespaces } from "@/components/smithery/actions";
 import { Button } from "@/components/ui/button";
 import {
 	Combobox,
@@ -34,6 +33,7 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
+import { listNamespaces } from "@/registry/new-york/smithery/actions";
 import { ConnectionConfigContext } from "@/registry/new-york/smithery/connection-context";
 import { Connections } from "@/registry/new-york/smithery/connections";
 import { SchemaForm } from "@/registry/new-york/smithery/schema-form";

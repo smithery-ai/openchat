@@ -1,12 +1,12 @@
 "use client";
 
 import { Download, FileText } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import {
 	CodeBlock,
 	CodeBlockCopyButton,
-} from "@/components/smithery/code-block";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+} from "@/registry/new-york/smithery/code-block";
 
 // MCP Content Types
 interface TextContent {

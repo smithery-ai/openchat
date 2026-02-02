@@ -11,7 +11,7 @@ The ToolsPanel component displays a searchable grid of tools from a connected MC
 ## Usage
 
 ```tsx
-import { ToolsPanel } from "@/components/smithery/tools-panel"
+import { ToolsPanel } from "@/registry/new-york/smithery/tools-panel"
 
 // Tools come from an MCP client connection
 const tools = await mcpClient.tools()
@@ -50,7 +50,7 @@ export function MyApp() {
 The ToolsPanel works best when wrapped with a `ConnectionConfigContext.Provider` to enable code generation in the tool detail dialog:
 
 ```tsx
-import { ConnectionConfigContext } from "@/components/smithery/connection-context"
+import { ConnectionConfigContext } from "@/registry/new-york/smithery/connection-context"
 
 <ConnectionConfigContext.Provider value={{
   mcpUrl: "https://mcp.exa.ai",

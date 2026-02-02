@@ -18,7 +18,6 @@ import {
 	Lock,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { listNamespaces } from "@/components/smithery/actions";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -419,15 +418,6 @@ const ServerDisplay = ({
 		</div>
 	);
 };
-
-// Uses server action to get namespace (scoped tokens lack namespaces:read)
-async function getDefaultNamespace() {
-	const namespaces = await listNamespaces();
-	if (namespaces.length === 0) {
-		throw new Error("No namespaces found");
-	}
-	return namespaces[0].name;
-}
 
 const getSmitheryClient = (token: string) => {
 	return new Smithery({

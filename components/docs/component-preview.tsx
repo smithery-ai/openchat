@@ -9,7 +9,6 @@ import type { Tool, ToolExecutionOptions } from "ai";
 import { useAtomValue } from "jotai";
 import { AlertCircle } from "lucide-react";
 import { useState } from "react";
-import { listNamespaces } from "@/components/smithery/actions";
 import {
 	Select,
 	SelectContent,
@@ -18,6 +17,7 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
+import { listNamespaces } from "@/registry/new-york/smithery/actions";
 import { ConnectionConfigContext } from "@/registry/new-york/smithery/connection-context";
 import { selectedTokenAtom } from "@/registry/new-york/smithery/tokens";
 import { PreviewFrame } from "./preview-frame";

@@ -14,7 +14,7 @@ This is a context provider component - it doesn't have a visual preview. See the
 import {
   ConnectionConfigContext,
   useConnectionConfig
-} from "@/components/smithery/connection-context"
+} from "@/registry/new-york/smithery/connection-context"
 
 // Wrap your components with the provider
 export function MyApp() {
@@ -64,7 +64,7 @@ interface ConnectionConfig {
 Returns the current connection configuration or `null` if not within a provider:
 
 ```tsx
-import { useConnectionConfig } from "@/components/smithery/connection-context"
+import { useConnectionConfig } from "@/registry/new-york/smithery/connection-context"
 
 function MyComponent() {
   const config = useConnectionConfig()

@@ -4,10 +4,6 @@ import type { Tool } from "ai";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { estimateTokenCount } from "tokenx";
-import {
-	CodeBlock,
-	CodeBlockCopyButton,
-} from "@/components/smithery/code-block";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -38,6 +34,10 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import {
+	CodeBlock,
+	CodeBlockCopyButton,
+} from "@/registry/new-york/smithery/code-block";
 import { useConnectionConfig } from "@/registry/new-york/smithery/connection-context";
 import { ToolOutputViewer } from "@/registry/new-york/smithery/tool-output-viewer";
 
