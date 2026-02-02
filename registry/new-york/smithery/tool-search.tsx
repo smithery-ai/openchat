@@ -1,6 +1,6 @@
 "use client";
 
-import type { Connection } from "@smithery/api/resources/beta/connect/connections";
+import type { Connection } from "@smithery/api/resources/experimental/connect/connections";
 import { useQuery } from "@tanstack/react-query";
 import { Pencil, SearchIcon } from "lucide-react";
 import { Fragment, useEffect, useState } from "react";
@@ -69,7 +69,7 @@ export function ToolSearch({
 		selectedConnectionIds.includes(connection.connectionId),
 	);
 
-	const { isLoading, isFetching, refetch } = useQuery({
+	const { isFetching, refetch } = useQuery({
 		queryKey: ["tool-search", namespace, apiKey, selectedConnectionIds, action],
 		queryFn: async () => {
 			const response = await fetch("/api/tool-search", {

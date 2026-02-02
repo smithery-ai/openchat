@@ -140,7 +140,6 @@ export function SharedSidebar({
 								if (forceCreate) {
 									return createToken({
 										ttlSeconds: 60 * 60 * 24,
-										userId: crypto.randomUUID(),
 									});
 								}
 
@@ -168,7 +167,6 @@ export function SharedSidebar({
 								// Mint a new token
 								return createToken({
 									ttlSeconds: 60 * 60 * 24,
-									userId: crypto.randomUUID(),
 								});
 							}}
 						/>

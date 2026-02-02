@@ -1,6 +1,6 @@
 "use client";
 import { useChat } from "@ai-sdk/react";
-import type { Connection } from "@smithery/api/resources/beta/connect/connections.mjs";
+import type { Connection } from "@smithery/api/resources/experimental/connect/connections.mjs";
 import {
 	DefaultChatTransport,
 	lastAssistantMessageIsCompleteWithToolCalls,
