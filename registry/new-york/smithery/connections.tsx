@@ -20,6 +20,7 @@ import {
 } from "@/registry/new-york/smithery/connection-context";
 import { WithQueryClient } from "@/registry/new-york/smithery/query-client-wrapper";
 import { ServerSearch } from "@/registry/new-york/smithery/server-search";
+import { useSmitheryContext } from "@/registry/new-york/smithery/smithery-provider";
 import { ToolsPanel } from "@/registry/new-york/smithery/tools-panel";
 
 // Re-export useConnectionConfig for backward compatibility
@@ -34,19 +35,25 @@ const getSmitheryClient = (token: string) => {
 
 const ConnectionCardInner = ({
 	connection,
-	token,
-	namespace,
+	token: tokenProp,
+	namespace: namespaceProp,
 	className,
 	...rest
 }: {
 	connection: Connection;
-	token: string;
-	namespace: string;
+	token?: string;
+	namespace?: string;
 	className?: string;
 } & React.HTMLAttributes<HTMLDivElement>) => {
+	const smitheryContext = useSmitheryContext();
+	const token = tokenProp ?? smitheryContext.token;
+	const namespace = namespaceProp ?? smitheryContext.namespace;
 	const queryClient = useQueryClient();
 	const deleteMutation = useMutation({
 		mutationFn: async () => {
+			if (!token || !namespace) {
+				throw new Error("Token and namespace are required");
+			}
 			const client = getSmitheryClient(token);
 			await client.experimental.connect.connections.delete(
 				connection.connectionId,
@@ -108,8 +115,8 @@ const ConnectionCardInner = ({
 export const ConnectionCard = (
 	props: {
 		connection: Connection;
-		token: string;
-		namespace: string;
+		token?: string;
+		namespace?: string;
 		className?: string;
 	} & React.HTMLAttributes<HTMLDivElement>,
 ) => (
@@ -119,18 +126,21 @@ export const ConnectionCard = (
 );
 
 const ConnectionsListInner = ({
-	token,
-	namespace,
+	token: tokenProp,
+	namespace: namespaceProp,
 	defaultActiveConnectionId,
 	onActiveConnectionIdChange,
 	defaultShowSearchServers = true,
 }: {
-	token: string;
+	token?: string;
 	namespace?: string;
 	defaultActiveConnectionId?: string;
 	onActiveConnectionIdChange: (connectionId: string) => void;
 	defaultShowSearchServers?: boolean;
 }) => {
+	const smitheryContext = useSmitheryContext();
+	const token = tokenProp ?? smitheryContext.token;
+	const namespace = namespaceProp ?? smitheryContext.namespace;
 	const [activeConnectionId, setActiveConnectionId] = useState<string | null>(
 		defaultActiveConnectionId || null,
 	);
@@ -140,7 +150,7 @@ const ConnectionsListInner = ({
 	const { data, isLoading, error, refetch, isFetching } = useQuery({
 		queryKey: ["connections", token],
 		queryFn: async () => {
-			if (!namespace) throw new Error("Namespace required");
+			if (!token || !namespace) throw new Error("Token and namespace required");
 			const client = getSmitheryClient(token);
 			const { connections } =
 				await client.experimental.connect.connections.list(namespace);
@@ -235,7 +245,7 @@ const ConnectionsListInner = ({
 };
 
 export const ConnectionsList = (props: {
-	token: string;
+	token?: string;
 	namespace?: string;
 	defaultActiveConnectionId?: string;
 	onActiveConnectionIdChange: (connectionId: string) => void;
@@ -247,21 +257,24 @@ export const ConnectionsList = (props: {
 );
 
 const ActiveConnection = ({
-	token,
-	namespace,
+	token: tokenProp,
+	namespace: namespaceProp,
 	connectionId,
 }: {
-	token: string;
+	token?: string;
 	namespace?: string;
 	connectionId: string;
 }) => {
+	const smitheryContext = useSmitheryContext();
+	const token = tokenProp ?? smitheryContext.token;
+	const namespace = namespaceProp ?? smitheryContext.namespace;
 	const [countdown, setCountdown] = useState<number | null>(null);
 	const [hasRedirected, setHasRedirected] = useState(false);
 
 	const { data, isLoading, error } = useQuery({
 		queryKey: ["connection", connectionId, token, namespace],
 		queryFn: async () => {
-			if (!namespace) throw new Error("Namespace required");
+			if (!token || !namespace) throw new Error("Token and namespace required");
 			const client = getSmitheryClient(token);
 			const data = await client.experimental.connect.connections.get(
 				connectionId,
@@ -271,7 +284,7 @@ const ActiveConnection = ({
 			);
 			return { namespace, ...data };
 		},
-		enabled: !!namespace,
+		enabled: !!token && !!namespace,
 		// Poll every 2 seconds when auth_required, stop when connected or error
 		refetchInterval: (query) => {
 			const state = query.state.data?.status?.state;
@@ -325,7 +338,7 @@ const ActiveConnection = ({
 	const clientQuery = useQuery({
 		queryKey: ["mcp-client", token, connectionId, namespace],
 		queryFn: async () => {
-			if (!namespace) throw new Error("Namespace required");
+			if (!token || !namespace) throw new Error("Token and namespace required");
 			const { transport } = await createConnection({
 				client: getSmitheryClient(token),
 				connectionId: connectionId,
@@ -335,7 +348,10 @@ const ActiveConnection = ({
 			return mcpClient;
 		},
 		enabled:
-			!!connectionId && !!namespace && data?.status?.state === "connected",
+			!!token &&
+			!!connectionId &&
+			!!namespace &&
+			data?.status?.state === "connected",
 	});
 
 	const toolsQuery = useQuery({
@@ -469,7 +485,7 @@ const ActiveConnection = ({
 						</p>
 					</div>
 				)}
-				{toolsQuery.data && data && (
+				{toolsQuery.data && data && token && (
 					<ConnectionConfigContext.Provider
 						value={{
 							mcpUrl: data.mcpUrl || "",
@@ -489,12 +505,15 @@ const ActiveConnection = ({
 };
 
 const ConnectionsInner = ({
-	token,
-	namespace,
+	token: tokenProp,
+	namespace: namespaceProp,
 }: {
-	token: string;
+	token?: string;
 	namespace?: string;
 }) => {
+	const smitheryContext = useSmitheryContext();
+	const token = tokenProp ?? smitheryContext.token;
+	const namespace = namespaceProp ?? smitheryContext.namespace;
 	const [activeConnectionId, setActiveConnectionId] = useState<string | null>(
 		null,
 	);
@@ -522,7 +541,7 @@ const ConnectionsInner = ({
 	);
 };
 
-export const Connections = (props: { token: string; namespace?: string }) => (
+export const Connections = (props: { token?: string; namespace?: string }) => (
 	<WithQueryClient>
 		<ConnectionsInner {...props} />
 	</WithQueryClient>
