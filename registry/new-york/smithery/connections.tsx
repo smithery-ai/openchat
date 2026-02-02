@@ -35,25 +35,16 @@ const getSmitheryClient = (token: string) => {
 
 const ConnectionCardInner = ({
 	connection,
-	token: tokenProp,
-	namespace: namespaceProp,
 	className,
 	...rest
 }: {
 	connection: Connection;
-	token?: string;
-	namespace?: string;
 	className?: string;
 } & React.HTMLAttributes<HTMLDivElement>) => {
-	const smitheryContext = useSmitheryContext();
-	const token = tokenProp ?? smitheryContext.token;
-	const namespace = namespaceProp ?? smitheryContext.namespace;
+	const { token, namespace } = useSmitheryContext();
 	const queryClient = useQueryClient();
 	const deleteMutation = useMutation({
 		mutationFn: async () => {
-			if (!token || !namespace) {
-				throw new Error("Token and namespace are required");
-			}
 			const client = getSmitheryClient(token);
 			await client.experimental.connect.connections.delete(
 				connection.connectionId,
@@ -115,8 +106,6 @@ const ConnectionCardInner = ({
 export const ConnectionCard = (
 	props: {
 		connection: Connection;
-		token?: string;
-		namespace?: string;
 		className?: string;
 	} & React.HTMLAttributes<HTMLDivElement>,
 ) => (
@@ -126,21 +115,15 @@ export const ConnectionCard = (
 );
 
 const ConnectionsListInner = ({
-	token: tokenProp,
-	namespace: namespaceProp,
 	defaultActiveConnectionId,
 	onActiveConnectionIdChange,
 	defaultShowSearchServers = true,
 }: {
-	token?: string;
-	namespace?: string;
 	defaultActiveConnectionId?: string;
 	onActiveConnectionIdChange: (connectionId: string) => void;
 	defaultShowSearchServers?: boolean;
 }) => {
-	const smitheryContext = useSmitheryContext();
-	const token = tokenProp ?? smitheryContext.token;
-	const namespace = namespaceProp ?? smitheryContext.namespace;
+	const { token, namespace } = useSmitheryContext();
 	const [activeConnectionId, setActiveConnectionId] = useState<string | null>(
 		defaultActiveConnectionId || null,
 	);
@@ -148,15 +131,13 @@ const ConnectionsListInner = ({
 		defaultShowSearchServers || false,
 	);
 	const { data, isLoading, error, refetch, isFetching } = useQuery({
-		queryKey: ["connections", token],
+		queryKey: ["connections", token, namespace],
 		queryFn: async () => {
-			if (!token || !namespace) throw new Error("Token and namespace required");
 			const client = getSmitheryClient(token);
 			const { connections } =
 				await client.experimental.connect.connections.list(namespace);
 			return { connections, namespace };
 		},
-		enabled: !!token && !!namespace,
 	});
 
 	useEffect(() => {
@@ -202,13 +183,7 @@ const ConnectionsListInner = ({
 			<div className="flex-1 flex flex-col">
 				{showSearchServers && data && (
 					<div className="px-6 pb-4">
-						{!data || !data.namespace ? (
-							<p className="text-destructive px-6">
-								Error: Missing namespace or data.
-							</p>
-						) : (
-							<ServerSearch token={token} namespace={data.namespace} />
-						)}
+						<ServerSearch />
 					</div>
 				)}
 				{isLoading && <p className="text-muted-foreground px-6">Loading...</p>}
@@ -225,8 +200,6 @@ const ConnectionsListInner = ({
 								<Separator />
 								<ConnectionCard
 									connection={connection}
-									token={token}
-									namespace={data.namespace}
 									className={cn(
 										"rounded-none",
 										activeConnectionId === connection.connectionId
@@ -245,8 +218,6 @@ const ConnectionsListInner = ({
 };
 
 export const ConnectionsList = (props: {
-	token?: string;
-	namespace?: string;
 	defaultActiveConnectionId?: string;
 	onActiveConnectionIdChange: (connectionId: string) => void;
 	defaultShowSearchServers?: boolean;
@@ -256,25 +227,14 @@ export const ConnectionsList = (props: {
 	</WithQueryClient>
 );
 
-const ActiveConnection = ({
-	token: tokenProp,
-	namespace: namespaceProp,
-	connectionId,
-}: {
-	token?: string;
-	namespace?: string;
-	connectionId: string;
-}) => {
-	const smitheryContext = useSmitheryContext();
-	const token = tokenProp ?? smitheryContext.token;
-	const namespace = namespaceProp ?? smitheryContext.namespace;
+const ActiveConnection = ({ connectionId }: { connectionId: string }) => {
+	const { token, namespace } = useSmitheryContext();
 	const [countdown, setCountdown] = useState<number | null>(null);
 	const [hasRedirected, setHasRedirected] = useState(false);
 
 	const { data, isLoading, error } = useQuery({
 		queryKey: ["connection", connectionId, token, namespace],
 		queryFn: async () => {
-			if (!token || !namespace) throw new Error("Token and namespace required");
 			const client = getSmitheryClient(token);
 			const data = await client.experimental.connect.connections.get(
 				connectionId,
@@ -284,7 +244,6 @@ const ActiveConnection = ({
 			);
 			return { namespace, ...data };
 		},
-		enabled: !!token && !!namespace,
 		// Poll every 2 seconds when auth_required, stop when connected or error
 		refetchInterval: (query) => {
 			const state = query.state.data?.status?.state;
@@ -338,7 +297,6 @@ const ActiveConnection = ({
 	const clientQuery = useQuery({
 		queryKey: ["mcp-client", token, connectionId, namespace],
 		queryFn: async () => {
-			if (!token || !namespace) throw new Error("Token and namespace required");
 			const { transport } = await createConnection({
 				client: getSmitheryClient(token),
 				connectionId: connectionId,
@@ -347,11 +305,7 @@ const ActiveConnection = ({
 			const mcpClient = await createMCPClient({ transport });
 			return mcpClient;
 		},
-		enabled:
-			!!token &&
-			!!connectionId &&
-			!!namespace &&
-			data?.status?.state === "connected",
+		enabled: !!connectionId && data?.status?.state === "connected",
 	});
 
 	const toolsQuery = useQuery({
@@ -485,7 +439,7 @@ const ActiveConnection = ({
 						</p>
 					</div>
 				)}
-				{toolsQuery.data && data && token && (
+				{toolsQuery.data && data && (
 					<ConnectionConfigContext.Provider
 						value={{
 							mcpUrl: data.mcpUrl || "",
@@ -504,16 +458,7 @@ const ActiveConnection = ({
 	);
 };
 
-const ConnectionsInner = ({
-	token: tokenProp,
-	namespace: namespaceProp,
-}: {
-	token?: string;
-	namespace?: string;
-}) => {
-	const smitheryContext = useSmitheryContext();
-	const token = tokenProp ?? smitheryContext.token;
-	const namespace = namespaceProp ?? smitheryContext.namespace;
+const ConnectionsInner = () => {
 	const [activeConnectionId, setActiveConnectionId] = useState<string | null>(
 		null,
 	);
@@ -522,27 +467,21 @@ const ConnectionsInner = ({
 		<div className="w-full h-full flex">
 			<div className="w-full max-w-sm border-r-3 h-full overflow-auto">
 				<ConnectionsListInner
-					token={token}
-					namespace={namespace}
 					onActiveConnectionIdChange={setActiveConnectionId}
 					defaultShowSearchServers={false}
 				/>
 			</div>
 			<div className="w-full flex-1 overflow-auto">
 				{activeConnectionId && (
-					<ActiveConnection
-						token={token}
-						namespace={namespace}
-						connectionId={activeConnectionId || ""}
-					/>
+					<ActiveConnection connectionId={activeConnectionId} />
 				)}
 			</div>
 		</div>
 	);
 };
 
-export const Connections = (props: { token?: string; namespace?: string }) => (
+export const Connections = () => (
 	<WithQueryClient>
-		<ConnectionsInner {...props} />
+		<ConnectionsInner />
 	</WithQueryClient>
 );

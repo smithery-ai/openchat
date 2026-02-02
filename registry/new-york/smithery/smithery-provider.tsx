@@ -5,10 +5,9 @@ import { createContext, type ReactNode, useContext } from "react";
 import { type UseSmitheryOptions, useSmithery } from "@/hooks/use-smithery";
 
 interface SmitheryContextValue {
-	token: string | undefined;
-	namespace: string | undefined;
-	client: Smithery | null;
-	isLoading: boolean;
+	token: string;
+	namespace: string;
+	client: Smithery;
 	error: Error | null;
 }
 

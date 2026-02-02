@@ -196,22 +196,16 @@ type OnExistingConnectionMode = "warn" | "error" | "use" | "create-new";
 
 interface ServerDisplayProps {
 	server: ServerListResponse;
-	token?: string;
-	namespace?: string;
 	onExistingConnection: OnExistingConnectionMode;
 	onServerConnect?: (connection: Connection) => void;
 }
 
 const ServerDisplay = ({
 	server,
-	token: tokenProp,
-	namespace: namespaceProp,
 	onExistingConnection,
 	onServerConnect,
 }: ServerDisplayProps) => {
-	const smitheryContext = useSmitheryContext();
-	const token = tokenProp ?? smitheryContext.token;
-	const namespace = namespaceProp ?? smitheryContext.namespace;
+	const { token, namespace } = useSmitheryContext();
 	const queryClient = useQueryClient();
 	const [countdown, setCountdown] = useState<number | null>(null);
 
@@ -232,9 +226,6 @@ const ServerDisplay = ({
 		mutationFn: async (
 			overrideMode?: "use" | "create-new",
 		): Promise<ConnectionStatus> => {
-			if (!token || !namespace) {
-				throw new Error("Token and namespace are required");
-			}
 			const client = getSmitheryClient(token);
 			return await getOrCreateConnection(
 				client,
@@ -562,22 +553,16 @@ const isValidUrl = (str: string): boolean => {
 
 interface ExternalURLDisplayProps {
 	url: string;
-	token?: string;
-	namespace?: string;
 	onExistingConnection: OnExistingConnectionMode;
 	onServerConnect?: (connection: Connection) => void;
 }
 
 const ExternalURLDisplay = ({
 	url,
-	token: tokenProp,
-	namespace: namespaceProp,
 	onExistingConnection,
 	onServerConnect,
 }: ExternalURLDisplayProps) => {
-	const smitheryContext = useSmitheryContext();
-	const token = tokenProp ?? smitheryContext.token;
-	const namespace = namespaceProp ?? smitheryContext.namespace;
+	const { token, namespace } = useSmitheryContext();
 	const queryClient = useQueryClient();
 	const [countdown, setCountdown] = useState<number | null>(null);
 
@@ -590,9 +575,6 @@ const ExternalURLDisplay = ({
 		mutationFn: async (
 			overrideMode?: "use" | "create-new",
 		): Promise<ConnectionStatus> => {
-			if (!token || !namespace) {
-				throw new Error("Token and namespace are required");
-			}
 			const client = getSmitheryClient(token);
 			return await getOrCreateConnection(
 				client,
@@ -732,23 +714,17 @@ const ExternalURLDisplay = ({
 };
 
 const ServerSearchInner = ({
-	token: tokenProp,
-	namespace: namespaceProp,
 	onExistingConnection = "warn",
 	onServerConnect,
 	query,
 	hideSearchAfterConnect,
 }: {
-	token?: string;
-	namespace?: string;
 	onExistingConnection?: OnExistingConnectionMode;
 	onServerConnect?: (connection: Connection) => void;
 	query?: string;
 	hideSearchAfterConnect?: boolean;
 }) => {
-	const smitheryContext = useSmitheryContext();
-	const token = tokenProp ?? smitheryContext.token;
-	const namespace = namespaceProp ?? smitheryContext.namespace;
+	const { token } = useSmitheryContext();
 	const [currentQuery, setCurrentQuery] = useState(query || "");
 	const [selectedServer, setSelectedServer] =
 		useState<ServerListResponse | null>(null);
@@ -767,9 +743,6 @@ const ServerSearchInner = ({
 	const { data, isLoading } = useQuery({
 		queryKey: ["servers", token, debouncedQuery],
 		queryFn: async () => {
-			if (!token) {
-				throw new Error("API token is required");
-			}
 			const client = getSmitheryClient(token);
 			console.log("searching", debouncedQuery);
 			const servers = debouncedQuery
@@ -779,7 +752,7 @@ const ServerSearchInner = ({
 			return servers;
 		},
 		// Don't fetch when a server or external URL is already selected
-		enabled: !!token && !selectedServer && !selectedExternalUrl,
+		enabled: !selectedServer && !selectedExternalUrl,
 	});
 
 	const servers = data?.servers ?? [];
@@ -830,7 +803,6 @@ const ServerSearchInner = ({
 				>
 					<ComboboxInput
 						placeholder="Search for a server or paste MCP URL..."
-						disabled={!token}
 						onKeyDown={handleKeyDown}
 						autoFocus={true}
 					/>
@@ -905,20 +877,17 @@ const ServerSearchInner = ({
 				</Combobox>
 			)}
 
-			{selectedServer && token && namespace && (
+			{selectedServer && (
 				<ServerDisplay
 					server={selectedServer}
-					token={token}
-					namespace={namespace}
 					onExistingConnection={onExistingConnection}
 					onServerConnect={handleServerConnect}
 				/>
 			)}
 
-			{selectedExternalUrl && token && (
+			{selectedExternalUrl && (
 				<ExternalURLDisplay
 					url={selectedExternalUrl}
-					token={token}
 					onExistingConnection={onExistingConnection}
 					onServerConnect={handleServerConnect}
 				/>
@@ -928,8 +897,6 @@ const ServerSearchInner = ({
 };
 
 export const ServerSearch = (props: {
-	token?: string;
-	namespace?: string;
 	query?: string;
 	onExistingConnection?: OnExistingConnectionMode;
 	hideSearchAfterConnect?: boolean;
