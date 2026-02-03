@@ -109,12 +109,7 @@ export function Tokens() {
 
 	return (
 		<div className="flex items-center gap-4 text-sm text-muted-foreground">
-			<span>
-				{selectedToken.token.startsWith("v4.public")
-					? "Service Token"
-					: "Root API Key"}{" "}
-				*****{selectedToken.token.slice(-4)}
-			</span>
+			<span>*****{selectedToken.token.slice(-4)}</span>
 			{sandboxMode ? (
 				<span className="text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded border border-amber-200">
 					Sandbox Mode
@@ -263,10 +258,7 @@ export function Tokens() {
 									<SelectContent>
 										{tokensCreated.map((token) => (
 											<SelectItem key={token.token} value={token.token}>
-												{token.token.startsWith("v4.public")
-													? "Service Token"
-													: "Root API Key"}
-												: *****{token.token.slice(-4)}
+												*****{token.token.slice(-4)}
 											</SelectItem>
 										))}
 									</SelectContent>
@@ -277,10 +269,7 @@ export function Tokens() {
 								<div className="flex items-start justify-between">
 									<div className="space-y-1">
 										<div className="font-medium">
-											{selectedToken.token.startsWith("v4.public")
-												? "Service Token"
-												: "Root API Key"}
-											: *****{selectedToken.token.slice(-4)}
+											*****{selectedToken.token.slice(-4)}
 										</div>
 										{selectedToken.expiresAt !== "never" && (
 											<div className="text-sm text-muted-foreground">
