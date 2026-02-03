@@ -271,7 +271,13 @@ export function useSmithery(
 		}, POLL_INTERVAL_MS);
 
 		return () => clearInterval(intervalId);
-	}, [sandboxMode, hydrated, setTokensCreated, setSelectedToken, setSandboxMode]);
+	}, [
+		sandboxMode,
+		hydrated,
+		setTokensCreated,
+		setSelectedToken,
+		setSandboxMode,
+	]);
 
 	// Auto-select first namespace if none selected
 	useEffect(() => {
