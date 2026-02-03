@@ -1,14 +1,13 @@
 "use client";
 
-import type { UseQueryResult } from "@tanstack/react-query";
 import { createContext, type ReactNode, useContext } from "react";
 import {
-	type SmitheryData,
 	type UseSmitheryOptions,
+	type UseSmitheryReturn,
 	useSmithery,
 } from "@/hooks/use-smithery";
 
-type SmitheryContextValue = UseQueryResult<SmitheryData, Error>;
+type SmitheryContextValue = UseSmitheryReturn;
 
 const SmitheryContext = createContext<SmitheryContextValue | null>(null);
 
@@ -16,12 +15,8 @@ interface SmitheryProviderProps extends UseSmitheryOptions {
 	children: ReactNode;
 }
 
-export function SmitheryProvider({
-	children,
-	defaultNamespace,
-	baseURL,
-}: SmitheryProviderProps) {
-	const value = useSmithery({ defaultNamespace, baseURL });
+export function SmitheryProvider({ children, baseURL }: SmitheryProviderProps) {
+	const value = useSmithery({ baseURL });
 
 	return (
 		<SmitheryContext.Provider value={value}>

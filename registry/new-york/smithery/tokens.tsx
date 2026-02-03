@@ -1,10 +1,8 @@
 "use client";
 
-import type { CreateTokenResponse } from "@smithery/api/resources/tokens.mjs";
-import { atom, useAtom } from "jotai";
-import { atomWithStorage } from "jotai/utils";
+import { useAtom } from "jotai";
 import { Loader2, Trash2 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -20,90 +18,16 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { filterExpiredTokens, isTokenExpired } from "@/lib/utils";
-// Jotai atoms for token state management
-export const tokensCreatedAtom = atomWithStorage<CreateTokenResponse[]>(
-	"tokensCreated",
-	[],
-);
-export const selectedTokenAtom = atom<CreateTokenResponse | null>(null);
+import { selectedTokenAtom, tokensCreatedAtom } from "@/hooks/use-smithery";
+import { useSmitheryContext } from "@/registry/new-york/smithery/smithery-provider";
 
-export function Tokens({
-	getOrCreateToken,
-}: {
-	getOrCreateToken: (options: {
-		hasExistingTokens: boolean;
-		forceCreate?: boolean;
-	}) => Promise<CreateTokenResponse | null>;
-}) {
+export function Tokens() {
 	const [tokensCreated, setTokensCreated] = useAtom(tokensCreatedAtom);
 	const [selectedToken, setSelectedToken] = useAtom(selectedTokenAtom);
 	const [isOpen, setIsOpen] = useState(false);
 	const [isCreating, setIsCreating] = useState(false);
-	const [isLoading, setIsLoading] = useState(true);
-	const [hydrated, setHydrated] = useState(false);
-	const fetchStarted = useRef(false);
 
-	// Wait for atom to hydrate
-	useEffect(() => {
-		setHydrated(true);
-	}, []);
-
-	// Filter expired tokens after hydration
-	useEffect(() => {
-		if (!hydrated) return;
-		setTokensCreated((current) => {
-			const validTokens = filterExpiredTokens(current);
-			if (validTokens.length !== current.length) {
-				return validTokens;
-			}
-			return current;
-		});
-	}, [hydrated, setTokensCreated]);
-
-	// Fetch token after hydration
-	useEffect(() => {
-		if (!hydrated) return;
-		if (fetchStarted.current) return;
-		fetchStarted.current = true;
-
-		async function fetchToken() {
-			const hasExistingTokens = tokensCreated.length > 0;
-			const tokenResponse = await getOrCreateToken({ hasExistingTokens });
-
-			if (tokenResponse) {
-				// Merge with current tokens using callback to get fresh state
-				setTokensCreated((current) => {
-					const alreadyExists = current.some(
-						(t) => t.token === tokenResponse.token,
-					);
-					if (alreadyExists) return current;
-					return [tokenResponse, ...current];
-				});
-				setSelectedToken(tokenResponse);
-			}
-
-			setIsLoading(false);
-		}
-
-		fetchToken();
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [
-		hydrated,
-		getOrCreateToken,
-		setSelectedToken, // Merge with current tokens using callback to get fresh state
-		setTokensCreated,
-		tokensCreated.length,
-	]);
-
-	// Select first valid token if none selected or current selection is expired
-	useEffect(() => {
-		const needsNewSelection = !selectedToken || isTokenExpired(selectedToken);
-		if (needsNewSelection && tokensCreated.length > 0) {
-			const validToken = tokensCreated.find((t) => !isTokenExpired(t));
-			if (validToken) setSelectedToken(validToken);
-		}
-	}, [selectedToken, setSelectedToken, tokensCreated]);
+	const { createToken, loading } = useSmitheryContext();
 
 	const handleRemoveToken = () => {
 		if (!selectedToken) return;
@@ -117,20 +41,13 @@ export function Tokens({
 	const handleCreateToken = async () => {
 		setIsCreating(true);
 		try {
-			const tokenResponse = await getOrCreateToken({
-				hasExistingTokens: true,
-				forceCreate: true,
-			});
-			if (tokenResponse) {
-				setTokensCreated([...tokensCreated, tokenResponse]);
-				setSelectedToken(tokenResponse);
-			}
+			await createToken();
 		} finally {
 			setIsCreating(false);
 		}
 	};
 
-	if (isLoading) {
+	if (loading) {
 		return (
 			<div className="flex items-center gap-2 text-sm text-muted-foreground">
 				<Loader2 className="size-4 animate-spin" />

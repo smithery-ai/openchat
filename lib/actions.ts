@@ -13,6 +13,11 @@ export async function getDefaultNamespace() {
 	return response.namespaces[0].name;
 }
 
+export async function listNamespaces(): Promise<string[]> {
+	const response = await client.namespaces.list();
+	return response.namespaces.map((ns) => ns.name);
+}
+
 export async function createToken({ ttlSeconds }: { ttlSeconds: number }) {
 	const namespace = await getDefaultNamespace();
 	const response = await client.tokens.create({
