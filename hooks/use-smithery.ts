@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { atom, useAtom } from "jotai";
 import { atomWithStorage } from "jotai/utils";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createSandboxToken } from "@/app/actions/create-token";
 import { filterExpiredTokens, isTokenExpired } from "@/lib/utils";
 
 // Jotai atoms for state management
@@ -15,6 +16,11 @@ export const tokensCreatedAtom = atomWithStorage<CreateTokenResponse[]>(
 );
 export const selectedTokenAtom = atom<CreateTokenResponse | null>(null);
 export const selectedNamespaceAtom = atom<string | null>(null);
+export const userIdAtom = atomWithStorage<string | null>(
+	"smithery_user_id",
+	null,
+);
+export const sandboxModeAtom = atom<boolean>(false);
 
 export interface UseSmitheryOptions {
 	baseURL?: string;
@@ -32,6 +38,7 @@ export interface UseSmitheryReturn {
 	error?: Error;
 	connected: boolean;
 	client: Smithery;
+	sandboxMode: boolean;
 }
 
 export { SmitheryConnectionError };
@@ -91,6 +98,11 @@ export function useSmithery(
 	const [hydrated, setHydrated] = useState(false);
 	const fetchStarted = useRef(false);
 
+	// User ID for sandbox mode isolation
+	const [userId, setUserId] = useAtom(userIdAtom);
+	const [sandboxMode, setSandboxMode] = useAtom(sandboxModeAtom);
+	const userIdRef = useRef<string | null>(null);
+
 	// Namespace state
 	const [selectedNamespace, setSelectedNamespace] = useAtom(
 		selectedNamespaceAtom,
@@ -104,10 +116,15 @@ export function useSmithery(
 		});
 	}, [selectedToken?.token, baseURL]);
 
-	// Fetch namespaces (only when we have a valid token)
+	// Fetch namespaces (only when we have a valid token and NOT in sandbox mode)
+	// Sandbox mode tokens don't have namespaces:read permission
 	const namespacesQuery = useQuery({
-		queryKey: ["namespaces", selectedToken?.token],
+		queryKey: ["namespaces", selectedToken?.token, sandboxMode],
 		queryFn: async () => {
+			// In sandbox mode, we only have access to "sandbox" namespace
+			if (sandboxMode) {
+				return ["sandbox"];
+			}
 			const response = await client.namespaces.list();
 			return response.namespaces.map((ns) => ns.name);
 		},
@@ -119,6 +136,18 @@ export function useSmithery(
 	useEffect(() => {
 		setHydrated(true);
 	}, []);
+
+	// Generate user ID if not exists (for sandbox mode isolation)
+	useEffect(() => {
+		if (!hydrated) return;
+		if (!userId) {
+			const newUserId = crypto.randomUUID();
+			setUserId(newUserId);
+			userIdRef.current = newUserId;
+		} else {
+			userIdRef.current = userId;
+		}
+	}, [hydrated, userId, setUserId]);
 
 	// Filter expired tokens after hydration
 	useEffect(() => {
@@ -151,16 +180,61 @@ export function useSmithery(
 						return [tokenResponse, ...current];
 					});
 					setSelectedToken(tokenResponse);
+					setSandboxMode(false);
 				}
 			} catch (err) {
-				setTokenError(err instanceof Error ? err : new Error(String(err)));
+				// Fallback to server-side token creation when whoami is unavailable
+				if (
+					err instanceof SmitheryConnectionError &&
+					err.isServiceUnavailable
+				) {
+					const currentUserId = userIdRef.current;
+					if (!currentUserId) {
+						// Wait for userId to be generated, retry later
+						fetchStarted.current = false;
+						setTokenLoading(false);
+						return;
+					}
+
+					try {
+						const result = await createSandboxToken({ userId: currentUserId });
+						if (result.success) {
+							setTokensCreated((current) => {
+								const alreadyExists = current.some(
+									(t) => t.token === result.token.token,
+								);
+								if (alreadyExists) return current;
+								return [result.token, ...current];
+							});
+							setSelectedToken(result.token);
+							setSandboxMode(true);
+							setSelectedNamespace("sandbox");
+						} else {
+							setTokenError(new Error(result.error));
+						}
+					} catch (sandboxErr) {
+						setTokenError(
+							sandboxErr instanceof Error
+								? sandboxErr
+								: new Error(String(sandboxErr)),
+						);
+					}
+				} else {
+					setTokenError(err instanceof Error ? err : new Error(String(err)));
+				}
 			} finally {
 				setTokenLoading(false);
 			}
 		}
 
 		fetchToken();
-	}, [hydrated, setSelectedToken, setTokensCreated]);
+	}, [
+		hydrated,
+		setSelectedToken,
+		setTokensCreated,
+		setSandboxMode,
+		setSelectedNamespace,
+	]);
 
 	// Select first valid token if none selected or current selection is expired
 	useEffect(() => {
@@ -170,6 +244,40 @@ export function useSmithery(
 			if (validToken) setSelectedToken(validToken);
 		}
 	}, [selectedToken, setSelectedToken, tokensCreated]);
+
+	// Poll whoami when in sandbox mode to check if service comes back online
+	useEffect(() => {
+		if (!sandboxMode || !hydrated) return;
+
+		const POLL_INTERVAL_MS = 3000;
+
+		const intervalId = setInterval(async () => {
+			try {
+				const tokenResponse = await fetchTokenFromWhoami();
+				if (tokenResponse) {
+					setTokensCreated((current) => {
+						const alreadyExists = current.some(
+							(t) => t.token === tokenResponse.token,
+						);
+						if (alreadyExists) return current;
+						return [tokenResponse, ...current];
+					});
+					setSelectedToken(tokenResponse);
+					setSandboxMode(false);
+				}
+			} catch {
+				// Service still unavailable, continue polling
+			}
+		}, POLL_INTERVAL_MS);
+
+		return () => clearInterval(intervalId);
+	}, [
+		sandboxMode,
+		hydrated,
+		setTokensCreated,
+		setSelectedToken,
+		setSandboxMode,
+	]);
 
 	// Auto-select first namespace if none selected
 	useEffect(() => {
@@ -246,5 +354,6 @@ export function useSmithery(
 		error,
 		connected,
 		client,
+		sandboxMode,
 	};
 }
