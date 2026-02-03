@@ -109,7 +109,6 @@ export function Tokens() {
 
 	return (
 		<div className="flex items-center gap-4 text-sm text-muted-foreground">
-			<span>*****{selectedToken.token.slice(-4)}</span>
 			{sandboxMode ? (
 				<span className="text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded border border-amber-200">
 					Sandbox Mode
