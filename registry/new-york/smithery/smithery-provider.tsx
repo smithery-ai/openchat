@@ -1,14 +1,18 @@
 "use client";
 
-import type { UseQueryResult } from "@tanstack/react-query";
-import { createContext, type ReactNode, useContext } from "react";
+import { createContext, type ReactNode, useContext, useState } from "react";
 import {
-	type SmitheryData,
 	type UseSmitheryOptions,
+	type UseSmitheryReturn,
 	useSmithery,
+	SmitheryConnectionError,
 } from "@/hooks/use-smithery";
+import {
+	CodeBlock,
+	CodeBlockCopyButton,
+} from "@/components/ai-elements/code-block";
 
-type SmitheryContextValue = UseQueryResult<SmitheryData, Error>;
+type SmitheryContextValue = UseSmitheryReturn;
 
 const SmitheryContext = createContext<SmitheryContextValue | null>(null);
 
@@ -16,12 +20,57 @@ interface SmitheryProviderProps extends UseSmitheryOptions {
 	children: ReactNode;
 }
 
-export function SmitheryProvider({
-	children,
-	defaultNamespace,
-	baseURL,
-}: SmitheryProviderProps) {
-	const value = useSmithery({ defaultNamespace, baseURL });
+function ConnectionError({ error }: { error: Error }) {
+	const isServiceUnavailable =
+		error instanceof SmitheryConnectionError && error.isServiceUnavailable;
+	const [isCopied, setIsCopied] = useState(false);
+	const command = "npx @smithery/cli@latest whoami --server";
+
+	const copyToClipboard = async () => {
+		if (typeof window === "undefined" || !navigator?.clipboard?.writeText) {
+			return;
+		}
+
+		try {
+			await navigator.clipboard.writeText(command);
+			setIsCopied(true);
+			setTimeout(() => setIsCopied(false), 2000);
+		} catch {
+			// Ignore errors
+		}
+	};
+
+	return (
+		<div className="absolute inset-0">
+			<div className="flex items-center justify-center h-full p-8">
+				<div className="max-w-md text-center space-y-4">
+					<div className="text-destructive text-lg font-medium">
+						{isServiceUnavailable
+							? "Unable to connect to Smithery"
+							: "Connection Error"}
+					</div>
+					<p className="text-muted-foreground">{error.message}</p>
+					{isServiceUnavailable && (
+							<CodeBlock code={command} language="bash">
+								<CodeBlockCopyButton />
+							</CodeBlock>
+					)}
+				</div>
+			</div>
+		</div>
+	);
+}
+
+export function SmitheryProvider({ children, baseURL }: SmitheryProviderProps) {
+	const value = useSmithery({ baseURL });
+
+	if (value.error && !value.loading) {
+		return (
+			<SmitheryContext.Provider value={value}>
+				<ConnectionError error={value.error} />
+			</SmitheryContext.Provider>
+		);
+	}
 
 	return (
 		<SmitheryContext.Provider value={value}>

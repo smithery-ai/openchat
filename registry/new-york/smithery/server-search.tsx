@@ -751,8 +751,8 @@ const ServerSearchInner = ({
 			console.log(`servers for ${debouncedQuery}`, servers);
 			return servers;
 		},
-		// Don't fetch when a server or external URL is already selected
-		enabled: !selectedServer && !selectedExternalUrl,
+		// Don't fetch when a server or external URL is already selected, or when no token
+		enabled: !!token && !selectedServer && !selectedExternalUrl,
 	});
 
 	const servers = data?.servers ?? [];

@@ -1,10 +1,8 @@
 "use client";
 
-import type { CreateTokenResponse } from "@smithery/api/resources/tokens.mjs";
-import { atom, useAtom } from "jotai";
-import { atomWithStorage } from "jotai/utils";
-import { Loader2, Trash2 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useAtom } from "jotai";
+import { Loader2, Plus, Trash2 } from "lucide-react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -13,6 +11,7 @@ import {
 	DialogTitle,
 	DialogTrigger,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import {
 	Select,
 	SelectContent,
@@ -20,90 +19,26 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { filterExpiredTokens, isTokenExpired } from "@/lib/utils";
-// Jotai atoms for token state management
-export const tokensCreatedAtom = atomWithStorage<CreateTokenResponse[]>(
-	"tokensCreated",
-	[],
-);
-export const selectedTokenAtom = atom<CreateTokenResponse | null>(null);
+import { selectedTokenAtom, tokensCreatedAtom } from "@/hooks/use-smithery";
+import { useSmitheryContext } from "@/registry/new-york/smithery/smithery-provider";
 
-export function Tokens({
-	getOrCreateToken,
-}: {
-	getOrCreateToken: (options: {
-		hasExistingTokens: boolean;
-		forceCreate?: boolean;
-	}) => Promise<CreateTokenResponse | null>;
-}) {
+export function Tokens() {
 	const [tokensCreated, setTokensCreated] = useAtom(tokensCreatedAtom);
 	const [selectedToken, setSelectedToken] = useAtom(selectedTokenAtom);
 	const [isOpen, setIsOpen] = useState(false);
-	const [isCreating, setIsCreating] = useState(false);
-	const [isLoading, setIsLoading] = useState(true);
-	const [hydrated, setHydrated] = useState(false);
-	const fetchStarted = useRef(false);
+	const [isCreatingToken, setIsCreatingToken] = useState(false);
+	const [isCreatingNamespace, setIsCreatingNamespace] = useState(false);
+	const [newNamespaceName, setNewNamespaceName] = useState("");
+	const [showNamespaceInput, setShowNamespaceInput] = useState(false);
 
-	// Wait for atom to hydrate
-	useEffect(() => {
-		setHydrated(true);
-	}, []);
-
-	// Filter expired tokens after hydration
-	useEffect(() => {
-		if (!hydrated) return;
-		setTokensCreated((current) => {
-			const validTokens = filterExpiredTokens(current);
-			if (validTokens.length !== current.length) {
-				return validTokens;
-			}
-			return current;
-		});
-	}, [hydrated, setTokensCreated]);
-
-	// Fetch token after hydration
-	useEffect(() => {
-		if (!hydrated) return;
-		if (fetchStarted.current) return;
-		fetchStarted.current = true;
-
-		async function fetchToken() {
-			const hasExistingTokens = tokensCreated.length > 0;
-			const tokenResponse = await getOrCreateToken({ hasExistingTokens });
-
-			if (tokenResponse) {
-				// Merge with current tokens using callback to get fresh state
-				setTokensCreated((current) => {
-					const alreadyExists = current.some(
-						(t) => t.token === tokenResponse.token,
-					);
-					if (alreadyExists) return current;
-					return [tokenResponse, ...current];
-				});
-				setSelectedToken(tokenResponse);
-			}
-
-			setIsLoading(false);
-		}
-
-		fetchToken();
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [
-		hydrated,
-		getOrCreateToken,
-		setSelectedToken, // Merge with current tokens using callback to get fresh state
-		setTokensCreated,
-		tokensCreated.length,
-	]);
-
-	// Select first valid token if none selected or current selection is expired
-	useEffect(() => {
-		const needsNewSelection = !selectedToken || isTokenExpired(selectedToken);
-		if (needsNewSelection && tokensCreated.length > 0) {
-			const validToken = tokensCreated.find((t) => !isTokenExpired(t));
-			if (validToken) setSelectedToken(validToken);
-		}
-	}, [selectedToken, setSelectedToken, tokensCreated]);
+	const {
+		createToken,
+		createNamespace,
+		loading,
+		namespace,
+		namespaces,
+		setNamespace,
+	} = useSmitheryContext();
 
 	const handleRemoveToken = () => {
 		if (!selectedToken) return;
@@ -115,26 +50,31 @@ export function Tokens({
 	};
 
 	const handleCreateToken = async () => {
-		setIsCreating(true);
+		setIsCreatingToken(true);
 		try {
-			const tokenResponse = await getOrCreateToken({
-				hasExistingTokens: true,
-				forceCreate: true,
-			});
-			if (tokenResponse) {
-				setTokensCreated([...tokensCreated, tokenResponse]);
-				setSelectedToken(tokenResponse);
-			}
+			await createToken();
 		} finally {
-			setIsCreating(false);
+			setIsCreatingToken(false);
 		}
 	};
 
-	if (isLoading) {
+	const handleCreateNamespace = async () => {
+		if (!newNamespaceName.trim()) return;
+		setIsCreatingNamespace(true);
+		try {
+			await createNamespace(newNamespaceName.trim());
+			setNewNamespaceName("");
+			setShowNamespaceInput(false);
+		} finally {
+			setIsCreatingNamespace(false);
+		}
+	};
+
+	if (loading) {
 		return (
 			<div className="flex items-center gap-2 text-sm text-muted-foreground">
 				<Loader2 className="size-4 animate-spin" />
-				<span>Loading token...</span>
+				<span>Loading...</span>
 			</div>
 		);
 	}
@@ -142,28 +82,101 @@ export function Tokens({
 	if (!selectedToken) return null;
 
 	return (
-		<div className="flex items-center gap-2 text-sm text-muted-foreground">
+		<div className="flex items-center gap-4 text-sm text-muted-foreground">
 			<span>
-				Using token:{" "}
 				{selectedToken.token.startsWith("v4.public")
 					? "Service Token"
 					: "Root API Key"}{" "}
 				*****{selectedToken.token.slice(-4)}
 			</span>
+			{namespace && (
+				<span className="text-xs bg-muted px-2 py-0.5 rounded">
+					{namespace}
+				</span>
+			)}
 			<Dialog open={isOpen} onOpenChange={setIsOpen}>
 				<DialogTrigger asChild>
 					<Button variant="outline" size="sm">
-						Modify
+						Settings
 					</Button>
 				</DialogTrigger>
 				<DialogContent>
 					<DialogHeader>
-						<DialogTitle>Manage Tokens</DialogTitle>
+						<DialogTitle>Settings</DialogTitle>
 					</DialogHeader>
-					<div className="space-y-4">
-						{tokensCreated.length > 1 && (
-							<div className="space-y-2">
-								<div className="text-sm font-medium">Select Token</div>
+					<div className="space-y-6">
+						{/* Namespace Section */}
+						<div className="space-y-2">
+							<div className="text-sm font-medium">Namespace</div>
+							{namespaces.length > 0 && (
+								<Select value={namespace} onValueChange={setNamespace}>
+									<SelectTrigger className="w-full">
+										<SelectValue placeholder="Select namespace" />
+									</SelectTrigger>
+									<SelectContent>
+										{namespaces.map((ns) => (
+											<SelectItem key={ns} value={ns}>
+												{ns}
+											</SelectItem>
+										))}
+									</SelectContent>
+								</Select>
+							)}
+							{showNamespaceInput ? (
+								<div className="flex gap-2">
+									<Input
+										placeholder="Namespace name"
+										value={newNamespaceName}
+										onChange={(e) => setNewNamespaceName(e.target.value)}
+										onKeyDown={(e) => {
+											if (e.key === "Enter") handleCreateNamespace();
+											if (e.key === "Escape") {
+												setShowNamespaceInput(false);
+												setNewNamespaceName("");
+											}
+										}}
+										disabled={isCreatingNamespace}
+									/>
+									<Button
+										onClick={handleCreateNamespace}
+										disabled={isCreatingNamespace || !newNamespaceName.trim()}
+										size="sm"
+									>
+										{isCreatingNamespace ? (
+											<Loader2 className="size-4 animate-spin" />
+										) : (
+											"Create"
+										)}
+									</Button>
+									<Button
+										variant="ghost"
+										size="sm"
+										onClick={() => {
+											setShowNamespaceInput(false);
+											setNewNamespaceName("");
+										}}
+										disabled={isCreatingNamespace}
+									>
+										Cancel
+									</Button>
+								</div>
+							) : (
+								<Button
+									variant="outline"
+									size="sm"
+									onClick={() => setShowNamespaceInput(true)}
+									className="w-full"
+								>
+									<Plus className="size-4 mr-2" />
+									Create Namespace
+								</Button>
+							)}
+						</div>
+
+						{/* Token Section */}
+						<div className="space-y-2">
+							<div className="text-sm font-medium">Token</div>
+							{tokensCreated.length > 1 && (
 								<Select
 									value={selectedToken.token}
 									onValueChange={(tokenValue) => {
@@ -187,44 +200,42 @@ export function Tokens({
 										))}
 									</SelectContent>
 								</Select>
-							</div>
-						)}
+							)}
 
-						<div className="rounded-lg border p-4 space-y-2">
-							<div className="flex items-start justify-between">
-								<div className="space-y-1">
-									<div className="font-medium">
-										{selectedToken.token.startsWith("v4.public")
-											? "Service Token"
-											: "Root API Key"}
-										: *****{selectedToken.token.slice(-4)}
-									</div>
-									{selectedToken.expiresAt !== "never" && (
-										<div className="text-sm text-muted-foreground">
-											Expires:{" "}
-											{new Date(selectedToken.expiresAt).toLocaleString()}
+							<div className="rounded-lg border p-4 space-y-2">
+								<div className="flex items-start justify-between">
+									<div className="space-y-1">
+										<div className="font-medium">
+											{selectedToken.token.startsWith("v4.public")
+												? "Service Token"
+												: "Root API Key"}
+											: *****{selectedToken.token.slice(-4)}
 										</div>
-									)}
+										{selectedToken.expiresAt !== "never" && (
+											<div className="text-sm text-muted-foreground">
+												Expires:{" "}
+												{new Date(selectedToken.expiresAt).toLocaleString()}
+											</div>
+										)}
+									</div>
+									<Button
+										variant="ghost"
+										size="icon-sm"
+										onClick={handleRemoveToken}
+										aria-label="Remove token"
+									>
+										<Trash2 className="size-4" />
+									</Button>
 								</div>
-								<Button
-									variant="ghost"
-									size="icon-sm"
-									onClick={handleRemoveToken}
-									aria-label="Remove token"
-								>
-									<Trash2 className="size-4" />
-								</Button>
 							</div>
-						</div>
 
-						<div className="flex gap-2">
 							<Button
 								onClick={handleCreateToken}
 								variant="secondary"
-								className="flex-1"
-								disabled={isCreating}
+								className="w-full"
+								disabled={isCreatingToken}
 							>
-								{isCreating ? (
+								{isCreatingToken ? (
 									<>
 										<Loader2 className="size-4 animate-spin" />
 										Creating...
@@ -233,10 +244,11 @@ export function Tokens({
 									"Create New Token"
 								)}
 							</Button>
-							<Button onClick={() => setIsOpen(false)} className="flex-1">
-								Done
-							</Button>
 						</div>
+
+						<Button onClick={() => setIsOpen(false)} className="w-full">
+							Done
+						</Button>
 					</div>
 				</DialogContent>
 			</Dialog>

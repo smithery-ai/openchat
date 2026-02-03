@@ -4,10 +4,10 @@ import { Suspense } from "react";
 import { SmitheryProvider } from "@/registry/new-york/smithery/smithery-provider";
 import { RegistryBrowser } from "./registry-browser";
 
-export function HomePage({ namespace }: { namespace: string }) {
+export function HomePage() {
 	return (
 		<Suspense>
-			<SmitheryProvider defaultNamespace={namespace}>
+			<SmitheryProvider>
 				<RegistryBrowser />
 			</SmitheryProvider>
 		</Suspense>

@@ -9,16 +9,16 @@ import { type NavigationSection, SharedSidebar } from "./shared-sidebar";
 
 export function RegistryBrowser() {
 	const searchParams = useSearchParams();
-	const { data: smitheryData, isLoading, error } = useSmitheryContext();
+	const { token, namespace } = useSmitheryContext();
 	const [activeNav, setActiveNav] = useState<NavigationSection>(
 		(searchParams.get("nav") as NavigationSection) || "chat",
 	);
 
 	return (
 		<SharedSidebar activeNav={activeNav} onNavChange={setActiveNav}>
-			{activeNav === "chat" && smitheryData?.token && smitheryData?.namespace ? (
+			{activeNav === "chat" && token && namespace ? (
 				<ChatBlock />
-			) : smitheryData?.token ? (
+			) : token ? (
 				<Connections />
 			) : null}
 		</SharedSidebar>

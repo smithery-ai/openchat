@@ -28,7 +28,6 @@ import {
 	SidebarProvider,
 	SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { createToken } from "@/lib/actions";
 import { Tokens } from "@/registry/new-york/smithery/tokens";
 
 export const navigationItems: {
@@ -134,42 +133,7 @@ export function SharedSidebar({
 				<div className="flex flex-col h-screen">
 					<header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
 						<SidebarTrigger />
-						<Tokens
-							getOrCreateToken={async ({ hasExistingTokens, forceCreate }) => {
-								// Force create skips whoami
-								if (forceCreate) {
-									return createToken({
-										ttlSeconds: 60 * 60 * 24,
-									});
-								}
-
-								// Try localhost whoami first
-								try {
-									const response = await fetch("http://localhost:4260/whoami");
-									if (response.ok) {
-										const data = await response.json();
-										if (data.SMITHERY_API_KEY) {
-											return {
-												token: data.SMITHERY_API_KEY,
-												expiresAt: data.expiresAt ?? "never",
-											};
-										}
-									}
-								} catch {
-									// whoami not available
-								}
-
-								// If we have existing tokens, don't mint
-								if (hasExistingTokens) {
-									return null;
-								}
-
-								// Mint a new token
-								return createToken({
-									ttlSeconds: 60 * 60 * 24,
-								});
-							}}
-						/>
+						<Tokens />
 					</header>
 
 					<div className="flex-1 overflow-auto">{children}</div>

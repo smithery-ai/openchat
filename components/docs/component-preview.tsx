@@ -17,8 +17,8 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
+import { selectedTokenAtom } from "@/hooks/use-smithery";
 import { ConnectionConfigContext } from "@/registry/new-york/smithery/connection-context";
-import { selectedTokenAtom } from "@/registry/new-york/smithery/tokens";
 import { PreviewFrame } from "./preview-frame";
 
 const DEFAULT_MCP_URL = "https://mcp.exa.ai";
