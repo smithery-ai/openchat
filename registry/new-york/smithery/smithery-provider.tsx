@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, type ReactNode, useContext, useState } from "react";
+import { createContext, type ReactNode, useContext } from "react";
 import {
 	CodeBlock,
 	CodeBlockCopyButton,
@@ -23,22 +23,7 @@ interface SmitheryProviderProps extends UseSmitheryOptions {
 function ConnectionError({ error }: { error: Error }) {
 	const isServiceUnavailable =
 		error instanceof SmitheryConnectionError && error.isServiceUnavailable;
-	const [_isCopied, setIsCopied] = useState(false);
 	const command = "npx @smithery/cli@latest whoami --server";
-
-	const _copyToClipboard = async () => {
-		if (typeof window === "undefined" || !navigator?.clipboard?.writeText) {
-			return;
-		}
-
-		try {
-			await navigator.clipboard.writeText(command);
-			setIsCopied(true);
-			setTimeout(() => setIsCopied(false), 2000);
-		} catch {
-			// Ignore errors
-		}
-	};
 
 	return (
 		<div className="absolute inset-0">
