@@ -1,8 +1,8 @@
 "use client";
 
 import Smithery from "@smithery/api";
+import { useQuery } from "@tanstack/react-query";
 import { useAtomValue } from "jotai";
-import { useEffect, useMemo } from "react";
 import { selectedTokenAtom } from "@/registry/new-york/smithery/tokens";
 
 export interface UseSmitheryOptions {
@@ -10,65 +10,33 @@ export interface UseSmitheryOptions {
 	baseURL?: string;
 }
 
-export interface UseSmitheryReturn {
+export interface SmitheryData {
 	token: string;
 	namespace: string;
 	client: Smithery;
-	error: Error | null;
 }
 
-// Suspense implementation
-let pendingPromise: Promise<void> | null = null;
-let resolvePromise: (() => void) | null = null;
-
-function getOrCreatePromise(): Promise<void> {
-	if (!pendingPromise) {
-		pendingPromise = new Promise((resolve) => {
-			resolvePromise = resolve;
-		});
-	}
-	return pendingPromise;
-}
-
-function notifyReady() {
-	if (resolvePromise) {
-		resolvePromise();
-		pendingPromise = null;
-		resolvePromise = null;
-	}
-}
-
-export function useSmithery(options: UseSmitheryOptions): UseSmitheryReturn {
+export function useSmithery(options: UseSmitheryOptions) {
 	const { defaultNamespace, baseURL } = options;
 	const selectedToken = useAtomValue(selectedTokenAtom);
 
-	// Notify that token is ready (resolves any suspended renders)
-	useEffect(() => {
-		if (selectedToken !== null) {
-			notifyReady();
-		}
-	}, [selectedToken]);
-
-	// Suspense: throw promise if token not ready
-	if (selectedToken === null) {
-		throw getOrCreatePromise();
-	}
-
-	const token = selectedToken.token;
-	const namespace = defaultNamespace;
-
-	// Memoize Smithery client instance - recreate only when token changes
-	const client = useMemo(() => {
-		return new Smithery({
-			apiKey: token,
-			baseURL: baseURL ?? process.env.NEXT_PUBLIC_SMITHERY_API_URL,
-		});
-	}, [token, baseURL]);
-
-	return {
-		token,
-		namespace,
-		client,
-		error: null,
-	};
+	return useQuery({
+		queryKey: ["smithery", selectedToken?.token, baseURL],
+		queryFn: () => {
+			if (!selectedToken) {
+				throw new Error("No token selected");
+			}
+			const client = new Smithery({
+				apiKey: selectedToken.token,
+				baseURL: baseURL ?? process.env.NEXT_PUBLIC_SMITHERY_API_URL,
+			});
+			return {
+				token: selectedToken.token,
+				namespace: defaultNamespace,
+				client,
+			} satisfies SmitheryData;
+		},
+		enabled: selectedToken !== null,
+		staleTime: Infinity,
+	});
 }
