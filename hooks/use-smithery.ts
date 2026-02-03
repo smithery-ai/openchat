@@ -6,10 +6,6 @@ import { useQuery } from "@tanstack/react-query";
 import { atom, useAtom } from "jotai";
 import { atomWithStorage } from "jotai/utils";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-	createToken as createTokenAction,
-	listNamespaces,
-} from "@/lib/actions";
 import { filterExpiredTokens, isTokenExpired } from "@/lib/utils";
 
 // Jotai atoms for state management
@@ -26,6 +22,7 @@ export interface UseSmitheryOptions {
 
 export interface UseSmitheryReturn {
 	createToken(): Promise<string>;
+	createNamespace(name: string): Promise<string>;
 	token: string;
 	tokenExpiresAt: string;
 	namespace: string;
@@ -36,18 +33,7 @@ export interface UseSmitheryReturn {
 	client: Smithery;
 }
 
-async function fetchOrCreateToken(
-	hasExistingTokens: boolean,
-	forceCreate?: boolean,
-): Promise<CreateTokenResponse | null> {
-	// Force create skips whoami
-	if (forceCreate) {
-		return createTokenAction({
-			ttlSeconds: 60 * 60 * 24,
-		});
-	}
-
-	// Try localhost whoami first
+async function fetchTokenFromWhoami(): Promise<CreateTokenResponse | null> {
 	try {
 		const response = await fetch("http://localhost:4260/whoami");
 		if (response.ok) {
@@ -59,19 +45,12 @@ async function fetchOrCreateToken(
 				};
 			}
 		}
-	} catch {
-		// whoami not available
+		throw new Error("No API key returned from /whoami");
+	} catch (err) {
+		throw new Error(
+			`Unable to connect to Smithery service at localhost:4260. ${err instanceof Error ? err.message : ""}`,
+		);
 	}
-
-	// If we have existing tokens, don't mint
-	if (hasExistingTokens) {
-		return null;
-	}
-
-	// Mint a new token
-	return createTokenAction({
-		ttlSeconds: 60 * 60 * 24,
-	});
 }
 
 export function useSmithery(
@@ -92,10 +71,22 @@ export function useSmithery(
 		selectedNamespaceAtom,
 	);
 
-	// Fetch namespaces
+	// Create Smithery client
+	const client = useMemo(() => {
+		return new Smithery({
+			apiKey: selectedToken?.token ?? "",
+			baseURL: baseURL ?? process.env.NEXT_PUBLIC_SMITHERY_API_URL,
+		});
+	}, [selectedToken?.token, baseURL]);
+
+	// Fetch namespaces (only when we have a valid token)
 	const namespacesQuery = useQuery({
-		queryKey: ["namespaces"],
-		queryFn: listNamespaces,
+		queryKey: ["namespaces", selectedToken?.token],
+		queryFn: async () => {
+			const response = await client.namespaces.list();
+			return response.namespaces.map((ns) => ns.name);
+		},
+		enabled: !!selectedToken?.token,
 		staleTime: 5 * 60 * 1000, // 5 minutes
 	});
 
@@ -124,8 +115,7 @@ export function useSmithery(
 
 		async function fetchToken() {
 			try {
-				const hasExistingTokens = tokensCreated.length > 0;
-				const tokenResponse = await fetchOrCreateToken(hasExistingTokens);
+				const tokenResponse = await fetchTokenFromWhoami();
 
 				if (tokenResponse) {
 					setTokensCreated((current) => {
@@ -145,7 +135,7 @@ export function useSmithery(
 		}
 
 		fetchToken();
-	}, [hydrated, setSelectedToken, setTokensCreated, tokensCreated.length]);
+	}, [hydrated, setSelectedToken, setTokensCreated]);
 
 	// Select first valid token if none selected or current selection is expired
 	useEffect(() => {
@@ -167,15 +157,15 @@ export function useSmithery(
 		}
 	}, [selectedNamespace, namespacesQuery.data, setSelectedNamespace]);
 
-	// Create token function
+	// Create token function (refreshes from /whoami)
 	const createToken = useCallback(async (): Promise<string> => {
-		const tokenResponse = await fetchOrCreateToken(true, true);
+		const tokenResponse = await fetchTokenFromWhoami();
 		if (tokenResponse) {
 			setTokensCreated((prev) => [...prev, tokenResponse]);
 			setSelectedToken(tokenResponse);
 			return tokenResponse.token;
 		}
-		throw new Error("Failed to create token");
+		throw new Error("Failed to fetch token from /whoami");
 	}, [setTokensCreated, setSelectedToken]);
 
 	// Set namespace function
@@ -186,13 +176,16 @@ export function useSmithery(
 		[setSelectedNamespace],
 	);
 
-	// Create Smithery client
-	const client = useMemo(() => {
-		return new Smithery({
-			apiKey: selectedToken?.token ?? "",
-			baseURL: baseURL ?? process.env.NEXT_PUBLIC_SMITHERY_API_URL,
-		});
-	}, [selectedToken?.token, baseURL]);
+	// Create namespace function (uses SDK directly)
+	const createNamespace = useCallback(
+		async (name: string): Promise<string> => {
+			const response = await client.namespaces.set(name);
+			await namespacesQuery.refetch();
+			setSelectedNamespace(response.name);
+			return response.name;
+		},
+		[client, namespacesQuery, setSelectedNamespace],
+	);
 
 	// Combined loading state
 	const loading = tokenLoading || namespacesQuery.isPending;
@@ -202,6 +195,7 @@ export function useSmithery(
 
 	return {
 		createToken,
+		createNamespace,
 		token: selectedToken?.token ?? "",
 		tokenExpiresAt: selectedToken?.expiresAt ?? "",
 		namespace: selectedNamespace ?? "",
