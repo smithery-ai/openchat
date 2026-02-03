@@ -1,16 +1,14 @@
 "use client";
 
-import type Smithery from "@smithery/api";
+import type { UseQueryResult } from "@tanstack/react-query";
 import { createContext, type ReactNode, useContext } from "react";
-import { type UseSmitheryOptions, useSmithery } from "@/hooks/use-smithery";
+import {
+	type SmitheryData,
+	type UseSmitheryOptions,
+	useSmithery,
+} from "@/hooks/use-smithery";
 
-interface SmitheryContextValue {
-	token: string | undefined;
-	namespace: string | undefined;
-	client: Smithery | null;
-	isLoading: boolean;
-	error: Error | null;
-}
+type SmitheryContextValue = UseQueryResult<SmitheryData, Error>;
 
 const SmitheryContext = createContext<SmitheryContextValue | null>(null);
 

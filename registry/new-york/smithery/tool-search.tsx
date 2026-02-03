@@ -45,19 +45,13 @@ const getServerTitle = (connection: Connection) => {
 export function ToolSearch({
 	defaultAction,
 	connections,
-	namespace: namespaceProp,
-	apiKey: apiKeyProp,
 	onSearchComplete,
 }: {
 	defaultAction: string;
 	connections: Connection[];
-	namespace?: string;
-	apiKey?: string;
 	onSearchComplete: (result: ToolSearchResult) => void;
 }) {
-	const smitheryContext = useSmitheryContext();
-	const apiKey = apiKeyProp ?? smitheryContext.token;
-	const namespace = namespaceProp ?? smitheryContext.namespace;
+	const { token: apiKey, namespace } = useSmitheryContext();
 	const defaultConnectionIds = connections.map(
 		(connection: Connection) => connection.connectionId,
 	);

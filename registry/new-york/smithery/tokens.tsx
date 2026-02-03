@@ -206,17 +206,14 @@ export function Tokens({
 										</div>
 									)}
 								</div>
-								{tokensCreated.length > 1 &&
-									selectedToken.expiresAt !== "never" && (
-										<Button
-											variant="ghost"
-											size="icon-sm"
-											onClick={handleRemoveToken}
-											aria-label="Remove token"
-										>
-											<Trash2 className="size-4" />
-										</Button>
-									)}
+								<Button
+									variant="ghost"
+									size="icon-sm"
+									onClick={handleRemoveToken}
+									aria-label="Remove token"
+								>
+									<Trash2 className="size-4" />
+								</Button>
 							</div>
 						</div>
 

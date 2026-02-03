@@ -6,7 +6,6 @@ import { createConnection } from "@smithery/api/mcp";
 import type { Connection } from "@smithery/api/resources/experimental/connect/connections.mjs";
 import { useQuery } from "@tanstack/react-query";
 import type { ToolExecutionOptions } from "ai";
-import { useAtomValue } from "jotai";
 import { AlertCircle } from "lucide-react";
 import * as React from "react";
 import { useState } from "react";
@@ -37,7 +36,7 @@ import { ConnectionConfigContext } from "@/registry/new-york/smithery/connection
 import { Connections } from "@/registry/new-york/smithery/connections";
 import { SchemaForm } from "@/registry/new-york/smithery/schema-form";
 import { ServerSearch } from "@/registry/new-york/smithery/server-search";
-import { selectedTokenAtom } from "@/registry/new-york/smithery/tokens";
+import { useSmitheryContext } from "@/registry/new-york/smithery/smithery-provider";
 import { ToolCard } from "@/registry/new-york/smithery/tool-card";
 import { ToolDetailDialog } from "@/registry/new-york/smithery/tool-detail-dialog";
 import { ToolSearch } from "@/registry/new-york/smithery/tool-search";
@@ -61,35 +60,27 @@ const getSmitheryClient = (token: string) => {
 	});
 };
 
-function useConnections(
-	token: string | undefined,
-	namespace: string | undefined,
-) {
+function useConnections(token: string, namespace: string) {
 	return useQuery({
 		queryKey: ["connections", token, namespace],
 		queryFn: async () => {
-			if (!token) throw new Error("Token required");
-			if (!namespace) throw new Error("Namespace required");
 			const client = getSmitheryClient(token);
 			const { connections } =
 				await client.experimental.connect.connections.list(namespace);
 			return { connections, namespace };
 		},
-		enabled: !!token && !!namespace,
 	});
 }
 
 function useConnectionTools(
-	token: string | undefined,
+	token: string,
 	connectionId: string | null,
-	namespace: string | undefined,
+	namespace: string,
 ) {
 	const clientQuery = useQuery({
 		queryKey: ["mcp-client", token, connectionId, namespace],
 		queryFn: async () => {
-			if (!token || !connectionId)
-				throw new Error("Token and connection required");
-			if (!namespace) throw new Error("Namespace required");
+			if (!connectionId) throw new Error("Connection required");
 			const { transport } = await createConnection({
 				client: getSmitheryClient(token),
 				connectionId,
@@ -98,7 +89,7 @@ function useConnectionTools(
 			const mcpClient = await createMCPClient({ transport });
 			return { client: mcpClient, namespace };
 		},
-		enabled: !!token && !!connectionId && !!namespace,
+		enabled: !!connectionId,
 	});
 
 	const toolsQuery = useQuery({
@@ -134,18 +125,15 @@ function useConnectionTools(
 }
 
 function ConnectionSelector({
-	token,
-	namespace,
 	selectedConnectionIds,
 	onSelectMultiple,
 	multiple = false,
 }: {
-	token: string;
-	namespace?: string;
 	selectedConnectionIds: string[];
 	onSelectMultiple: (connectionIds: string[]) => void;
 	multiple?: boolean;
 }) {
+	const { token, namespace } = useSmitheryContext();
 	const { data, isLoading, error } = useConnections(token, namespace);
 	const anchor = useComboboxAnchor();
 	const connections = data?.connections ?? [];
@@ -267,26 +255,8 @@ function ConnectionSelector({
 	);
 }
 
-function TokenRequiredMessage() {
-	return (
-		<div className="p-6 text-muted-foreground text-center">
-			Select a token above to view the preview.
-		</div>
-	);
-}
-
 // Server Search Preview - needs namespace for full functionality
-export function ServerSearchPreview({ namespace }: { namespace: string }) {
-	const apiKey = useAtomValue(selectedTokenAtom);
-
-	if (!apiKey) {
-		return (
-			<PreviewFrame>
-				<TokenRequiredMessage />
-			</PreviewFrame>
-		);
-	}
-
+export function ServerSearchPreview() {
 	return (
 		<PreviewFrame>
 			<div className="p-4">
@@ -296,79 +266,47 @@ export function ServerSearchPreview({ namespace }: { namespace: string }) {
 						{DEFAULT_MCP_URL}
 					</code>
 				</p>
-				<ServerSearch token={apiKey.token} namespace={namespace} />
+				<ServerSearch />
 			</div>
 		</PreviewFrame>
 	);
 }
 
 // Connections Preview
-export function ConnectionsPreview({ namespace }: { namespace: string }) {
-	const apiKey = useAtomValue(selectedTokenAtom);
-
-	if (!apiKey) {
-		return (
-			<PreviewFrame>
-				<TokenRequiredMessage />
-			</PreviewFrame>
-		);
-	}
-
+export function ConnectionsPreview() {
 	return (
 		<PreviewFrame>
 			<div className="h-[500px]">
-				<Connections token={apiKey.token} namespace={namespace} />
+				<Connections />
 			</div>
 		</PreviewFrame>
 	);
 }
 
 // Tools Panel Preview - config OUTSIDE preview frame
-export function ToolsPanelPreview({ namespace }: { namespace: string }) {
-	const apiKey = useAtomValue(selectedTokenAtom);
+export function ToolsPanelPreview() {
 	const [selectedConnectionIds, setSelectedConnectionIds] = useState<string[]>(
 		[],
 	);
-
-	if (!apiKey) {
-		return (
-			<PreviewFrame>
-				<TokenRequiredMessage />
-			</PreviewFrame>
-		);
-	}
 
 	return (
 		<div className="space-y-4">
 			<div className="flex items-center gap-2">
 				<span className="text-sm text-muted-foreground">Connection:</span>
 				<ConnectionSelector
-					token={apiKey.token}
-					namespace={namespace}
 					selectedConnectionIds={selectedConnectionIds}
 					onSelectMultiple={setSelectedConnectionIds}
 				/>
 			</div>
 			<PreviewFrame>
-				<ToolsPanelInner
-					token={apiKey.token}
-					namespace={namespace}
-					connectionId={selectedConnectionIds[0] ?? null}
-				/>
+				<ToolsPanelInner connectionId={selectedConnectionIds[0] ?? null} />
 			</PreviewFrame>
 		</div>
 	);
 }
 
-function ToolsPanelInner({
-	token,
-	namespace,
-	connectionId,
-}: {
-	token: string;
-	namespace: string;
-	connectionId: string | null;
-}) {
+function ToolsPanelInner({ connectionId }: { connectionId: string | null }) {
+	const { token, namespace } = useSmitheryContext();
 	const { tools, isLoading, error, handleExecute } = useConnectionTools(
 		token,
 		connectionId,
@@ -416,51 +354,29 @@ function ToolsPanelInner({
 }
 
 // Tool Card Preview - config OUTSIDE preview frame
-export function ToolCardPreview({ namespace }: { namespace: string }) {
-	const apiKey = useAtomValue(selectedTokenAtom);
+export function ToolCardPreview() {
 	const [selectedConnectionIds, setSelectedConnectionIds] = useState<string[]>(
 		[],
 	);
-
-	if (!apiKey) {
-		return (
-			<PreviewFrame>
-				<TokenRequiredMessage />
-			</PreviewFrame>
-		);
-	}
 
 	return (
 		<div className="space-y-4">
 			<div className="flex items-center gap-2">
 				<span className="text-sm text-muted-foreground">Connection:</span>
 				<ConnectionSelector
-					token={apiKey.token}
-					namespace={namespace}
 					selectedConnectionIds={selectedConnectionIds}
 					onSelectMultiple={setSelectedConnectionIds}
 				/>
 			</div>
 			<PreviewFrame>
-				<ToolCardInner
-					token={apiKey.token}
-					namespace={namespace}
-					connectionId={selectedConnectionIds[0] ?? null}
-				/>
+				<ToolCardInner connectionId={selectedConnectionIds[0] ?? null} />
 			</PreviewFrame>
 		</div>
 	);
 }
 
-function ToolCardInner({
-	token,
-	namespace,
-	connectionId,
-}: {
-	token: string;
-	namespace: string;
-	connectionId: string | null;
-}) {
+function ToolCardInner({ connectionId }: { connectionId: string | null }) {
+	const { token, namespace } = useSmitheryContext();
 	const { tools, isLoading, error, handleExecute } = useConnectionTools(
 		token,
 		connectionId,
@@ -517,35 +433,22 @@ function ToolCardInner({
 }
 
 // Tool Detail Dialog Preview - config OUTSIDE preview frame
-export function ToolDetailDialogPreview({ namespace }: { namespace: string }) {
-	const apiKey = useAtomValue(selectedTokenAtom);
+export function ToolDetailDialogPreview() {
 	const [selectedConnectionIds, setSelectedConnectionIds] = useState<string[]>(
 		[],
 	);
-
-	if (!apiKey) {
-		return (
-			<PreviewFrame>
-				<TokenRequiredMessage />
-			</PreviewFrame>
-		);
-	}
 
 	return (
 		<div className="space-y-4">
 			<div className="flex items-center gap-2">
 				<span className="text-sm text-muted-foreground">Connection:</span>
 				<ConnectionSelector
-					token={apiKey.token}
-					namespace={namespace}
 					selectedConnectionIds={selectedConnectionIds}
 					onSelectMultiple={setSelectedConnectionIds}
 				/>
 			</div>
 			<PreviewFrame>
 				<ToolDetailDialogInner
-					token={apiKey.token}
-					namespace={namespace}
 					connectionId={selectedConnectionIds[0] ?? null}
 				/>
 			</PreviewFrame>
@@ -554,14 +457,11 @@ export function ToolDetailDialogPreview({ namespace }: { namespace: string }) {
 }
 
 function ToolDetailDialogInner({
-	token,
-	namespace,
 	connectionId,
 }: {
-	token: string;
-	namespace: string;
 	connectionId: string | null;
 }) {
+	const { token, namespace } = useSmitheryContext();
 	const { tools, isLoading, error, handleExecute } = useConnectionTools(
 		token,
 		connectionId,
@@ -642,51 +542,29 @@ function ToolDetailDialogInner({
 }
 
 // Schema Form Preview - config OUTSIDE preview frame
-export function SchemaFormPreview({ namespace }: { namespace: string }) {
-	const apiKey = useAtomValue(selectedTokenAtom);
+export function SchemaFormPreview() {
 	const [selectedConnectionIds, setSelectedConnectionIds] = useState<string[]>(
 		[],
 	);
-
-	if (!apiKey) {
-		return (
-			<PreviewFrame>
-				<TokenRequiredMessage />
-			</PreviewFrame>
-		);
-	}
 
 	return (
 		<div className="space-y-4">
 			<div className="flex items-center gap-2">
 				<span className="text-sm text-muted-foreground">Connection:</span>
 				<ConnectionSelector
-					token={apiKey.token}
-					namespace={namespace}
 					selectedConnectionIds={selectedConnectionIds}
 					onSelectMultiple={setSelectedConnectionIds}
 				/>
 			</div>
 			<PreviewFrame>
-				<SchemaFormInner
-					token={apiKey.token}
-					namespace={namespace}
-					connectionId={selectedConnectionIds[0] ?? null}
-				/>
+				<SchemaFormInner connectionId={selectedConnectionIds[0] ?? null} />
 			</PreviewFrame>
 		</div>
 	);
 }
 
-function SchemaFormInner({
-	token,
-	namespace,
-	connectionId,
-}: {
-	token: string;
-	namespace: string;
-	connectionId: string | null;
-}) {
+function SchemaFormInner({ connectionId }: { connectionId: string | null }) {
+	const { token, namespace } = useSmitheryContext();
 	const { tools, isLoading, error } = useConnectionTools(
 		token,
 		connectionId,
@@ -760,21 +638,13 @@ function SchemaFormInner({
 }
 
 // Tool Search Preview - config OUTSIDE preview frame
-export function ToolSearchPreview({ namespace }: { namespace: string }) {
-	const apiKey = useAtomValue(selectedTokenAtom);
+export function ToolSearchPreview() {
+	const { token, namespace } = useSmitheryContext();
 	const [action, setAction] = useState("Create");
-	const { data, isLoading, error } = useConnections(apiKey?.token, namespace);
+	const { data, isLoading, error } = useConnections(token, namespace);
 	const [searchResults, setSearchResults] = useState<ToolSearchResult | null>(
 		null,
 	);
-
-	if (!apiKey) {
-		return (
-			<PreviewFrame>
-				<TokenRequiredMessage />
-			</PreviewFrame>
-		);
-	}
 
 	if (isLoading) {
 		return (
@@ -834,8 +704,6 @@ export function ToolSearchPreview({ namespace }: { namespace: string }) {
 					<ToolSearch
 						defaultAction={action}
 						connections={data.connections}
-						namespace={data.namespace}
-						apiKey={apiKey.token}
 						onSearchComplete={setSearchResults}
 					/>
 				</div>

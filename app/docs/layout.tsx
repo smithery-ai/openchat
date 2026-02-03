@@ -1,9 +1,11 @@
+import { getDefaultNamespace } from "@/lib/actions";
 import { DocsLayoutClient } from "./docs-layout-client";
 
-export default function DocsLayout({
+export default async function DocsLayout({
 	children,
 }: {
 	children: React.ReactNode;
 }) {
-	return <DocsLayoutClient>{children}</DocsLayoutClient>;
+	const namespace = await getDefaultNamespace();
+	return <DocsLayoutClient namespace={namespace}>{children}</DocsLayoutClient>;
 }
