@@ -307,8 +307,7 @@ const ActiveConnection = ({ connectionId }: { connectionId: string }) => {
 			const mcpClient = await createMCPClient({ transport });
 			return mcpClient;
 		},
-		enabled:
-			!!token && !!connectionId && data?.status?.state === "connected",
+		enabled: !!token && !!connectionId && data?.status?.state === "connected",
 	});
 
 	const toolsQuery = useQuery({
