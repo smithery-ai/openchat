@@ -138,6 +138,7 @@ const ConnectionsListInner = ({
 				await client.experimental.connect.connections.list(namespace);
 			return { connections, namespace };
 		},
+		enabled: !!token && !!namespace,
 	});
 
 	useEffect(() => {
@@ -190,7 +191,7 @@ const ConnectionsListInner = ({
 				{error && (
 					<p className="text-destructive px-6">Error: {error.message}</p>
 				)}
-				{data && (
+				{data?.connections && (
 					<div className="overflow-auto flex-1">
 						{data.connections.length === 0 && (
 							<p className="text-muted-foreground px-6">No connections found</p>
@@ -244,6 +245,7 @@ const ActiveConnection = ({ connectionId }: { connectionId: string }) => {
 			);
 			return { namespace, ...data };
 		},
+		enabled: !!token && !!namespace && !!connectionId,
 		// Poll every 2 seconds when auth_required, stop when connected or error
 		refetchInterval: (query) => {
 			const state = query.state.data?.status?.state;
@@ -305,7 +307,8 @@ const ActiveConnection = ({ connectionId }: { connectionId: string }) => {
 			const mcpClient = await createMCPClient({ transport });
 			return mcpClient;
 		},
-		enabled: !!connectionId && data?.status?.state === "connected",
+		enabled:
+			!!token && !!connectionId && data?.status?.state === "connected",
 	});
 
 	const toolsQuery = useQuery({

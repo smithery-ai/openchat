@@ -30,27 +30,52 @@ export interface UseSmitheryReturn {
 	namespaces: string[];
 	loading: boolean;
 	error?: Error;
+	connected: boolean;
 	client: Smithery;
 }
 
-async function fetchTokenFromWhoami(): Promise<CreateTokenResponse | null> {
+export { SmitheryConnectionError };
+
+class SmitheryConnectionError extends Error {
+	constructor(
+		message: string,
+		public readonly isServiceUnavailable: boolean,
+	) {
+		super(message);
+		this.name = "SmitheryConnectionError";
+	}
+}
+
+async function fetchTokenFromWhoami(): Promise<CreateTokenResponse> {
+	let response: Response;
 	try {
-		const response = await fetch("http://localhost:4260/whoami");
-		if (response.ok) {
-			const data = await response.json();
-			if (data.SMITHERY_API_KEY) {
-				return {
-					token: data.SMITHERY_API_KEY,
-					expiresAt: data.expiresAt ?? "never",
-				};
-			}
-		}
-		throw new Error("No API key returned from /whoami");
-	} catch (err) {
-		throw new Error(
-			`Unable to connect to Smithery service at localhost:4260. ${err instanceof Error ? err.message : ""}`,
+		response = await fetch("http://localhost:4260/whoami");
+	} catch {
+		throw new SmitheryConnectionError(
+			"Unable to connect to Smithery service. Make sure the Smithery agent is running on localhost:4260.",
+			true,
 		);
 	}
+
+	if (!response.ok) {
+		throw new SmitheryConnectionError(
+			`Smithery service returned an error: ${response.status} ${response.statusText}`,
+			false,
+		);
+	}
+
+	const data = await response.json();
+	if (!data.SMITHERY_API_KEY) {
+		throw new SmitheryConnectionError(
+			"Smithery service did not return an API key. Please check your Smithery configuration.",
+			false,
+		);
+	}
+
+	return {
+		token: data.SMITHERY_API_KEY,
+		expiresAt: data.expiresAt ?? "never",
+	};
 }
 
 export function useSmithery(
@@ -179,19 +204,35 @@ export function useSmithery(
 	// Create namespace function (uses SDK directly)
 	const createNamespace = useCallback(
 		async (name: string): Promise<string> => {
-			const response = await client.namespaces.set(name);
-			await namespacesQuery.refetch();
-			setSelectedNamespace(response.name);
-			return response.name;
+			if (!selectedToken?.token) {
+				throw new Error(
+					"Cannot create namespace: not connected to Smithery service",
+				);
+			}
+			try {
+				const response = await client.namespaces.set(name);
+				await namespacesQuery.refetch();
+				setSelectedNamespace(response.name);
+				return response.name;
+			} catch (err) {
+				const message =
+					err instanceof Error ? err.message : "Unknown error occurred";
+				throw new Error(`Failed to create namespace "${name}": ${message}`);
+			}
 		},
-		[client, namespacesQuery, setSelectedNamespace],
+		[client, namespacesQuery, selectedToken?.token, setSelectedNamespace],
 	);
 
 	// Combined loading state
-	const loading = tokenLoading || namespacesQuery.isPending;
+	// Only consider namespace query loading if we have a token (query is enabled)
+	const loading =
+		tokenLoading || (!!selectedToken?.token && namespacesQuery.isPending);
 
 	// Combined error state
 	const error = tokenError ?? namespacesQuery.error ?? undefined;
+
+	// Connected if we have a token and no connection error
+	const connected = !!selectedToken?.token && !tokenError;
 
 	return {
 		createToken,
@@ -203,6 +244,7 @@ export function useSmithery(
 		namespaces: namespacesQuery.data ?? [],
 		loading,
 		error,
+		connected,
 		client,
 	};
 }
