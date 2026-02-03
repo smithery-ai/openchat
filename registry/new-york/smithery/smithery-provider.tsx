@@ -2,15 +2,15 @@
 
 import { createContext, type ReactNode, useContext, useState } from "react";
 import {
-	type UseSmitheryOptions,
-	type UseSmitheryReturn,
-	useSmithery,
-	SmitheryConnectionError,
-} from "@/hooks/use-smithery";
-import {
 	CodeBlock,
 	CodeBlockCopyButton,
 } from "@/components/ai-elements/code-block";
+import {
+	SmitheryConnectionError,
+	type UseSmitheryOptions,
+	type UseSmitheryReturn,
+	useSmithery,
+} from "@/hooks/use-smithery";
 
 type SmitheryContextValue = UseSmitheryReturn;
 
@@ -23,10 +23,10 @@ interface SmitheryProviderProps extends UseSmitheryOptions {
 function ConnectionError({ error }: { error: Error }) {
 	const isServiceUnavailable =
 		error instanceof SmitheryConnectionError && error.isServiceUnavailable;
-	const [isCopied, setIsCopied] = useState(false);
+	const [_isCopied, setIsCopied] = useState(false);
 	const command = "npx @smithery/cli@latest whoami --server";
 
-	const copyToClipboard = async () => {
+	const _copyToClipboard = async () => {
 		if (typeof window === "undefined" || !navigator?.clipboard?.writeText) {
 			return;
 		}
@@ -51,9 +51,9 @@ function ConnectionError({ error }: { error: Error }) {
 					</div>
 					<p className="text-muted-foreground">{error.message}</p>
 					{isServiceUnavailable && (
-							<CodeBlock code={command} language="bash">
-								<CodeBlockCopyButton />
-							</CodeBlock>
+						<CodeBlock code={command} language="bash">
+							<CodeBlockCopyButton />
+						</CodeBlock>
 					)}
 				</div>
 			</div>
