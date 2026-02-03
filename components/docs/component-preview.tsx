@@ -9,7 +9,6 @@ import type { Tool, ToolExecutionOptions } from "ai";
 import { useAtomValue } from "jotai";
 import { AlertCircle } from "lucide-react";
 import { useState } from "react";
-import { listNamespaces } from "@/components/smithery/actions";
 import {
 	Select,
 	SelectContent,
@@ -31,50 +30,44 @@ const getSmitheryClient = (token: string) => {
 	});
 };
 
-// Uses server action to get namespace (scoped tokens lack namespaces:read)
-async function getDefaultNamespace() {
-	const namespaces = await listNamespaces();
-	if (namespaces.length === 0) {
-		throw new Error("No namespaces found");
-	}
-	return namespaces[0].name;
-}
-
-function useConnections(token: string | undefined, namespace?: string) {
+function useConnections(
+	token: string | undefined,
+	namespace: string | undefined,
+) {
 	return useQuery({
-		queryKey: ["connections", token],
+		queryKey: ["connections", token, namespace],
 		queryFn: async () => {
 			if (!token) throw new Error("Token required");
+			if (!namespace) throw new Error("Namespace required");
 			const client = getSmitheryClient(token);
-			const namespaceToUse = namespace || (await getDefaultNamespace());
 			const { connections } =
-				await client.experimental.connect.connections.list(namespaceToUse);
-			return { connections, namespace: namespaceToUse };
+				await client.experimental.connect.connections.list(namespace);
+			return { connections, namespace };
 		},
-		enabled: !!token,
+		enabled: !!token && !!namespace,
 	});
 }
 
 function useConnectionTools(
 	token: string | undefined,
 	connectionId: string | null,
-	namespace?: string,
+	namespace: string | undefined,
 ) {
 	const clientQuery = useQuery({
 		queryKey: ["mcp-client", token, connectionId, namespace],
 		queryFn: async () => {
 			if (!token || !connectionId)
 				throw new Error("Token and connection required");
-			const namespaceToUse = namespace || (await getDefaultNamespace());
+			if (!namespace) throw new Error("Namespace required");
 			const { transport } = await createConnection({
 				client: getSmitheryClient(token),
 				connectionId,
-				namespace: namespaceToUse,
+				namespace,
 			});
 			const mcpClient = await createMCPClient({ transport });
-			return { client: mcpClient, namespace: namespaceToUse };
+			return { client: mcpClient, namespace };
 		},
-		enabled: !!token && !!connectionId,
+		enabled: !!token && !!connectionId && !!namespace,
 	});
 
 	const toolsQuery = useQuery({
@@ -116,7 +109,7 @@ function ConnectionSelector({
 	onSelect,
 }: {
 	token: string;
-	namespace?: string;
+	namespace: string;
 	selectedConnectionId: string | null;
 	onSelect: (connectionId: string | null) => void;
 }) {
@@ -179,6 +172,7 @@ function ConnectionSelector({
 
 interface ComponentPreviewProps {
 	component: string;
+	namespace: string;
 	requiresConnection?: boolean;
 	children:
 		| React.ReactNode
@@ -201,6 +195,7 @@ interface ComponentPreviewProps {
 
 export function ComponentPreview({
 	component: _component,
+	namespace,
 	requiresConnection = false,
 	children,
 }: ComponentPreviewProps) {
@@ -235,12 +230,14 @@ export function ComponentPreview({
 				<div className="p-4 border-b">
 					<ConnectionSelector
 						token={apiKey.token}
+						namespace={namespace}
 						selectedConnectionId={selectedConnectionId}
 						onSelect={setSelectedConnectionId}
 					/>
 				</div>
 				<ToolComponentPreviewInner
 					token={apiKey.token}
+					namespace={namespace}
 					connectionId={selectedConnectionId}
 					selectedToolName={selectedToolName}
 					setSelectedToolName={setSelectedToolName}
@@ -275,7 +272,7 @@ function ToolComponentPreviewInner({
 	children,
 }: {
 	token: string;
-	namespace?: string;
+	namespace: string;
 	connectionId: string | null;
 	selectedToolName: string | null;
 	setSelectedToolName: (name: string | null) => void;
@@ -295,13 +292,11 @@ function ToolComponentPreviewInner({
 		setSelectedToolName: (name: string | null) => void;
 	}) => React.ReactNode;
 }) {
-	const {
-		tools,
-		isLoading,
-		error,
-		handleExecute,
-		namespace: resolvedNamespace,
-	} = useConnectionTools(token, connectionId, namespace);
+	const { tools, isLoading, error, handleExecute } = useConnectionTools(
+		token,
+		connectionId,
+		namespace,
+	);
 
 	if (!connectionId) {
 		return (
@@ -339,7 +334,7 @@ function ToolComponentPreviewInner({
 	const connectionConfig = {
 		mcpUrl: DEFAULT_MCP_URL,
 		apiKey: token,
-		namespace: resolvedNamespace || "",
+		namespace,
 		connectionId,
 	};
 

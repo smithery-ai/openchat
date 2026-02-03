@@ -98,6 +98,18 @@ export function ChatBlock() {
 	const [connections, setConnections] = useState<Connection[]>([]);
 
 	const updateBody = useCallback(() => {
+		console.log(
+			"📦 Updating body:",
+			JSON.stringify(
+				{
+					model: model,
+					connections: connections,
+					apiKey: token,
+				},
+				null,
+				2,
+			),
+		);
 		return {
 			model: model,
 			connections: connections,
@@ -109,6 +121,10 @@ export function ChatBlock() {
 		transport: new DefaultChatTransport({
 			api: "/api/chat",
 			prepareSendMessagesRequest: (options) => {
+				console.log(
+					"📦 Full request messages:",
+					JSON.stringify(options, null, 2),
+				);
 				return {
 					body: {
 						...(options.body || {}),

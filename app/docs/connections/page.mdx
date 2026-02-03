@@ -11,7 +11,7 @@ The Connections component provides a full-featured interface for managing MCP se
 ## Usage
 
 ```tsx
-import { Connections } from "@/components/smithery/connections"
+import { Connections } from "@/registry/new-york/smithery/connections"
 
 export function MyApp() {
   return (
@@ -44,7 +44,7 @@ export function MyApp() {
 Individual connection card with delete functionality:
 
 ```tsx
-import { ConnectionCard } from "@/components/smithery/connections"
+import { ConnectionCard } from "@/registry/new-york/smithery/connections"
 
 <ConnectionCard
   connection={connection}
@@ -58,7 +58,7 @@ import { ConnectionCard } from "@/components/smithery/connections"
 Just the connections list without the tools panel:
 
 ```tsx
-import { ConnectionsList } from "@/components/smithery/connections"
+import { ConnectionsList } from "@/registry/new-york/smithery/connections"
 
 <ConnectionsList
   token="your-token"

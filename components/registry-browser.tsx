@@ -16,15 +16,11 @@ export function RegistryBrowser() {
 
 	return (
 		<SharedSidebar activeNav={activeNav} onNavChange={setActiveNav}>
-			{activeNav === "chat" ? (
+			{activeNav === "chat" && token ? (
 				<ChatBlock />
 			) : token ? (
 				<Connections />
-			) : (
-				<div className="p-6 text-muted-foreground">
-					No token selected. Please create a token.
-				</div>
-			)}
+			) : null}
 		</SharedSidebar>
 	);
 }
