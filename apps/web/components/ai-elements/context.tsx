@@ -1,8 +1,5 @@
 "use client";
 
-import type { LanguageModelUsage } from "ai";
-import { type ComponentProps, createContext, useContext } from "react";
-import { getUsage } from "tokenlens";
 import { Button } from "@openchat/ui/components/button";
 import {
 	HoverCard,
@@ -11,6 +8,9 @@ import {
 } from "@openchat/ui/components/hover-card";
 import { Progress } from "@openchat/ui/components/progress";
 import { cn } from "@openchat/ui/lib/utils";
+import type { LanguageModelUsage } from "ai";
+import { type ComponentProps, createContext, useContext } from "react";
+import { getUsage } from "tokenlens";
 
 const PERCENT_MAX = 100;
 const ICON_RADIUS = 10;

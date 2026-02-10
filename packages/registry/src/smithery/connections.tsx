@@ -1,19 +1,22 @@
 "use client";
 
 import { createMCPClient } from "@ai-sdk/mcp";
-import Smithery from "@smithery/api";
+import {
+	Avatar,
+	AvatarFallback,
+	AvatarImage,
+} from "@openchat/ui/components/avatar";
+import { Button } from "@openchat/ui/components/button";
+import { Card, CardContent } from "@openchat/ui/components/card";
+import { Separator } from "@openchat/ui/components/separator";
+import { Toggle } from "@openchat/ui/components/toggle";
+import { cn } from "@openchat/ui/lib/utils";
 import { createConnection } from "@smithery/api/mcp";
 import type { Connection } from "@smithery/api/resources/experimental/connect/connections.mjs";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ToolExecutionOptions } from "ai";
 import { Plus, RefreshCw, Trash2, X } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Avatar, AvatarFallback, AvatarImage } from "@openchat/ui/components/avatar";
-import { Button } from "@openchat/ui/components/button";
-import { Card, CardContent } from "@openchat/ui/components/card";
-import { Separator } from "@openchat/ui/components/separator";
-import { Toggle } from "@openchat/ui/components/toggle";
-import { cn } from "@openchat/ui/lib/utils";
 import {
 	ConnectionConfigContext,
 	useConnectionConfig,
@@ -26,13 +29,6 @@ import { ToolsPanel } from "./tools-panel";
 // Re-export useConnectionConfig for backward compatibility
 export { useConnectionConfig };
 
-const getSmitheryClient = (token: string) => {
-	return new Smithery({
-		apiKey: token,
-		baseURL: process.env.NEXT_PUBLIC_SMITHERY_API_URL,
-	});
-};
-
 const ConnectionCardInner = ({
 	connection,
 	className,
@@ -41,11 +37,10 @@ const ConnectionCardInner = ({
 	connection: Connection;
 	className?: string;
 } & React.HTMLAttributes<HTMLDivElement>) => {
-	const { token, namespace } = useSmitheryContext();
+	const { client, namespace } = useSmitheryContext();
 	const queryClient = useQueryClient();
 	const deleteMutation = useMutation({
 		mutationFn: async () => {
-			const client = getSmitheryClient(token);
 			await client.experimental.connect.connections.delete(
 				connection.connectionId,
 				{
@@ -123,7 +118,7 @@ const ConnectionsListInner = ({
 	onActiveConnectionIdChange: (connectionId: string) => void;
 	defaultShowSearchServers?: boolean;
 }) => {
-	const { token, namespace } = useSmitheryContext();
+	const { client, token, namespace } = useSmitheryContext();
 	const [activeConnectionId, setActiveConnectionId] = useState<string | null>(
 		defaultActiveConnectionId || null,
 	);
@@ -133,7 +128,6 @@ const ConnectionsListInner = ({
 	const { data, isLoading, error, refetch, isFetching } = useQuery({
 		queryKey: ["connections", token, namespace],
 		queryFn: async () => {
-			const client = getSmitheryClient(token);
 			const { connections } =
 				await client.experimental.connect.connections.list(namespace);
 			return { connections, namespace };
@@ -229,14 +223,13 @@ export const ConnectionsList = (props: {
 );
 
 const ActiveConnection = ({ connectionId }: { connectionId: string }) => {
-	const { token, namespace } = useSmitheryContext();
+	const { client, token, namespace } = useSmitheryContext();
 	const [countdown, setCountdown] = useState<number | null>(null);
 	const [hasRedirected, setHasRedirected] = useState(false);
 
 	const { data, isLoading, error } = useQuery({
 		queryKey: ["connection", connectionId, token, namespace],
 		queryFn: async () => {
-			const client = getSmitheryClient(token);
 			const data = await client.experimental.connect.connections.get(
 				connectionId,
 				{
@@ -300,7 +293,7 @@ const ActiveConnection = ({ connectionId }: { connectionId: string }) => {
 		queryKey: ["mcp-client", token, connectionId, namespace],
 		queryFn: async () => {
 			const { transport } = await createConnection({
-				client: getSmitheryClient(token),
+				client,
 				connectionId: connectionId,
 				namespace,
 			});

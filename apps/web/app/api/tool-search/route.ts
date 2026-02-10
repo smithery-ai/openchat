@@ -1,14 +1,14 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import type { Tool } from "@modelcontextprotocol/sdk/types.js";
+import type {
+	FailedToolSearch,
+	SuccessfulToolSearch,
+} from "@openchat/registry/smithery/types";
 import { Smithery } from "@smithery/api";
 import { createConnection } from "@smithery/api/lib/mcp-transport.mjs";
 import type { Connection } from "@smithery/api/resources/experimental/connect/connections";
 import { Index } from "flexsearch";
 import { estimateTokenCount } from "tokenx";
-import type {
-	FailedToolSearch,
-	SuccessfulToolSearch,
-} from "@openchat/registry/smithery/types";
 
 export async function POST(request: Request) {
 	const startTime = performance.now();

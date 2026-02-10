@@ -1,9 +1,9 @@
 "use client";
 
+import { SmitheryProvider } from "@openchat/registry/smithery/smithery-provider";
 import { Suspense } from "react";
 import { createSandboxToken } from "@/app/actions/create-token";
 import { SharedSidebar } from "@/components/shared-sidebar";
-import { SmitheryProvider } from "@openchat/registry/smithery/smithery-provider";
 
 export function DocsLayoutClient({ children }: { children: React.ReactNode }) {
 	return (

@@ -1,14 +1,16 @@
 "use client";
 
 import { createMCPClient } from "@ai-sdk/mcp";
-import Smithery from "@smithery/api";
-import { createConnection } from "@smithery/api/mcp";
-import type { Connection } from "@smithery/api/resources/experimental/connect/connections.mjs";
-import { useQuery } from "@tanstack/react-query";
-import type { ToolExecutionOptions } from "ai";
-import { AlertCircle } from "lucide-react";
-import * as React from "react";
-import { useState } from "react";
+import { ConnectionConfigContext } from "@openchat/registry/smithery/connection-context";
+import { Connections } from "@openchat/registry/smithery/connections";
+import { SchemaForm } from "@openchat/registry/smithery/schema-form";
+import { ServerSearch } from "@openchat/registry/smithery/server-search";
+import { useSmitheryContext } from "@openchat/registry/smithery/smithery-provider";
+import { ToolCard } from "@openchat/registry/smithery/tool-card";
+import { ToolDetailDialog } from "@openchat/registry/smithery/tool-detail-dialog";
+import { ToolSearch } from "@openchat/registry/smithery/tool-search";
+import { ToolsPanel } from "@openchat/registry/smithery/tools-panel";
+import type { ToolSearchResult } from "@openchat/registry/smithery/types";
 import { Button } from "@openchat/ui/components/button";
 import {
 	Combobox,
@@ -23,6 +25,13 @@ import {
 	ComboboxValue,
 	useComboboxAnchor,
 } from "@openchat/ui/components/combobox";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogTitle,
+	DialogTrigger,
+} from "@openchat/ui/components/dialog";
 import { Input } from "@openchat/ui/components/input";
 import {
 	Select,
@@ -32,39 +41,22 @@ import {
 	SelectValue,
 } from "@openchat/ui/components/select";
 import { Spinner } from "@openchat/ui/components/spinner";
-import { ConnectionConfigContext } from "@openchat/registry/smithery/connection-context";
-import { Connections } from "@openchat/registry/smithery/connections";
-import { SchemaForm } from "@openchat/registry/smithery/schema-form";
-import { ServerSearch } from "@openchat/registry/smithery/server-search";
-import { useSmitheryContext } from "@openchat/registry/smithery/smithery-provider";
-import { ToolCard } from "@openchat/registry/smithery/tool-card";
-import { ToolDetailDialog } from "@openchat/registry/smithery/tool-detail-dialog";
-import { ToolSearch } from "@openchat/registry/smithery/tool-search";
-import { ToolsPanel } from "@openchat/registry/smithery/tools-panel";
-import type { ToolSearchResult } from "@openchat/registry/smithery/types";
-import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogTitle,
-	DialogTrigger,
-} from "@openchat/ui/components/dialog";
+import type Smithery from "@smithery/api";
+import { createConnection } from "@smithery/api/mcp";
+import type { Connection } from "@smithery/api/resources/experimental/connect/connections.mjs";
+import { useQuery } from "@tanstack/react-query";
+import type { ToolExecutionOptions } from "ai";
+import { AlertCircle } from "lucide-react";
+import * as React from "react";
+import { useState } from "react";
 import { PreviewFrame } from "./preview-frame";
 
 const DEFAULT_MCP_URL = "https://mcp.exa.ai";
 
-const getSmitheryClient = (token: string) => {
-	return new Smithery({
-		apiKey: token,
-		baseURL: process.env.NEXT_PUBLIC_SMITHERY_API_URL,
-	});
-};
-
-function useConnections(token: string, namespace: string) {
+function useConnections(client: Smithery, token: string, namespace: string) {
 	return useQuery({
 		queryKey: ["connections", token, namespace],
 		queryFn: async () => {
-			const client = getSmitheryClient(token);
 			const { connections } =
 				await client.experimental.connect.connections.list(namespace);
 			return { connections, namespace };
@@ -73,6 +65,7 @@ function useConnections(token: string, namespace: string) {
 }
 
 function useConnectionTools(
+	client: Smithery,
 	token: string,
 	connectionId: string | null,
 	namespace: string,
@@ -82,7 +75,7 @@ function useConnectionTools(
 		queryFn: async () => {
 			if (!connectionId) throw new Error("Connection required");
 			const { transport } = await createConnection({
-				client: getSmitheryClient(token),
+				client,
 				connectionId,
 				namespace,
 			});
@@ -133,8 +126,8 @@ function ConnectionSelector({
 	onSelectMultiple: (connectionIds: string[]) => void;
 	multiple?: boolean;
 }) {
-	const { token, namespace } = useSmitheryContext();
-	const { data, isLoading, error } = useConnections(token, namespace);
+	const { client, token, namespace } = useSmitheryContext();
+	const { data, isLoading, error } = useConnections(client, token, namespace);
 	const anchor = useComboboxAnchor();
 	const connections = data?.connections ?? [];
 	const connectionItems = React.useMemo(
@@ -306,8 +299,9 @@ export function ToolsPanelPreview() {
 }
 
 function ToolsPanelInner({ connectionId }: { connectionId: string | null }) {
-	const { token, namespace } = useSmitheryContext();
+	const { client, token, namespace } = useSmitheryContext();
 	const { tools, isLoading, error, handleExecute } = useConnectionTools(
+		client,
 		token,
 		connectionId,
 		namespace,
@@ -376,8 +370,9 @@ export function ToolCardPreview() {
 }
 
 function ToolCardInner({ connectionId }: { connectionId: string | null }) {
-	const { token, namespace } = useSmitheryContext();
+	const { client, token, namespace } = useSmitheryContext();
 	const { tools, isLoading, error, handleExecute } = useConnectionTools(
+		client,
 		token,
 		connectionId,
 		namespace,
@@ -461,8 +456,9 @@ function ToolDetailDialogInner({
 }: {
 	connectionId: string | null;
 }) {
-	const { token, namespace } = useSmitheryContext();
+	const { client, token, namespace } = useSmitheryContext();
 	const { tools, isLoading, error, handleExecute } = useConnectionTools(
+		client,
 		token,
 		connectionId,
 		namespace,
@@ -564,8 +560,9 @@ export function SchemaFormPreview() {
 }
 
 function SchemaFormInner({ connectionId }: { connectionId: string | null }) {
-	const { token, namespace } = useSmitheryContext();
+	const { client, token, namespace } = useSmitheryContext();
 	const { tools, isLoading, error } = useConnectionTools(
+		client,
 		token,
 		connectionId,
 		namespace,
@@ -639,9 +636,9 @@ function SchemaFormInner({ connectionId }: { connectionId: string | null }) {
 
 // Tool Search Preview - config OUTSIDE preview frame
 export function ToolSearchPreview() {
-	const { token, namespace } = useSmitheryContext();
+	const { client, token, namespace } = useSmitheryContext();
 	const [action, setAction] = useState("Create");
-	const { data, isLoading, error } = useConnections(token, namespace);
+	const { data, isLoading, error } = useConnections(client, token, namespace);
 	const [searchResults, setSearchResults] = useState<ToolSearchResult | null>(
 		null,
 	);

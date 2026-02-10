@@ -1,5 +1,12 @@
 "use client";
 
+import { Badge } from "@openchat/ui/components/badge";
+import {
+	Collapsible,
+	CollapsibleContent,
+	CollapsibleTrigger,
+} from "@openchat/ui/components/collapsible";
+import { cn } from "@openchat/ui/lib/utils";
 import { useControllableState } from "@radix-ui/react-use-controllable-state";
 import {
 	BrainIcon,
@@ -9,13 +16,6 @@ import {
 } from "lucide-react";
 import type { ComponentProps, ReactNode } from "react";
 import { createContext, memo, useContext, useMemo } from "react";
-import { Badge } from "@openchat/ui/components/badge";
-import {
-	Collapsible,
-	CollapsibleContent,
-	CollapsibleTrigger,
-} from "@openchat/ui/components/collapsible";
-import { cn } from "@openchat/ui/lib/utils";
 
 type ChainOfThoughtContextValue = {
 	isOpen: boolean;

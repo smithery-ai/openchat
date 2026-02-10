@@ -1,9 +1,9 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
-import { useState } from "react";
 import { Connections } from "@openchat/registry/smithery/connections";
 import { useSmitheryContext } from "@openchat/registry/smithery/smithery-provider";
+import { useSearchParams } from "next/navigation";
+import { useState } from "react";
 import { ChatBlock } from "./chat-block";
 import { type NavigationSection, SharedSidebar } from "./shared-sidebar";
 
