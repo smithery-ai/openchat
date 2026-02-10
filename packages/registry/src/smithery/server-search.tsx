@@ -1,24 +1,11 @@
 "use client";
 
 import { createMCPClient } from "@ai-sdk/mcp";
-import Smithery from "@smithery/api";
 import {
-	createConnection,
-	SmitheryAuthorizationError,
-} from "@smithery/api/mcp";
-import type { Connection } from "@smithery/api/resources/experimental/connect/connections.mjs";
-import type { ServerListResponse } from "@smithery/api/resources/servers/servers.mjs";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-	AlertTriangle,
-	ArrowRight,
-	CheckCircle,
-	Link,
-	Loader2,
-	Lock,
-} from "lucide-react";
-import { useEffect, useState } from "react";
-import { Avatar, AvatarFallback, AvatarImage } from "@openchat/ui/components/avatar";
+	Avatar,
+	AvatarFallback,
+	AvatarImage,
+} from "@openchat/ui/components/avatar";
 import { Button } from "@openchat/ui/components/button";
 import {
 	Combobox,
@@ -36,6 +23,23 @@ import {
 	ItemTitle,
 } from "@openchat/ui/components/item";
 import { useDebounce } from "@openchat/ui/hooks/use-debounce";
+import type Smithery from "@smithery/api";
+import {
+	createConnection,
+	SmitheryAuthorizationError,
+} from "@smithery/api/mcp";
+import type { Connection } from "@smithery/api/resources/experimental/connect/connections.mjs";
+import type { ServerListResponse } from "@smithery/api/resources/servers/servers.mjs";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+	AlertTriangle,
+	ArrowRight,
+	CheckCircle,
+	Link,
+	Loader2,
+	Lock,
+} from "lucide-react";
+import { useEffect, useState } from "react";
 import { WithQueryClient } from "./query-client-wrapper";
 import { useSmitheryContext } from "./smithery-provider";
 
@@ -205,7 +209,7 @@ const ServerDisplay = ({
 	onExistingConnection,
 	onServerConnect,
 }: ServerDisplayProps) => {
-	const { token, namespace } = useSmitheryContext();
+	const { client, token, namespace } = useSmitheryContext();
 	const queryClient = useQueryClient();
 	const [countdown, setCountdown] = useState<number | null>(null);
 
@@ -226,7 +230,6 @@ const ServerDisplay = ({
 		mutationFn: async (
 			overrideMode?: "use" | "create-new",
 		): Promise<ConnectionStatus> => {
-			const client = getSmitheryClient(token);
 			return await getOrCreateConnection(
 				client,
 				namespace,
@@ -289,7 +292,6 @@ const ServerDisplay = ({
 
 		const pollInterval = setInterval(async () => {
 			try {
-				const client = getSmitheryClient(token);
 				const status = await checkConnectionStatus(
 					client,
 					authConnectionId,
@@ -308,7 +310,7 @@ const ServerDisplay = ({
 		}, 2000); // Check every 2 seconds
 
 		return () => clearInterval(pollInterval);
-	}, [authConnectionId, token, namespace, connectAsync]);
+	}, [authConnectionId, token, namespace, connectAsync, client]);
 
 	return (
 		<div className="p-4 border rounded-md flex flex-col gap-4 text-left">
@@ -397,13 +399,6 @@ const ServerDisplay = ({
 			)}
 		</div>
 	);
-};
-
-const getSmitheryClient = (token: string) => {
-	return new Smithery({
-		apiKey: token,
-		baseURL: process.env.NEXT_PUBLIC_SMITHERY_API_URL,
-	});
 };
 
 type ConnectionStatus =
@@ -562,7 +557,7 @@ const ExternalURLDisplay = ({
 	onExistingConnection,
 	onServerConnect,
 }: ExternalURLDisplayProps) => {
-	const { token, namespace } = useSmitheryContext();
+	const { client, token, namespace } = useSmitheryContext();
 	const queryClient = useQueryClient();
 	const [countdown, setCountdown] = useState<number | null>(null);
 
@@ -575,7 +570,6 @@ const ExternalURLDisplay = ({
 		mutationFn: async (
 			overrideMode?: "use" | "create-new",
 		): Promise<ConnectionStatus> => {
-			const client = getSmitheryClient(token);
 			return await getOrCreateConnection(
 				client,
 				namespace,
@@ -644,7 +638,6 @@ const ExternalURLDisplay = ({
 
 		const pollInterval = setInterval(async () => {
 			try {
-				const client = getSmitheryClient(token);
 				const status = await checkConnectionStatus(
 					client,
 					authConnectionId,
@@ -663,7 +656,7 @@ const ExternalURLDisplay = ({
 		}, 2000); // Check every 2 seconds
 
 		return () => clearInterval(pollInterval);
-	}, [authConnectionId, token, namespace, connectAsync]);
+	}, [authConnectionId, token, namespace, connectAsync, client]);
 
 	return (
 		<div className="mt-4 p-4 border rounded-md flex flex-col gap-4">
@@ -724,7 +717,7 @@ const ServerSearchInner = ({
 	query?: string;
 	hideSearchAfterConnect?: boolean;
 }) => {
-	const { token } = useSmitheryContext();
+	const { client, token } = useSmitheryContext();
 	const [currentQuery, setCurrentQuery] = useState(query || "");
 	const [selectedServer, setSelectedServer] =
 		useState<ServerListResponse | null>(null);
@@ -743,7 +736,6 @@ const ServerSearchInner = ({
 	const { data, isLoading } = useQuery({
 		queryKey: ["servers", token, debouncedQuery],
 		queryFn: async () => {
-			const client = getSmitheryClient(token);
 			console.log("searching", debouncedQuery);
 			const servers = debouncedQuery
 				? await client.servers.list({ q: debouncedQuery, pageSize: 3 })

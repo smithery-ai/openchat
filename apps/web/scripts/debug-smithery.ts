@@ -153,16 +153,20 @@ async function testConnection(connectionId: string, namespace: string) {
 				`   Tool names: ${result.tools.map((t) => t.name).join(", ")}`,
 			);
 		}
-	} catch (error: any) {
+	} catch (error) {
 		console.error("❌ Connection test failed");
-		console.error(`   Error: ${error?.message || error}`);
+		const err =
+			typeof error === "object" && error !== null
+				? (error as { message?: string; status?: unknown; error?: unknown })
+				: undefined;
+		console.error(`   Error: ${err?.message || String(error)}`);
 
-		if (error?.status) {
-			console.error(`   HTTP Status: ${error.status}`);
+		if (err?.status) {
+			console.error(`   HTTP Status: ${String(err.status)}`);
 		}
 
-		if (error?.error) {
-			console.error(`   Details: ${JSON.stringify(error.error, null, 2)}`);
+		if (err?.error) {
+			console.error(`   Details: ${JSON.stringify(err.error, null, 2)}`);
 		}
 	}
 }
