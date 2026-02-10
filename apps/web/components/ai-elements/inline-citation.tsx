@@ -1,14 +1,5 @@
 "use client";
 
-import { ArrowLeftIcon, ArrowRightIcon } from "lucide-react";
-import {
-	type ComponentProps,
-	createContext,
-	useCallback,
-	useContext,
-	useEffect,
-	useState,
-} from "react";
 import { Badge } from "@openchat/ui/components/badge";
 import {
 	Carousel,
@@ -22,6 +13,15 @@ import {
 	HoverCardTrigger,
 } from "@openchat/ui/components/hover-card";
 import { cn } from "@openchat/ui/lib/utils";
+import { ArrowLeftIcon, ArrowRightIcon } from "lucide-react";
+import {
+	type ComponentProps,
+	createContext,
+	useCallback,
+	useContext,
+	useEffect,
+	useState,
+} from "react";
 
 export type InlineCitationProps = ComponentProps<"span">;
 

@@ -1,5 +1,22 @@
 "use client";
 import { useChat } from "@ai-sdk/react";
+import { ServerSearch } from "@openchat/registry/smithery/server-search";
+import { useSmitheryContext } from "@openchat/registry/smithery/smithery-provider";
+import { ToolSearch } from "@openchat/registry/smithery/tool-search";
+import {
+	Card,
+	CardDescription,
+	CardHeader,
+	CardTitle,
+} from "@openchat/ui/components/card";
+import {
+	Empty,
+	EmptyContent,
+	EmptyDescription,
+	EmptyHeader,
+	EmptyMedia,
+	EmptyTitle,
+} from "@openchat/ui/components/empty";
 import type { Connection } from "@smithery/api/resources/experimental/connect/connections.mjs";
 import {
 	DefaultChatTransport,
@@ -52,18 +69,6 @@ import {
 	SourcesContent,
 	SourcesTrigger,
 } from "@/components/ai-elements/sources";
-import {
-	Empty,
-	EmptyContent,
-	EmptyDescription,
-	EmptyHeader,
-	EmptyMedia,
-	EmptyTitle,
-} from "@openchat/ui/components/empty";
-import { ServerSearch } from "@openchat/registry/smithery/server-search";
-import { useSmitheryContext } from "@openchat/registry/smithery/smithery-provider";
-import { ToolSearch } from "@openchat/registry/smithery/tool-search";
-import { Card, CardDescription, CardHeader, CardTitle } from "@openchat/ui/components/card";
 
 const models = [
 	{

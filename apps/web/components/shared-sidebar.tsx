@@ -1,5 +1,19 @@
 "use client";
 
+import { Tokens } from "@openchat/registry/smithery/tokens";
+import {
+	Sidebar,
+	SidebarContent,
+	SidebarGroup,
+	SidebarGroupContent,
+	SidebarGroupLabel,
+	SidebarInset,
+	SidebarMenu,
+	SidebarMenuButton,
+	SidebarMenuItem,
+	SidebarProvider,
+	SidebarTrigger,
+} from "@openchat/ui/components/sidebar";
 import {
 	Blocks,
 	FileJson,
@@ -15,20 +29,6 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-	Sidebar,
-	SidebarContent,
-	SidebarGroup,
-	SidebarGroupContent,
-	SidebarGroupLabel,
-	SidebarInset,
-	SidebarMenu,
-	SidebarMenuButton,
-	SidebarMenuItem,
-	SidebarProvider,
-	SidebarTrigger,
-} from "@openchat/ui/components/sidebar";
-import { Tokens } from "@openchat/registry/smithery/tokens";
 
 export const navigationItems: {
 	title: string;

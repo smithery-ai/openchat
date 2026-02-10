@@ -1,13 +1,13 @@
 "use client";
 
-import { BookIcon, ChevronDownIcon } from "lucide-react";
-import type { ComponentProps } from "react";
 import {
 	Collapsible,
 	CollapsibleContent,
 	CollapsibleTrigger,
 } from "@openchat/ui/components/collapsible";
 import { cn } from "@openchat/ui/lib/utils";
+import { BookIcon, ChevronDownIcon } from "lucide-react";
+import type { ComponentProps } from "react";
 
 export type SourcesProps = ComponentProps<"div">;
 

@@ -1,14 +1,8 @@
 "use client";
 
 import { createMCPClient } from "@ai-sdk/mcp";
-import Smithery from "@smithery/api";
-import { createConnection } from "@smithery/api/mcp";
-import type { Connection } from "@smithery/api/resources/experimental/connect/connections.mjs";
-import { useQuery } from "@tanstack/react-query";
-import type { Tool, ToolExecutionOptions } from "ai";
-import { useAtomValue } from "jotai";
-import { AlertCircle } from "lucide-react";
-import { useState } from "react";
+import { ConnectionConfigContext } from "@openchat/registry/smithery/connection-context";
+import { useSmitheryContext } from "@openchat/registry/smithery/smithery-provider";
 import {
 	Select,
 	SelectContent,
@@ -17,20 +11,19 @@ import {
 	SelectValue,
 } from "@openchat/ui/components/select";
 import { Spinner } from "@openchat/ui/components/spinner";
-import { selectedTokenAtom } from "@openchat/registry/hooks/use-smithery";
-import { ConnectionConfigContext } from "@openchat/registry/smithery/connection-context";
+import type Smithery from "@smithery/api";
+import { createConnection } from "@smithery/api/mcp";
+import type { Connection } from "@smithery/api/resources/experimental/connect/connections.mjs";
+import { useQuery } from "@tanstack/react-query";
+import type { Tool, ToolExecutionOptions } from "ai";
+import { AlertCircle } from "lucide-react";
+import { useState } from "react";
 import { PreviewFrame } from "./preview-frame";
 
 const DEFAULT_MCP_URL = "https://mcp.exa.ai";
 
-const getSmitheryClient = (token: string) => {
-	return new Smithery({
-		apiKey: token,
-		baseURL: process.env.NEXT_PUBLIC_SMITHERY_API_URL,
-	});
-};
-
 function useConnections(
+	client: Smithery,
 	token: string | undefined,
 	namespace: string | undefined,
 ) {
@@ -39,7 +32,6 @@ function useConnections(
 		queryFn: async () => {
 			if (!token) throw new Error("Token required");
 			if (!namespace) throw new Error("Namespace required");
-			const client = getSmitheryClient(token);
 			const { connections } =
 				await client.experimental.connect.connections.list(namespace);
 			return { connections, namespace };
@@ -49,6 +41,7 @@ function useConnections(
 }
 
 function useConnectionTools(
+	client: Smithery,
 	token: string | undefined,
 	connectionId: string | null,
 	namespace: string | undefined,
@@ -60,7 +53,7 @@ function useConnectionTools(
 				throw new Error("Token and connection required");
 			if (!namespace) throw new Error("Namespace required");
 			const { transport } = await createConnection({
-				client: getSmitheryClient(token),
+				client,
 				connectionId,
 				namespace,
 			});
@@ -103,17 +96,19 @@ function useConnectionTools(
 }
 
 function ConnectionSelector({
+	client,
 	token,
 	namespace,
 	selectedConnectionId,
 	onSelect,
 }: {
+	client: Smithery;
 	token: string;
 	namespace: string;
 	selectedConnectionId: string | null;
 	onSelect: (connectionId: string | null) => void;
 }) {
-	const { data, isLoading, error } = useConnections(token, namespace);
+	const { data, isLoading, error } = useConnections(client, token, namespace);
 
 	if (isLoading) {
 		return (
@@ -199,7 +194,7 @@ export function ComponentPreview({
 	requiresConnection = false,
 	children,
 }: ComponentPreviewProps) {
-	const apiKey = useAtomValue(selectedTokenAtom);
+	const { client, token } = useSmitheryContext();
 	const [selectedConnectionId, setSelectedConnectionId] = useState<
 		string | null
 	>(null);
@@ -213,7 +208,7 @@ export function ComponentPreview({
 	}
 
 	// Components with render functions need a token
-	if (!apiKey) {
+	if (!token) {
 		return (
 			<PreviewFrame>
 				<div className="p-6 text-muted-foreground">
@@ -229,14 +224,16 @@ export function ComponentPreview({
 			<PreviewFrame>
 				<div className="p-4 border-b">
 					<ConnectionSelector
-						token={apiKey.token}
+						client={client}
+						token={token}
 						namespace={namespace}
 						selectedConnectionId={selectedConnectionId}
 						onSelect={setSelectedConnectionId}
 					/>
 				</div>
 				<ToolComponentPreviewInner
-					token={apiKey.token}
+					client={client}
+					token={token}
 					namespace={namespace}
 					connectionId={selectedConnectionId}
 					selectedToolName={selectedToolName}
@@ -264,6 +261,7 @@ export function ComponentPreview({
 }
 
 function ToolComponentPreviewInner({
+	client,
 	token,
 	namespace,
 	connectionId,
@@ -271,6 +269,7 @@ function ToolComponentPreviewInner({
 	setSelectedToolName,
 	children,
 }: {
+	client: Smithery;
 	token: string;
 	namespace: string;
 	connectionId: string | null;
@@ -293,6 +292,7 @@ function ToolComponentPreviewInner({
 	}) => React.ReactNode;
 }) {
 	const { tools, isLoading, error, handleExecute } = useConnectionTools(
+		client,
 		token,
 		connectionId,
 		namespace,

@@ -1,5 +1,7 @@
 "use client";
 
+import { Button } from "@openchat/ui/components/button";
+import { cn } from "@openchat/ui/lib/utils";
 import { CheckIcon, CopyIcon } from "lucide-react";
 import {
 	type ComponentProps,
@@ -11,8 +13,6 @@ import {
 	useState,
 } from "react";
 import { type BundledLanguage, codeToHtml, type ShikiTransformer } from "shiki";
-import { Button } from "@openchat/ui/components/button";
-import { cn } from "@openchat/ui/lib/utils";
 
 type CodeBlockProps = HTMLAttributes<HTMLDivElement> & {
 	code: string;

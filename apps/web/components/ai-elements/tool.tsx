@@ -1,5 +1,12 @@
 "use client";
 
+import { Badge } from "@openchat/ui/components/badge";
+import {
+	Collapsible,
+	CollapsibleContent,
+	CollapsibleTrigger,
+} from "@openchat/ui/components/collapsible";
+import { cn } from "@openchat/ui/lib/utils";
 import type { ToolUIPart } from "ai";
 import {
 	CheckCircleIcon,
@@ -11,13 +18,6 @@ import {
 } from "lucide-react";
 import type { ComponentProps, ReactNode } from "react";
 import { isValidElement } from "react";
-import { Badge } from "@openchat/ui/components/badge";
-import {
-	Collapsible,
-	CollapsibleContent,
-	CollapsibleTrigger,
-} from "@openchat/ui/components/collapsible";
-import { cn } from "@openchat/ui/lib/utils";
 import { CodeBlock } from "./code-block";
 
 export type ToolProps = ComponentProps<typeof Collapsible>;
