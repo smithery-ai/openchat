@@ -1,8 +1,5 @@
 "use client";
 
-import { ChevronDownIcon } from "lucide-react";
-import type { ComponentProps, ReactNode } from "react";
-import { createContext, useContext, useEffect, useState } from "react";
 import { Button } from "@openchat/ui/components/button";
 import {
 	Collapsible,
@@ -17,6 +14,9 @@ import {
 	TooltipTrigger,
 } from "@openchat/ui/components/tooltip";
 import { cn } from "@openchat/ui/lib/utils";
+import { ChevronDownIcon } from "lucide-react";
+import type { ComponentProps, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 
 export type WebPreviewContextValue = {
 	url: string;

@@ -1,5 +1,17 @@
 "use client";
 
+import { Button } from "@openchat/ui/components/button";
+import {
+	ButtonGroup,
+	ButtonGroupText,
+} from "@openchat/ui/components/button-group";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipProvider,
+	TooltipTrigger,
+} from "@openchat/ui/components/tooltip";
+import { cn } from "@openchat/ui/lib/utils";
 import type { FileUIPart, UIMessage } from "ai";
 import {
 	ChevronLeftIcon,
@@ -10,15 +22,6 @@ import {
 import type { ComponentProps, HTMLAttributes, ReactElement } from "react";
 import { createContext, memo, useContext, useEffect, useState } from "react";
 import { Streamdown } from "streamdown";
-import { Button } from "@openchat/ui/components/button";
-import { ButtonGroup, ButtonGroupText } from "@openchat/ui/components/button-group";
-import {
-	Tooltip,
-	TooltipContent,
-	TooltipProvider,
-	TooltipTrigger,
-} from "@openchat/ui/components/tooltip";
-import { cn } from "@openchat/ui/lib/utils";
 
 export type MessageProps = HTMLAttributes<HTMLDivElement> & {
 	from: UIMessage["role"];

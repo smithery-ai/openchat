@@ -1,7 +1,5 @@
 "use client";
 
-import { type LucideIcon, XIcon } from "lucide-react";
-import type { ComponentProps, HTMLAttributes } from "react";
 import { Button } from "@openchat/ui/components/button";
 import {
 	Tooltip,
@@ -10,6 +8,8 @@ import {
 	TooltipTrigger,
 } from "@openchat/ui/components/tooltip";
 import { cn } from "@openchat/ui/lib/utils";
+import { type LucideIcon, XIcon } from "lucide-react";
+import type { ComponentProps, HTMLAttributes } from "react";
 
 export type ArtifactProps = HTMLAttributes<HTMLDivElement>;
 

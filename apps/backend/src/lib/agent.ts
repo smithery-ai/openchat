@@ -1,29 +1,21 @@
 import type { Connection } from "@smithery/api/resources/experimental/connect/connections.mjs";
-import {
-	createAgentUIStreamResponse,
-	ToolLoopAgent,
-	tool,
-	type UIMessage,
-} from "ai";
+import { ToolLoopAgent, tool } from "ai";
 import { z } from "zod";
 
-// Allow streaming responses up to 30 seconds
-export const maxDuration = 30;
-
-function createToolLoopAgent({
+export function createToolLoopAgent({
 	model = "anthropic/claude-haiku-4.5",
 	connections = [],
 }: {
 	model?: string;
 	connections?: Connection[];
 }) {
-	const instructions = `You are a helpful assistant that can answer questions and help with tasks. 
+	const instructions = `You are a helpful assistant that can answer questions and help with tasks.
 	Before calling a tool, you MUST first start a regular text response explaining what you are going to do. After calling a tool, you MUST provide a summary of the result in a regular text response.
 	When calling act(), be VERY CAREFUL with the dates you use. Use the tools/date tool to resolve the date the action should be performed on.`;
 
 	return new ToolLoopAgent({
 		model,
-		instructions: `${instructions}\n\nYou have access to the following servers: 
+		instructions: `${instructions}\n\nYou have access to the following servers:
 		<servers>
 		${connections
 			.map(
@@ -50,8 +42,6 @@ function createToolLoopAgent({
 					const date = new Date();
 
 					if (addOrSubtract) {
-						// Parse format: [+/-][number][unit]
-						// Examples: '-3d', '+1w', '+2M', '-1y', '+5h'
 						const match = addOrSubtract.match(/^([+-]?)(\d+)([smhdwMy])$/i);
 
 						if (!match) {
@@ -65,30 +55,27 @@ function createToolLoopAgent({
 						const multiplier = sign === "-" ? -1 : 1;
 						const value = amount * multiplier;
 
-						// Apply the offset based on the unit
-						// Note: 'M' (uppercase) is months, 'm' (lowercase) is minutes
 						const unitLower = unit.toLowerCase();
 						if (unit === "M") {
-							// Months (uppercase M)
 							date.setMonth(date.getMonth() + value);
 						} else {
 							switch (unitLower) {
-								case "s": // seconds
+								case "s":
 									date.setSeconds(date.getSeconds() + value);
 									break;
-								case "m": // minutes
+								case "m":
 									date.setMinutes(date.getMinutes() + value);
 									break;
-								case "h": // hours
+								case "h":
 									date.setHours(date.getHours() + value);
 									break;
-								case "d": // days
+								case "d":
 									date.setDate(date.getDate() + value);
 									break;
-								case "w": // weeks
+								case "w":
 									date.setDate(date.getDate() + value * 7);
 									break;
-								case "y": // years
+								case "y":
 									date.setFullYear(date.getFullYear() + value);
 									break;
 								default:
@@ -134,48 +121,5 @@ function createToolLoopAgent({
 				}),
 			}),
 		},
-	});
-}
-
-export async function POST(request: Request) {
-	const { messages, ...body }: { messages: UIMessage[] } = await request.json();
-	console.log("📦 Full request messages:", JSON.stringify(messages, null, 2));
-	console.log("📦 Full request body:", JSON.stringify(body, null, 2));
-
-	// Extract API key from body or use env var
-	const { model, connections, apiKey } = body as {
-		model?: string;
-		connections?: Connection[];
-		apiKey?: string;
-	};
-
-	// Validate API key - accept from body or env
-	if (!apiKey) {
-		return new Response(
-			JSON.stringify({
-				error:
-					"Smithery API key not configured. Please add SMITHERY_API_KEY to your environment variables or provide it in the request.",
-			}),
-			{
-				status: 401,
-				headers: { "Content-Type": "application/json" },
-			},
-		);
-	}
-
-	// Optional: support cancellation (aborts on disconnect, etc.)
-	const abortController = new AbortController();
-
-	const params = {
-		...(model ? { model } : {}),
-		...(connections ? { connections } : {}),
-	};
-
-	return createAgentUIStreamResponse({
-		agent: createToolLoopAgent(params),
-		uiMessages: messages,
-		abortSignal: abortController.signal, // optional
-		sendSources: true,
-		sendReasoning: true,
 	});
 }

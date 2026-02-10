@@ -1,13 +1,13 @@
 "use client";
 
-import { ChevronDownIcon, SearchIcon } from "lucide-react";
-import type { ComponentProps } from "react";
 import {
 	Collapsible,
 	CollapsibleContent,
 	CollapsibleTrigger,
 } from "@openchat/ui/components/collapsible";
 import { cn } from "@openchat/ui/lib/utils";
+import { ChevronDownIcon, SearchIcon } from "lucide-react";
+import type { ComponentProps } from "react";
 
 export type TaskItemFileProps = ComponentProps<"div">;
 

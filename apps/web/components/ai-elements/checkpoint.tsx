@@ -1,7 +1,5 @@
 "use client";
 
-import { BookmarkIcon, type LucideProps } from "lucide-react";
-import type { ComponentProps, HTMLAttributes } from "react";
 import { Button } from "@openchat/ui/components/button";
 import { Separator } from "@openchat/ui/components/separator";
 import {
@@ -10,6 +8,8 @@ import {
 	TooltipTrigger,
 } from "@openchat/ui/components/tooltip";
 import { cn } from "@openchat/ui/lib/utils";
+import { BookmarkIcon, type LucideProps } from "lucide-react";
+import type { ComponentProps, HTMLAttributes } from "react";
 
 export type CheckpointProps = HTMLAttributes<HTMLDivElement>;
 

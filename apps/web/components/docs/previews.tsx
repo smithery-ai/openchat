@@ -1,14 +1,16 @@
 "use client";
 
 import { createMCPClient } from "@ai-sdk/mcp";
-import Smithery from "@smithery/api";
-import { createConnection } from "@smithery/api/mcp";
-import type { Connection } from "@smithery/api/resources/experimental/connect/connections.mjs";
-import { useQuery } from "@tanstack/react-query";
-import type { ToolExecutionOptions } from "ai";
-import { AlertCircle } from "lucide-react";
-import * as React from "react";
-import { useState } from "react";
+import { ConnectionConfigContext } from "@openchat/registry/smithery/connection-context";
+import { Connections } from "@openchat/registry/smithery/connections";
+import { SchemaForm } from "@openchat/registry/smithery/schema-form";
+import { ServerSearch } from "@openchat/registry/smithery/server-search";
+import { useSmitheryContext } from "@openchat/registry/smithery/smithery-provider";
+import { ToolCard } from "@openchat/registry/smithery/tool-card";
+import { ToolDetailDialog } from "@openchat/registry/smithery/tool-detail-dialog";
+import { ToolSearch } from "@openchat/registry/smithery/tool-search";
+import { ToolsPanel } from "@openchat/registry/smithery/tools-panel";
+import type { ToolSearchResult } from "@openchat/registry/smithery/types";
 import { Button } from "@openchat/ui/components/button";
 import {
 	Combobox,
@@ -23,6 +25,13 @@ import {
 	ComboboxValue,
 	useComboboxAnchor,
 } from "@openchat/ui/components/combobox";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogTitle,
+	DialogTrigger,
+} from "@openchat/ui/components/dialog";
 import { Input } from "@openchat/ui/components/input";
 import {
 	Select,
@@ -32,23 +41,14 @@ import {
 	SelectValue,
 } from "@openchat/ui/components/select";
 import { Spinner } from "@openchat/ui/components/spinner";
-import { ConnectionConfigContext } from "@openchat/registry/smithery/connection-context";
-import { Connections } from "@openchat/registry/smithery/connections";
-import { SchemaForm } from "@openchat/registry/smithery/schema-form";
-import { ServerSearch } from "@openchat/registry/smithery/server-search";
-import { useSmitheryContext } from "@openchat/registry/smithery/smithery-provider";
-import { ToolCard } from "@openchat/registry/smithery/tool-card";
-import { ToolDetailDialog } from "@openchat/registry/smithery/tool-detail-dialog";
-import { ToolSearch } from "@openchat/registry/smithery/tool-search";
-import { ToolsPanel } from "@openchat/registry/smithery/tools-panel";
-import type { ToolSearchResult } from "@openchat/registry/smithery/types";
-import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogTitle,
-	DialogTrigger,
-} from "@openchat/ui/components/dialog";
+import Smithery from "@smithery/api";
+import { createConnection } from "@smithery/api/mcp";
+import type { Connection } from "@smithery/api/resources/experimental/connect/connections.mjs";
+import { useQuery } from "@tanstack/react-query";
+import type { ToolExecutionOptions } from "ai";
+import { AlertCircle } from "lucide-react";
+import * as React from "react";
+import { useState } from "react";
 import { PreviewFrame } from "./preview-frame";
 
 const DEFAULT_MCP_URL = "https://mcp.exa.ai";

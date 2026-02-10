@@ -1,5 +1,22 @@
 "use client";
 import { useChat } from "@ai-sdk/react";
+import { ServerSearch } from "@openchat/registry/smithery/server-search";
+import { useSmitheryContext } from "@openchat/registry/smithery/smithery-provider";
+import { ToolSearch } from "@openchat/registry/smithery/tool-search";
+import {
+	Card,
+	CardDescription,
+	CardHeader,
+	CardTitle,
+} from "@openchat/ui/components/card";
+import {
+	Empty,
+	EmptyContent,
+	EmptyDescription,
+	EmptyHeader,
+	EmptyMedia,
+	EmptyTitle,
+} from "@openchat/ui/components/empty";
 import type { Connection } from "@smithery/api/resources/experimental/connect/connections.mjs";
 import {
 	DefaultChatTransport,
@@ -52,18 +69,6 @@ import {
 	SourcesContent,
 	SourcesTrigger,
 } from "@/components/ai-elements/sources";
-import {
-	Empty,
-	EmptyContent,
-	EmptyDescription,
-	EmptyHeader,
-	EmptyMedia,
-	EmptyTitle,
-} from "@openchat/ui/components/empty";
-import { ServerSearch } from "@openchat/registry/smithery/server-search";
-import { useSmitheryContext } from "@openchat/registry/smithery/smithery-provider";
-import { ToolSearch } from "@openchat/registry/smithery/tool-search";
-import { Card, CardDescription, CardHeader, CardTitle } from "@openchat/ui/components/card";
 
 const models = [
 	{
@@ -92,7 +97,7 @@ const emptyStateCards = [
 ];
 
 export function ChatBlock() {
-	const { token } = useSmitheryContext();
+	const { token, backendUrl } = useSmitheryContext();
 	const [input, setInput] = useState("");
 	const [model, setModel] = useState<string>(models[0].value);
 	const [connections, setConnections] = useState<Connection[]>([]);
@@ -119,7 +124,7 @@ export function ChatBlock() {
 
 	const { messages, sendMessage, status, regenerate, addToolOutput } = useChat({
 		transport: new DefaultChatTransport({
-			api: "/api/chat",
+			api: `${backendUrl}/api/chat`,
 			prepareSendMessagesRequest: (options) => {
 				console.log(
 					"📦 Full request messages:",

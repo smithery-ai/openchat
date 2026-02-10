@@ -1,14 +1,8 @@
 "use client";
 
 import { createMCPClient } from "@ai-sdk/mcp";
-import Smithery from "@smithery/api";
-import { createConnection } from "@smithery/api/mcp";
-import type { Connection } from "@smithery/api/resources/experimental/connect/connections.mjs";
-import { useQuery } from "@tanstack/react-query";
-import type { Tool, ToolExecutionOptions } from "ai";
-import { useAtomValue } from "jotai";
-import { AlertCircle } from "lucide-react";
-import { useState } from "react";
+import { selectedTokenAtom } from "@openchat/registry/hooks/use-smithery";
+import { ConnectionConfigContext } from "@openchat/registry/smithery/connection-context";
 import {
 	Select,
 	SelectContent,
@@ -17,8 +11,14 @@ import {
 	SelectValue,
 } from "@openchat/ui/components/select";
 import { Spinner } from "@openchat/ui/components/spinner";
-import { selectedTokenAtom } from "@openchat/registry/hooks/use-smithery";
-import { ConnectionConfigContext } from "@openchat/registry/smithery/connection-context";
+import Smithery from "@smithery/api";
+import { createConnection } from "@smithery/api/mcp";
+import type { Connection } from "@smithery/api/resources/experimental/connect/connections.mjs";
+import { useQuery } from "@tanstack/react-query";
+import type { Tool, ToolExecutionOptions } from "ai";
+import { useAtomValue } from "jotai";
+import { AlertCircle } from "lucide-react";
+import { useState } from "react";
 import { PreviewFrame } from "./preview-frame";
 
 const DEFAULT_MCP_URL = "https://mcp.exa.ai";

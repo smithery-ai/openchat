@@ -4,25 +4,33 @@ import { Smithery } from "@smithery/api";
 import { createConnection } from "@smithery/api/lib/mcp-transport.mjs";
 import type { Connection } from "@smithery/api/resources/experimental/connect/connections";
 import { Index } from "flexsearch";
+import { Hono } from "hono";
 import { estimateTokenCount } from "tokenx";
-import type {
-	FailedToolSearch,
-	SuccessfulToolSearch,
-} from "@openchat/registry/smithery/types";
 
-export async function POST(request: Request) {
+type SuccessfulToolSearch = {
+	connectionStatus: "connected";
+	connectionLatency: number;
+	toolsTokenCount: number;
+};
+type FailedToolSearch = {
+	connectionStatus: "failed";
+	connectionLatency: number;
+	error: string;
+};
+
+export const toolSearchRoute = new Hono();
+
+toolSearchRoute.post("/tool-search", async (c) => {
 	const startTime = performance.now();
 
-	const { connections, apiKey, namespace, action } = (await request.json()) as {
+	const { connections, apiKey, namespace, action } = await c.req.json<{
 		connections: Connection[];
 		apiKey: string;
 		namespace: string;
 		action: string;
-	};
+	}>();
 
 	const index = new Index({
-		// use forward when you want to match partials
-		// e.g. match "flexsearch" when query "flex"
 		tokenize: "forward",
 	});
 	const connectionStats: Record<
@@ -42,14 +50,12 @@ export async function POST(request: Request) {
 					connectionId: connection.connectionId,
 					namespace,
 				});
-				// Connect using the MCP SDK Client
 				const mcpClient = new Client({
 					name: "smithery-mcp-client",
 					version: "1.0.0",
 				});
 				await mcpClient.connect(transport);
 
-				// Use the MCP SDK's ergonomic API
 				const { tools: mcpTools } = await mcpClient.listTools();
 				const serverToolsTokenCount = estimateTokenCount(
 					JSON.stringify(mcpTools, null, 2),
@@ -99,10 +105,8 @@ export async function POST(request: Request) {
 	const endTime = performance.now();
 	const latency = endTime - startTime;
 
-	// Calculate total number of tools
 	const totalTools = allTools.flat().length;
 
-	// Calculate tokens processed for all tools
 	console.log("Final toolsTokenCount:", toolsTokenCount);
 
 	const responseBody = {
@@ -116,5 +120,5 @@ export async function POST(request: Request) {
 
 	console.log("Response body:", JSON.stringify(responseBody, null, 2));
 
-	return Response.json(responseBody);
-}
+	return c.json(responseBody);
+});

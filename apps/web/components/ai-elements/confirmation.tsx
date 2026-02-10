@@ -1,5 +1,8 @@
 "use client";
 
+import { Alert, AlertDescription } from "@openchat/ui/components/alert";
+import { Button } from "@openchat/ui/components/button";
+import { cn } from "@openchat/ui/lib/utils";
 import type { ToolUIPart } from "ai";
 import {
 	type ComponentProps,
@@ -7,9 +10,6 @@ import {
 	type ReactNode,
 	useContext,
 } from "react";
-import { Alert, AlertDescription } from "@openchat/ui/components/alert";
-import { Button } from "@openchat/ui/components/button";
-import { cn } from "@openchat/ui/lib/utils";
 
 type ToolUIPartApproval =
 	| {

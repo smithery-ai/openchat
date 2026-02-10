@@ -51,7 +51,7 @@ export function ToolSearch({
 	connections: Connection[];
 	onSearchComplete: (result: ToolSearchResult) => void;
 }) {
-	const { token: apiKey, namespace } = useSmitheryContext();
+	const { token: apiKey, namespace, backendUrl } = useSmitheryContext();
 	const defaultConnectionIds = connections.map(
 		(connection: Connection) => connection.connectionId,
 	);
@@ -70,7 +70,7 @@ export function ToolSearch({
 	const { isFetching, refetch } = useQuery({
 		queryKey: ["tool-search", namespace, apiKey, selectedConnectionIds, action],
 		queryFn: async () => {
-			const response = await fetch("/api/tool-search", {
+			const response = await fetch(`${backendUrl}/api/tool-search`, {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({

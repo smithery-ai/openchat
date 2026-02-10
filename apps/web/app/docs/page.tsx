@@ -1,4 +1,10 @@
 import {
+	Card,
+	CardDescription,
+	CardHeader,
+	CardTitle,
+} from "@openchat/ui/components/card";
+import {
 	FileJson,
 	Key,
 	LayoutGrid,
@@ -9,12 +15,6 @@ import {
 	SquareArrowOutUpRight,
 } from "lucide-react";
 import Link from "next/link";
-import {
-	Card,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from "@openchat/ui/components/card";
 
 const components = [
 	{

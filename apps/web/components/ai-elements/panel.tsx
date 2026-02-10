@@ -1,6 +1,6 @@
+import { cn } from "@openchat/ui/lib/utils";
 import { Panel as PanelPrimitive } from "@xyflow/react";
 import type { ComponentProps } from "react";
-import { cn } from "@openchat/ui/lib/utils";
 
 type PanelProps = ComponentProps<typeof PanelPrimitive>;
 

@@ -1,7 +1,5 @@
 "use client";
 
-import { ChevronDownIcon, PaperclipIcon } from "lucide-react";
-import type { ComponentProps } from "react";
 import { Button } from "@openchat/ui/components/button";
 import {
 	Collapsible,
@@ -10,6 +8,8 @@ import {
 } from "@openchat/ui/components/collapsible";
 import { ScrollArea } from "@openchat/ui/components/scroll-area";
 import { cn } from "@openchat/ui/lib/utils";
+import { ChevronDownIcon, PaperclipIcon } from "lucide-react";
+import type { ComponentProps } from "react";
 
 export type QueueMessagePart = {
 	type: string;

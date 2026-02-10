@@ -1,5 +1,3 @@
-import { Handle, Position } from "@xyflow/react";
-import type { ComponentProps } from "react";
 import {
 	Card,
 	CardAction,
@@ -10,6 +8,8 @@ import {
 	CardTitle,
 } from "@openchat/ui/components/card";
 import { cn } from "@openchat/ui/lib/utils";
+import { Handle, Position } from "@xyflow/react";
+import type { ComponentProps } from "react";
 
 export type NodeProps = ComponentProps<typeof Card> & {
 	handles: {
