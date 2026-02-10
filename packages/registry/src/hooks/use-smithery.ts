@@ -29,7 +29,8 @@ export type CreateSandboxTokenFn = (params: {
 >;
 
 export interface UseSmitheryOptions {
-	baseURL?: string;
+	baseURL: string;
+	backendUrl: string;
 	createSandboxToken?: CreateSandboxTokenFn;
 }
 
@@ -46,6 +47,7 @@ export interface UseSmitheryReturn {
 	connected: boolean;
 	client: Smithery;
 	sandboxMode: boolean;
+	backendUrl: string;
 }
 
 export { SmitheryConnectionError };
@@ -60,13 +62,13 @@ class SmitheryConnectionError extends Error {
 	}
 }
 
-async function fetchTokenFromWhoami(): Promise<CreateTokenResponse> {
+async function fetchTokenFromWhoami(backendUrl: string): Promise<CreateTokenResponse> {
 	let response: Response;
 	try {
-		response = await fetch("http://localhost:4260/whoami");
+		response = await fetch(`${backendUrl}/api/whoami`);
 	} catch {
 		throw new SmitheryConnectionError(
-			"Unable to connect to Smithery service. Make sure the Smithery agent is running on localhost:4260.",
+			`Unable to connect to backend at ${backendUrl}/api/whoami.`,
 			true,
 		);
 	}
@@ -93,9 +95,9 @@ async function fetchTokenFromWhoami(): Promise<CreateTokenResponse> {
 }
 
 export function useSmithery(
-	options: UseSmitheryOptions = {},
+	options: UseSmitheryOptions,
 ): UseSmitheryReturn {
-	const { baseURL, createSandboxToken } = options;
+	const { baseURL, backendUrl, createSandboxToken } = options;
 
 	// Token state
 	const [tokensCreated, setTokensCreated] = useAtom(tokensCreatedAtom);
@@ -117,11 +119,16 @@ export function useSmithery(
 
 	// Create Smithery client
 	const client = useMemo(() => {
+		console.log("[useSmithery] Creating Smithery client", {
+			apiKey: selectedToken?.token ? `${selectedToken.token.slice(0, 8)}...` : "(empty)",
+			baseURL: baseURL ?? process.env.NEXT_PUBLIC_SMITHERY_API_URL,
+			tokenSource: selectedToken ? "selectedToken" : "none",
+		});
 		return new Smithery({
 			apiKey: selectedToken?.token ?? "",
 			baseURL: baseURL ?? process.env.NEXT_PUBLIC_SMITHERY_API_URL,
 		});
-	}, [selectedToken?.token, baseURL]);
+	}, [selectedToken?.token, baseURL, selectedToken]);
 
 	// Fetch namespaces (only when we have a valid token and NOT in sandbox mode)
 	// Sandbox mode tokens don't have namespaces:read permission
@@ -176,7 +183,11 @@ export function useSmithery(
 
 		async function fetchToken() {
 			try {
-				const tokenResponse = await fetchTokenFromWhoami();
+				const tokenResponse = await fetchTokenFromWhoami(backendUrl);
+				console.log("[useSmithery] Got token from whoami", {
+					token: tokenResponse.token ? `${tokenResponse.token.slice(0, 8)}...` : "(empty)",
+					expiresAt: tokenResponse.expiresAt,
+				});
 
 				if (tokenResponse) {
 					setTokensCreated((current) => {
@@ -210,7 +221,13 @@ export function useSmithery(
 					}
 
 					try {
+						console.log("[useSmithery] Calling createSandboxToken fallback", { userId: currentUserId });
 						const result = await createSandboxToken({ userId: currentUserId });
+						console.log("[useSmithery] createSandboxToken result", {
+							success: result.success,
+							token: result.success ? `${result.token.token.slice(0, 8)}...` : "(failed)",
+							error: !result.success ? result.error : undefined,
+						});
 						if (result.success) {
 							setTokensCreated((current) => {
 								const alreadyExists = current.some(
@@ -242,12 +259,12 @@ export function useSmithery(
 
 		fetchToken();
 	}, [
-		hydrated,
-		createSandboxToken,
-		setSelectedToken,
-		setTokensCreated,
-		setSandboxMode,
-		setSelectedNamespace,
+		hydrated, 
+		createSandboxToken, 
+		setSelectedToken, 
+		setTokensCreated, 
+		setSandboxMode, 
+		setSelectedNamespace, backendUrl
 	]);
 
 	// Select first valid token if none selected or current selection is expired
@@ -267,7 +284,7 @@ export function useSmithery(
 
 		const intervalId = setInterval(async () => {
 			try {
-				const tokenResponse = await fetchTokenFromWhoami();
+				const tokenResponse = await fetchTokenFromWhoami(backendUrl);
 				if (tokenResponse) {
 					setTokensCreated((current) => {
 						const alreadyExists = current.some(
@@ -286,11 +303,11 @@ export function useSmithery(
 
 		return () => clearInterval(intervalId);
 	}, [
-		sandboxMode,
-		hydrated,
-		setTokensCreated,
-		setSelectedToken,
-		setSandboxMode,
+		sandboxMode, 
+		hydrated, 
+		setTokensCreated, 
+		setSelectedToken, 
+		setSandboxMode, backendUrl
 	]);
 
 	// Auto-select first namespace if none selected
@@ -306,14 +323,14 @@ export function useSmithery(
 
 	// Create token function (refreshes from /whoami)
 	const createToken = useCallback(async (): Promise<string> => {
-		const tokenResponse = await fetchTokenFromWhoami();
+		const tokenResponse = await fetchTokenFromWhoami(backendUrl);
 		if (tokenResponse) {
 			setTokensCreated((prev) => [...prev, tokenResponse]);
 			setSelectedToken(tokenResponse);
 			return tokenResponse.token;
 		}
 		throw new Error("Failed to fetch token from /whoami");
-	}, [setTokensCreated, setSelectedToken]);
+	}, [setTokensCreated, setSelectedToken, backendUrl]);
 
 	// Set namespace function
 	const setNamespace = useCallback(
@@ -369,5 +386,6 @@ export function useSmithery(
 		connected,
 		client,
 		sandboxMode,
+		backendUrl,
 	};
 }

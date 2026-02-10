@@ -41,7 +41,7 @@ import {
 	SelectValue,
 } from "@openchat/ui/components/select";
 import { Spinner } from "@openchat/ui/components/spinner";
-import type Smithery from "@smithery/api";
+import Smithery from "@smithery/api";
 import { createConnection } from "@smithery/api/mcp";
 import type { Connection } from "@smithery/api/resources/experimental/connect/connections.mjs";
 import { useQuery } from "@tanstack/react-query";
@@ -53,10 +53,18 @@ import { PreviewFrame } from "./preview-frame";
 
 const DEFAULT_MCP_URL = "https://mcp.exa.ai";
 
-function useConnections(client: Smithery, token: string, namespace: string) {
+const getSmitheryClient = (token: string) => {
+	return new Smithery({
+		apiKey: token,
+		baseURL: process.env.NEXT_PUBLIC_SMITHERY_API_URL,
+	});
+};
+
+function useConnections(token: string, namespace: string) {
 	return useQuery({
 		queryKey: ["connections", token, namespace],
 		queryFn: async () => {
+			const client = getSmitheryClient(token);
 			const { connections } =
 				await client.experimental.connect.connections.list(namespace);
 			return { connections, namespace };
@@ -65,7 +73,6 @@ function useConnections(client: Smithery, token: string, namespace: string) {
 }
 
 function useConnectionTools(
-	client: Smithery,
 	token: string,
 	connectionId: string | null,
 	namespace: string,
@@ -75,7 +82,7 @@ function useConnectionTools(
 		queryFn: async () => {
 			if (!connectionId) throw new Error("Connection required");
 			const { transport } = await createConnection({
-				client,
+				client: getSmitheryClient(token),
 				connectionId,
 				namespace,
 			});
@@ -126,8 +133,8 @@ function ConnectionSelector({
 	onSelectMultiple: (connectionIds: string[]) => void;
 	multiple?: boolean;
 }) {
-	const { client, token, namespace } = useSmitheryContext();
-	const { data, isLoading, error } = useConnections(client, token, namespace);
+	const { token, namespace } = useSmitheryContext();
+	const { data, isLoading, error } = useConnections(token, namespace);
 	const anchor = useComboboxAnchor();
 	const connections = data?.connections ?? [];
 	const connectionItems = React.useMemo(
@@ -299,9 +306,8 @@ export function ToolsPanelPreview() {
 }
 
 function ToolsPanelInner({ connectionId }: { connectionId: string | null }) {
-	const { client, token, namespace } = useSmitheryContext();
+	const { token, namespace } = useSmitheryContext();
 	const { tools, isLoading, error, handleExecute } = useConnectionTools(
-		client,
 		token,
 		connectionId,
 		namespace,
@@ -370,9 +376,8 @@ export function ToolCardPreview() {
 }
 
 function ToolCardInner({ connectionId }: { connectionId: string | null }) {
-	const { client, token, namespace } = useSmitheryContext();
+	const { token, namespace } = useSmitheryContext();
 	const { tools, isLoading, error, handleExecute } = useConnectionTools(
-		client,
 		token,
 		connectionId,
 		namespace,
@@ -456,9 +461,8 @@ function ToolDetailDialogInner({
 }: {
 	connectionId: string | null;
 }) {
-	const { client, token, namespace } = useSmitheryContext();
+	const { token, namespace } = useSmitheryContext();
 	const { tools, isLoading, error, handleExecute } = useConnectionTools(
-		client,
 		token,
 		connectionId,
 		namespace,
@@ -560,9 +564,8 @@ export function SchemaFormPreview() {
 }
 
 function SchemaFormInner({ connectionId }: { connectionId: string | null }) {
-	const { client, token, namespace } = useSmitheryContext();
+	const { token, namespace } = useSmitheryContext();
 	const { tools, isLoading, error } = useConnectionTools(
-		client,
 		token,
 		connectionId,
 		namespace,
@@ -636,9 +639,9 @@ function SchemaFormInner({ connectionId }: { connectionId: string | null }) {
 
 // Tool Search Preview - config OUTSIDE preview frame
 export function ToolSearchPreview() {
-	const { client, token, namespace } = useSmitheryContext();
+	const { token, namespace } = useSmitheryContext();
 	const [action, setAction] = useState("Create");
-	const { data, isLoading, error } = useConnections(client, token, namespace);
+	const { data, isLoading, error } = useConnections(token, namespace);
 	const [searchResults, setSearchResults] = useState<ToolSearchResult | null>(
 		null,
 	);

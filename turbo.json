@@ -5,7 +5,7 @@
 		"build": {
 			"dependsOn": ["^build"],
 			"inputs": ["$TURBO_DEFAULT$", ".env*"],
-			"env": ["SMITHERY_API_KEY"],
+			"env": ["SMITHERY_API_KEY", "SMITHERY_API_URL", "NEXT_PUBLIC_BACKEND_URL"],
 			"outputs": [".next/**", "!.next/cache/**"]
 		},
 		"dev": {

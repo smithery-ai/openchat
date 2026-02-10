@@ -97,7 +97,7 @@ const emptyStateCards = [
 ];
 
 export function ChatBlock() {
-	const { token } = useSmitheryContext();
+	const { token, backendUrl } = useSmitheryContext();
 	const [input, setInput] = useState("");
 	const [model, setModel] = useState<string>(models[0].value);
 	const [connections, setConnections] = useState<Connection[]>([]);
@@ -124,7 +124,7 @@ export function ChatBlock() {
 
 	const { messages, sendMessage, status, regenerate, addToolOutput } = useChat({
 		transport: new DefaultChatTransport({
-			api: "/api/chat",
+			api: `${backendUrl}/api/chat`,
 			prepareSendMessagesRequest: (options) => {
 				console.log(
 					"📦 Full request messages:",

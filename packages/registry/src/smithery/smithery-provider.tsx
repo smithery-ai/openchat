@@ -19,7 +19,8 @@ const SmitheryContext = createContext<SmitheryContextValue | null>(null);
 
 interface SmitheryProviderProps {
 	children: ReactNode;
-	baseURL?: string;
+	baseURL: string;
+	backendUrl: string;
 	createSandboxToken?: CreateSandboxTokenFn;
 }
 
@@ -27,6 +28,8 @@ function ConnectionError({ error }: { error: Error }) {
 	const isServiceUnavailable =
 		error instanceof SmitheryConnectionError && error.isServiceUnavailable;
 	const command = "npx @smithery/cli@latest whoami --server";
+	const { client } = useSmitheryContext();
+	console.log("[ConnectionError] Rendering with client.apiKey:", client?.apiKey ? `${client.apiKey.slice(0, 8)}...` : "(empty)");
 
 	return (
 		<div className="absolute inset-0">
@@ -43,14 +46,15 @@ function ConnectionError({ error }: { error: Error }) {
 							<CodeBlockCopyButton />
 						</CodeBlock>
 					)}
+					<p>{client?.apiKey}</p>
 				</div>
 			</div>
 		</div>
 	);
 }
 
-export function SmitheryProvider({ children, baseURL, createSandboxToken }: SmitheryProviderProps) {
-	const value = useSmithery({ baseURL, createSandboxToken });
+export function SmitheryProvider({ children, baseURL, backendUrl, createSandboxToken }: SmitheryProviderProps) {
+	const value = useSmithery({ baseURL, backendUrl, createSandboxToken });
 
 	if (value.error && !value.loading) {
 		return (
