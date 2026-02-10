@@ -1,0 +1,74 @@
+# Schema Form
+
+The SchemaForm component dynamically generates forms from JSON Schema definitions. It's used internally by the ToolDetailDialog but can be used standalone for any JSON Schema-based form needs.
+
+<SchemaFormPreview />
+
+## Installation
+
+<InstallCommand name="smithery-schema-form" />
+
+## Usage
+
+```tsx
+import { SchemaForm } from "@openchat/registry/smithery/schema-form"
+
+const schema = {
+  type: "object",
+  properties: {
+    query: {
+      type: "string",
+      description: "The search query"
+    },
+    limit: {
+      type: "integer",
+      description: "Max results",
+      minimum: 1,
+      maximum: 100,
+      default: 10
+    },
+    includeImages: {
+      type: "boolean",
+      description: "Include image results"
+    }
+  },
+  required: ["query"]
+}
+
+export function MyApp() {
+  const handleSubmit = (data: Record<string, unknown>) => {
+    console.log("Form submitted:", data)
+  }
+
+  return (
+    <SchemaForm
+      schema={schema}
+      onSubmit={handleSubmit}
+      isLoading={false}
+    />
+  )
+}
+```
+
+## Props
+
+- `schema` (required): A JSON Schema object defining the form fields
+- `onSubmit` (required): Callback function receiving the form data
+- `isLoading` (optional): Shows loading state on the submit button
+
+## Supported Types
+
+- **string**: Text input (or textarea for long descriptions)
+- **number/integer**: Number input with min/max validation
+- **boolean**: Toggle switch
+- **array**: Textarea for JSON array input
+- **object**: Textarea for JSON object input
+- **enum**: Select dropdown with predefined options
+
+## Features
+
+- Automatic default values based on type
+- Required field validation with asterisk indicators
+- Field descriptions displayed as help text
+- Handles nested `jsonSchema` wrapper (common in AI SDK tools)
+- Form error messages for validation failures

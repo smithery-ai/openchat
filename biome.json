@@ -10,7 +10,7 @@
 	},
 	"overrides": [
 		{
-			"includes": ["components/ui/**", "components/ai-elements/**"],
+			"includes": ["packages/ui/src/components/**", "apps/web/components/ai-elements/**"],
 			"linter": {
 				"enabled": false
 			}
