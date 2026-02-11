@@ -72,6 +72,10 @@ import {
 
 const models = [
 	{
+		name: "Claude Code: Opus 4.6",
+		value: "claude-code/opus",
+	},
+	{
 		name: "Codex: GPT-5.3-Codex",
 		value: "codex/gpt-5.3-codex",
 	},

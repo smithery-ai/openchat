@@ -1,5 +1,6 @@
 import type { Connection } from "@smithery/api/resources/experimental/connect/connections.mjs";
 import { ToolLoopAgent, tool, type LanguageModel } from "ai";
+import { claudeCode } from "ai-sdk-provider-claude-code";
 import { createCodexCli } from "ai-sdk-provider-codex-cli";
 import { z } from "zod";
 
@@ -22,6 +23,9 @@ export function createToolLoopAgent({
 	let modelToUse: LanguageModel = model;
 	if (model.startsWith("codex/")) {
 		modelToUse = codexCli(model.replace("codex/", ""));
+	}
+	if (model.startsWith("claude-code/")) {
+		modelToUse = claudeCode(model.replace("claude-code/", ""));
 	}
 
 	const instructions = `You are a helpful assistant that can answer questions and help with tasks.
