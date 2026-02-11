@@ -1,6 +1,5 @@
 "use client";
 
-import { createMCPClient } from "@ai-sdk/mcp";
 import {
 	Avatar,
 	AvatarFallback,
@@ -24,10 +23,6 @@ import {
 } from "@openchat/ui/components/item";
 import { useDebounce } from "@openchat/ui/hooks/use-debounce";
 import type Smithery from "@smithery/api";
-import {
-	createConnection,
-	SmitheryAuthorizationError,
-} from "@smithery/api/mcp";
 import type { Connection } from "@smithery/api/resources/experimental/connect/connections.mjs";
 import type { ServerListResponse } from "@smithery/api/resources/servers/servers.mjs";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -417,50 +412,43 @@ async function checkConnectionStatus(
 	namespace: string,
 ): Promise<ConnectionStatus> {
 	try {
-		const { transport } = await createConnection({
-			client,
-			connectionId,
-			namespace,
-		});
-		const mcpClient = await createMCPClient({ transport });
-
-		const tools = await mcpClient.tools();
-		console.log("tools list", tools);
-
 		const connection = await client.experimental.connect.connections.get(
 			connectionId,
-			{
-				namespace: namespace,
-			},
+			{ namespace },
 		);
 
-		return {
-			status: "connected",
-			connection,
-		};
-	} catch (error) {
-		if (error instanceof SmitheryAuthorizationError) {
-			const authorizationUrl = error.authorizationUrl;
-			console.log("connection requires authorization", {
-				connectionId,
-				namespace,
-				authorizationUrl,
-			});
+		const state = connection.status?.state;
+		if (state === "connected") {
+			return { status: "connected", connection };
+		}
+		if (state === "auth_required") {
 			return {
 				status: "auth_required",
 				connectionId,
-				authorizationUrl,
+				authorizationUrl: connection.status?.authorizationUrl,
 			};
 		}
+		if (state === "error") {
+			return {
+				status: "error",
+				error: new Error(
+					connection.status?.message || "Connection failed",
+				),
+			};
+		}
+		return {
+			status: "error",
+			error: new Error(
+				`Connection not ready (state: ${String(state ?? "unknown")})`,
+			),
+		};
+	} catch (error) {
 		console.error(
-			"error connecting to server",
+			"error checking connection status",
 			`connectionId: ${connectionId}, namespace: ${namespace}`,
 			error,
 		);
-		return {
-			status: "error",
-			error,
-		};
+		return { status: "error", error };
 	}
 }
 
