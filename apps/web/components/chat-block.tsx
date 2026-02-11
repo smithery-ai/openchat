@@ -23,7 +23,7 @@ import {
 	lastAssistantMessageIsCompleteWithToolCalls,
 } from "ai";
 import { CopyIcon, MessageSquareIcon, RefreshCcwIcon } from "lucide-react";
-import { useCallback, useState } from "react";
+import { useRef, useState } from "react";
 import {
 	Conversation,
 	ConversationContent,
@@ -110,38 +110,17 @@ export function ChatBlock() {
 	const [model, setModel] = useState<string>(models[0].value);
 	const [connections, setConnections] = useState<Connection[]>([]);
 
-	const updateBody = useCallback(() => {
-		console.log(
-			"📦 Updating body:",
-			JSON.stringify(
-				{
-					model: model,
-					connections: connections,
-					apiKey: token,
-				},
-				null,
-				2,
-			),
-		);
-		return {
-			model: model,
-			connections: connections,
-			apiKey: token,
-		};
-	}, [model, connections, token]);
+	const bodyRef = useRef({ model, connections, apiKey: token });
+	bodyRef.current = { model, connections, apiKey: token };
 
 	const { messages, sendMessage, status, regenerate, addToolOutput } = useChat({
 		transport: new DefaultChatTransport({
 			api: `${backendUrl}/api/chat`,
 			prepareSendMessagesRequest: (options) => {
-				console.log(
-					"📦 Full request messages:",
-					JSON.stringify(options, null, 2),
-				);
 				return {
 					body: {
 						...(options.body || {}),
-						...updateBody(),
+						...bodyRef.current,
 						messages: options.messages,
 					},
 					headers: options.headers,
