@@ -1,6 +1,17 @@
 import type { Connection } from "@smithery/api/resources/experimental/connect/connections.mjs";
-import { ToolLoopAgent, tool } from "ai";
+import { ToolLoopAgent, tool, type LanguageModel } from "ai";
+import { claudeCode } from "ai-sdk-provider-claude-code";
+import { createCodexCli } from "ai-sdk-provider-codex-cli";
 import { z } from "zod";
+
+const codexCli = createCodexCli({
+	defaultSettings: {
+		reasoningEffort: "medium",
+		approvalMode: "on-failure",
+		sandboxMode: "workspace-write",
+		verbose: true,
+	},
+});
 
 export function createToolLoopAgent({
 	model = "anthropic/claude-haiku-4.5",
@@ -9,12 +20,20 @@ export function createToolLoopAgent({
 	model?: string;
 	connections?: Connection[];
 }) {
+	let modelToUse: LanguageModel = model;
+	if (model.startsWith("codex/")) {
+		modelToUse = codexCli(model.replace("codex/", ""));
+	}
+	if (model.startsWith("claude-code/")) {
+		modelToUse = claudeCode(model.replace("claude-code/", ""));
+	}
+
 	const instructions = `You are a helpful assistant that can answer questions and help with tasks.
 	Before calling a tool, you MUST first start a regular text response explaining what you are going to do. After calling a tool, you MUST provide a summary of the result in a regular text response.
 	When calling act(), be VERY CAREFUL with the dates you use. Use the tools/date tool to resolve the date the action should be performed on.`;
 
 	return new ToolLoopAgent({
-		model,
+		model: modelToUse,
 		instructions: `${instructions}\n\nYou have access to the following servers:
 		<servers>
 		${connections
