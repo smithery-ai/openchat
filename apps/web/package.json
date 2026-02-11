@@ -14,7 +14,8 @@
 		"debug:env": "tsx scripts/check-env.ts",
 		"debug:smithery": "tsx scripts/debug-smithery.ts",
 		"debug:connection": "tsx scripts/debug-smithery.ts --test-connection",
-		"debug:test-server": "tsx scripts/test-server-connection.ts"
+		"debug:test-server": "tsx scripts/test-server-connection.ts",
+		"debug:check-mcp": "tsx scripts/check-mcp-client.ts"
 	},
 	"dependencies": {
 		"@openchat/registry": "workspace:*",
@@ -28,7 +29,7 @@
 		"@mdx-js/react": "^3.1.1",
 		"@modelcontextprotocol/sdk": "^1.25.3",
 		"@next/mdx": "^16.1.5",
-		"@smithery/api": "^0.34.0",
+		"@smithery/api": "^0.42.0",
 		"@tanstack/react-query": "^5.90.20",
 		"@tanstack/react-table": "^8.21.3",
 		"@types/mdx": "^2.0.13",

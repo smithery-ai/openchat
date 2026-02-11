@@ -100,8 +100,8 @@ importers:
         specifier: ^1.2.2
         version: 1.2.2(@types/react@19.2.13)(react@19.2.3)
       '@smithery/api':
-        specifier: ^0.34.0
-        version: 0.34.1(@modelcontextprotocol/sdk@1.26.0(zod@4.3.6))
+        specifier: ^0.42.0
+        version: 0.42.0(@modelcontextprotocol/sdk@1.26.0(zod@4.3.6))
       '@tanstack/react-query':
         specifier: ^5.90.20
         version: 5.90.20(react@19.2.3)
@@ -2343,6 +2343,14 @@ packages:
 
   '@smithery/api@0.34.1':
     resolution: {integrity: sha512-ybXu3/58OCHCwLV6g0YP3encV60vGXWeW8LdEVAT7q0OZyUkI/835J1Q7yu5PkhWuiz8e2WLPxYSldkkbjobxg==}
+    peerDependencies:
+      '@modelcontextprotocol/sdk': '>=1.0.0'
+    peerDependenciesMeta:
+      '@modelcontextprotocol/sdk':
+        optional: true
+
+  '@smithery/api@0.42.0':
+    resolution: {integrity: sha512-DPT6wRas247Y+jVlz9+M2lCXlTf6uSQcNafGXoV8VwxS4oykVv08WXZrajP+G/wfO3bSqhCfMP2vSXeI2X17yg==}
     peerDependencies:
       '@modelcontextprotocol/sdk': '>=1.0.0'
     peerDependenciesMeta:
@@ -7217,6 +7225,10 @@ snapshots:
   '@sindresorhus/merge-streams@4.0.0': {}
 
   '@smithery/api@0.34.1(@modelcontextprotocol/sdk@1.26.0(zod@4.3.6))':
+    optionalDependencies:
+      '@modelcontextprotocol/sdk': 1.26.0(zod@4.3.6)
+
+  '@smithery/api@0.42.0(@modelcontextprotocol/sdk@1.26.0(zod@4.3.6))':
     optionalDependencies:
       '@modelcontextprotocol/sdk': 1.26.0(zod@4.3.6)
 
