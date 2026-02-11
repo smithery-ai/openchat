@@ -69,7 +69,7 @@ const ConnectionCardInner = ({
 							connection.name}
 						{connection.connectionId && (
 							<span className="ml-2 text-xs font-mono text-muted-foreground bg-muted px-2 py-0.5 rounded">
-								{"•".repeat(Math.min(connection.connectionId.length - 10, 4))}
+								{"•".repeat(Math.max(0, Math.min(connection.connectionId.length - 10, 4)))}
 								{connection.connectionId.slice(-10)}
 							</span>
 						)}
