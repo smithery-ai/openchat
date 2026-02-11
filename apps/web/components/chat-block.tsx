@@ -72,6 +72,10 @@ import {
 
 const models = [
 	{
+		name: "Codex: GPT-5.3-Codex",
+		value: "codex/gpt-5.3-codex",
+	},
+	{
 		name: "Claude Haiku 4.5",
 		value: "anthropic/claude-haiku-4.5",
 	},

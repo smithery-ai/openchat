@@ -32,6 +32,9 @@ importers:
       ai:
         specifier: ^6.0.41
         version: 6.0.78(zod@4.3.6)
+      ai-sdk-provider-codex-cli:
+        specifier: workspace:*
+        version: link:../../packages/ai-sdk-provider-codex-cli
       dotenv:
         specifier: ^17.2.3
         version: 17.2.4
