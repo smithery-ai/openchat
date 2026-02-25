@@ -3,7 +3,7 @@
 import { createMCPClient } from "@ai-sdk/mcp";
 import Smithery from "@smithery/api";
 import { createConnection } from "@smithery/api/mcp";
-import type { Connection } from "@smithery/api/resources/experimental/connect/connections.mjs";
+import type { Connection } from "@smithery/api/resources/connections/connections.mjs";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ToolExecutionOptions } from "ai";
 import { Plus, RefreshCw, Trash2, X } from "lucide-react";
@@ -46,12 +46,9 @@ const ConnectionCardInner = ({
 	const deleteMutation = useMutation({
 		mutationFn: async () => {
 			const client = getSmitheryClient(token);
-			await client.experimental.connect.connections.delete(
-				connection.connectionId,
-				{
-					namespace: namespace,
-				},
-			);
+			await client.connections.delete(connection.connectionId, {
+				namespace: namespace,
+			});
 		},
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ["connections"] });
@@ -74,7 +71,9 @@ const ConnectionCardInner = ({
 							connection.name}
 						{connection.connectionId && (
 							<span className="ml-2 text-xs font-mono text-muted-foreground bg-muted px-2 py-0.5 rounded">
-								{"•".repeat(Math.min(connection.connectionId.length - 10, 4))}
+								{"•".repeat(
+									Math.max(0, Math.min(connection.connectionId.length - 10, 4)),
+								)}
 								{connection.connectionId.slice(-10)}
 							</span>
 						)}
@@ -134,8 +133,7 @@ const ConnectionsListInner = ({
 		queryKey: ["connections", token, namespace],
 		queryFn: async () => {
 			const client = getSmitheryClient(token);
-			const { connections } =
-				await client.experimental.connect.connections.list(namespace);
+			const { connections } = await client.connections.list(namespace);
 			return { connections, namespace };
 		},
 		enabled: !!token && !!namespace,
@@ -237,12 +235,9 @@ const ActiveConnection = ({ connectionId }: { connectionId: string }) => {
 		queryKey: ["connection", connectionId, token, namespace],
 		queryFn: async () => {
 			const client = getSmitheryClient(token);
-			const data = await client.experimental.connect.connections.get(
-				connectionId,
-				{
-					namespace,
-				},
-			);
+			const data = await client.connections.get(connectionId, {
+				namespace,
+			});
 			return { namespace, ...data };
 		},
 		enabled: !!token && !!namespace && !!connectionId,

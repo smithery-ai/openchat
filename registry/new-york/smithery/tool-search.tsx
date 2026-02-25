@@ -1,6 +1,6 @@
 "use client";
 
-import type { Connection } from "@smithery/api/resources/experimental/connect/connections";
+import type { Connection } from "@smithery/api/resources/connections/connections.mjs";
 import { useQuery } from "@tanstack/react-query";
 import { Pencil, SearchIcon } from "lucide-react";
 import { Fragment, useEffect, useState } from "react";

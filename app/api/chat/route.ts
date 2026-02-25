@@ -1,4 +1,4 @@
-import type { Connection } from "@smithery/api/resources/experimental/connect/connections.mjs";
+import type { Connection } from "@smithery/api/resources/connections/connections.mjs";
 import {
 	createAgentUIStreamResponse,
 	ToolLoopAgent,
