@@ -1,5 +1,6 @@
 import { HomePage } from "@/components/home";
 
 export default function Home() {
-	return <HomePage />;
+	const smitheryApiKey = process.env.SMITHERY_API_KEY ?? "";
+	return <HomePage smitheryApiKey={smitheryApiKey} />;
 }

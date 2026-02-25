@@ -152,12 +152,12 @@ export function ChatBlock() {
 		setInput("");
 	};
 
-	// No token selected
+	// No API key configured
 	if (!token) {
 		return (
 			<div className="flex items-center justify-center">
 				<div className="text-muted-foreground">
-					No token selected. Please create a token.
+					Smithery API key is not configured.
 				</div>
 			</div>
 		);
