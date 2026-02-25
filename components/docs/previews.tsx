@@ -1,11 +1,11 @@
 "use client";
 
-import { createMCPClient } from "@ai-sdk/mcp";
+import { Client } from "@modelcontextprotocol/sdk/client";
+import type { Tool } from "@modelcontextprotocol/sdk/types.js";
 import Smithery from "@smithery/api";
 import { createConnection } from "@smithery/api/mcp";
 import type { Connection } from "@smithery/api/resources/connections.mjs";
 import { useQuery } from "@tanstack/react-query";
-import type { ToolExecutionOptions } from "ai";
 import { AlertCircle } from "lucide-react";
 import * as React from "react";
 import { useState } from "react";
@@ -85,7 +85,8 @@ function useConnectionTools(
 				connectionId,
 				namespace,
 			});
-			const mcpClient = await createMCPClient({ transport });
+			const mcpClient = new Client({ name: "smithery-cli", version: "1.0.0" });
+			await mcpClient.connect(transport);
 			return { client: mcpClient, namespace };
 		},
 		enabled: !!connectionId,
@@ -95,7 +96,12 @@ function useConnectionTools(
 		queryKey: ["tools", connectionId, token, namespace],
 		queryFn: async () => {
 			if (!clientQuery.data) throw new Error("Client not available");
-			return await clientQuery.data.client.tools();
+			const { tools } = await clientQuery.data.client.listTools();
+			const toolMap: Record<string, Tool> = {};
+			for (const tool of tools) {
+				toolMap[tool.name] = tool;
+			}
+			return toolMap;
 		},
 		enabled: !!clientQuery.data,
 	});
@@ -105,13 +111,13 @@ function useConnectionTools(
 		params: Record<string, unknown>,
 	) => {
 		if (!toolsQuery.data) throw new Error("Tools not available");
+		if (!clientQuery.data) throw new Error("Client not available");
 		const tool = toolsQuery.data[toolName];
 		if (!tool) throw new Error(`Tool ${toolName} not found`);
-		const options: ToolExecutionOptions = {
-			toolCallId: `manual-${Date.now()}`,
-			messages: [],
-		};
-		return await tool.execute(params, options);
+		return await clientQuery.data.client.callTool({
+			name: toolName,
+			arguments: params,
+		});
 	};
 
 	return {
