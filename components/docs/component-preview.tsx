@@ -6,7 +6,6 @@ import { createConnection } from "@smithery/api/mcp";
 import type { Connection } from "@smithery/api/resources/connections.mjs";
 import { useQuery } from "@tanstack/react-query";
 import type { Tool, ToolExecutionOptions } from "ai";
-import { useAtomValue } from "jotai";
 import { AlertCircle } from "lucide-react";
 import { useState } from "react";
 import {
@@ -17,8 +16,8 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
-import { selectedTokenAtom } from "@/hooks/use-smithery";
 import { ConnectionConfigContext } from "@/registry/new-york/smithery/connection-context";
+import { useSmitheryContext } from "@/registry/new-york/smithery/smithery-provider";
 import { PreviewFrame } from "./preview-frame";
 
 const DEFAULT_MCP_URL = "https://mcp.exa.ai";
@@ -198,7 +197,7 @@ export function ComponentPreview({
 	requiresConnection = false,
 	children,
 }: ComponentPreviewProps) {
-	const apiKey = useAtomValue(selectedTokenAtom);
+	const { token: apiKey } = useSmitheryContext();
 	const [selectedConnectionId, setSelectedConnectionId] = useState<
 		string | null
 	>(null);
@@ -211,12 +210,12 @@ export function ComponentPreview({
 		return <PreviewFrame>{children}</PreviewFrame>;
 	}
 
-	// Components with render functions need a token
+	// Components with render functions need an API key
 	if (!apiKey) {
 		return (
 			<PreviewFrame>
 				<div className="p-6 text-muted-foreground">
-					Please select a token to view this component preview.
+					Smithery API key is not configured.
 				</div>
 			</PreviewFrame>
 		);
@@ -228,14 +227,14 @@ export function ComponentPreview({
 			<PreviewFrame>
 				<div className="p-4 border-b">
 					<ConnectionSelector
-						token={apiKey.token}
+						token={apiKey}
 						namespace={namespace}
 						selectedConnectionId={selectedConnectionId}
 						onSelect={setSelectedConnectionId}
 					/>
 				</div>
 				<ToolComponentPreviewInner
-					token={apiKey.token}
+					token={apiKey}
 					namespace={namespace}
 					connectionId={selectedConnectionId}
 					selectedToolName={selectedToolName}
