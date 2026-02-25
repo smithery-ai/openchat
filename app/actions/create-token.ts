@@ -5,7 +5,7 @@ import type { CreateTokenResponse } from "@smithery/api/resources/tokens.mjs";
 
 const SMITHERY_API_KEY = process.env.SMITHERY_API_KEY;
 const SMITHERY_API_URL = process.env.NEXT_PUBLIC_SMITHERY_API_URL;
-const DEFAULT_NAMESPACE = "aws";
+const DEFAULT_NAMESPACE = process.env.NEXT_PUBLIC_SMITHERY_NAMESPACE ?? "sandbox";
 const DEFAULT_TTL = "1h";
 
 interface CreateSandboxTokenParams {
@@ -29,6 +29,7 @@ export async function createSandboxToken(
 	params: CreateSandboxTokenParams,
 ): Promise<CreateSandboxTokenResult> {
 	const { userId, namespace = DEFAULT_NAMESPACE, ttl = DEFAULT_TTL } = params;
+	console.log("createSandboxToken", params, userId, namespace, ttl);
 
 	if (!SMITHERY_API_KEY) {
 		return {
@@ -61,6 +62,13 @@ export async function createSandboxToken(
 		// Create scoped token with user isolation via metadata
 		const tokenResponse = await client.tokens.create({
 			policy: [
+				{
+					namespaces: [namespace],
+					operations: ["read", "write"],
+					resources: ["namespaces"],
+					metadata: { user_id: userId },
+					ttl,
+				},
 				{
 					namespaces: [namespace],
 					operations: ["read", "write"],

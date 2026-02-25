@@ -123,7 +123,7 @@ export function useSmithery(
 		queryFn: async () => {
 			// In sandbox mode, we only have access to "sandbox" namespace
 			if (sandboxMode) {
-				return ["aws"];
+				return [process.env.NEXT_PUBLIC_SMITHERY_NAMESPACE ?? "sandbox"];
 			}
 			const response = await client.namespaces.list();
 			return response.namespaces.map((ns) => ns.name);
@@ -208,7 +208,7 @@ export function useSmithery(
 							});
 							setSelectedToken(result.token);
 							setSandboxMode(true);
-							setSelectedNamespace("sandbox");
+							setSelectedNamespace(process.env.NEXT_PUBLIC_SMITHERY_NAMESPACE ?? "sandbox");
 						} else {
 							setTokenError(new Error(result.error));
 						}
