@@ -5,7 +5,7 @@ import type { CreateTokenResponse } from "@smithery/api/resources/tokens.mjs";
 
 const SMITHERY_API_KEY = process.env.SMITHERY_API_KEY;
 const SMITHERY_API_URL = process.env.NEXT_PUBLIC_SMITHERY_API_URL;
-const DEFAULT_NAMESPACE = "sandbox";
+const DEFAULT_NAMESPACE = "aws";
 const DEFAULT_TTL = "1h";
 
 interface CreateSandboxTokenParams {

@@ -97,10 +97,7 @@ async function findExistingConnection(
 	status?: { state?: string; message?: string; authorizationUrl?: string };
 } | null> {
 	try {
-		const response = await client.experimental.connect.connections.list(
-			namespace,
-			{},
-		);
+		const response = await client.connections.list(namespace, {});
 		const existing = response.connections.find((c) => c.mcpUrl === mcpUrl);
 		if (existing) {
 			return {
@@ -175,13 +172,10 @@ async function createConnection(
 	console.log(`🔗 Creating new connection...`);
 
 	try {
-		const connection = await client.experimental.connect.connections.create(
-			namespace,
-			{
-				mcpUrl,
-				name: displayName,
-			},
-		);
+		const connection = await client.connections.create(namespace, {
+			mcpUrl,
+			name: displayName,
+		});
 
 		console.log(`✅ Connection created: ${connection.connectionId}`);
 		console.log(`   Status: ${connection.status?.state || "unknown"}`);
@@ -211,7 +205,7 @@ async function getTools(
 	console.log(`\n🛠️  Fetching available tools...`);
 
 	try {
-		const response = await client.experimental.connect.mcp.call(
+		const response = await client.mcp.call(
 			connectionId,
 			{ namespace },
 			{
@@ -272,7 +266,7 @@ async function deleteConnection(
 ): Promise<void> {
 	console.log(`\n🗑️  Deleting connection: ${connectionId}`);
 	try {
-		await client.experimental.connect.connections.delete(connectionId, {
+		await client.connections.delete(connectionId, {
 			namespace,
 		});
 		console.log("✅ Connection deleted");

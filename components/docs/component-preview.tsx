@@ -3,7 +3,7 @@
 import { createMCPClient } from "@ai-sdk/mcp";
 import Smithery from "@smithery/api";
 import { createConnection } from "@smithery/api/mcp";
-import type { Connection } from "@smithery/api/resources/experimental/connect/connections.mjs";
+import type { Connection } from "@smithery/api/resources/connections.mjs";
 import { useQuery } from "@tanstack/react-query";
 import type { Tool, ToolExecutionOptions } from "ai";
 import { useAtomValue } from "jotai";
@@ -40,8 +40,7 @@ function useConnections(
 			if (!token) throw new Error("Token required");
 			if (!namespace) throw new Error("Namespace required");
 			const client = getSmitheryClient(token);
-			const { connections } =
-				await client.experimental.connect.connections.list(namespace);
+			const { connections } = await client.connections.list(namespace);
 			return { connections, namespace };
 		},
 		enabled: !!token && !!namespace,

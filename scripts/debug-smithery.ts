@@ -86,10 +86,7 @@ async function listConnections(namespace: string) {
 	console.log("\n🔍 Listing existing connections...");
 
 	try {
-		const response = await client.experimental.connect.connections.list(
-			namespace,
-			{},
-		);
+		const response = await client.connections.list(namespace, {});
 		console.log(`✅ Found ${response.connections.length} connections`);
 
 		for (const conn of response.connections) {
@@ -117,10 +114,9 @@ async function testConnection(connectionId: string, namespace: string) {
 
 	try {
 		// First get the connection details
-		const connection = await client.experimental.connect.connections.get(
-			connectionId,
-			{ namespace },
-		);
+		const connection = await client.connections.get(connectionId, {
+			namespace,
+		});
 
 		console.log(`   Status: ${connection.status?.state || "unknown"}`);
 		console.log(`   URL: ${connection.mcpUrl}`);
@@ -131,7 +127,7 @@ async function testConnection(connectionId: string, namespace: string) {
 
 		// Try to call tools/list
 		console.log("\n   Attempting to call tools/list...");
-		const response = await client.experimental.connect.mcp.call(
+		const response = await client.mcp.call(
 			connectionId,
 			{ namespace },
 			{
@@ -174,13 +170,10 @@ async function createTestConnection(serverName: string, namespace: string) {
 	console.log(`   MCP URL: ${mcpUrl}`);
 
 	try {
-		const connection = await client.experimental.connect.connections.create(
-			namespace,
-			{
-				mcpUrl,
-				name: serverName,
-			},
-		);
+		const connection = await client.connections.create(namespace, {
+			mcpUrl,
+			name: serverName,
+		});
 
 		console.log(`✅ Connection created`);
 		console.log(`   Connection ID: ${connection.connectionId}`);
