@@ -123,7 +123,7 @@ export function useSmithery(
 		queryFn: async () => {
 			// In sandbox mode, we only have access to "sandbox" namespace
 			if (sandboxMode) {
-				return ["sandbox"];
+				return ["aws"];
 			}
 			const response = await client.namespaces.list();
 			return response.namespaces.map((ns) => ns.name);
