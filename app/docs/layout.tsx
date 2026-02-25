@@ -5,5 +5,9 @@ export default function DocsLayout({
 }: {
 	children: React.ReactNode;
 }) {
-	return <DocsLayoutClient>{children}</DocsLayoutClient>;
+	return (
+		<DocsLayoutClient smitheryApiKey={process.env.SMITHERY_API_KEY}>
+			{children}
+		</DocsLayoutClient>
+	);
 }

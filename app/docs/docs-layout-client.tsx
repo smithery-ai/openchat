@@ -4,9 +4,17 @@ import { Suspense } from "react";
 import { SharedSidebar } from "@/components/shared-sidebar";
 import { SmitheryProvider } from "@/registry/new-york/smithery/smithery-provider";
 
-export function DocsLayoutClient({ children }: { children: React.ReactNode }) {
+interface DocsLayoutClientProps {
+	children: React.ReactNode;
+	smitheryApiKey?: string;
+}
+
+export function DocsLayoutClient({
+	children,
+	smitheryApiKey,
+}: DocsLayoutClientProps) {
 	return (
-		<SmitheryProvider>
+		<SmitheryProvider smitheryApiKey={smitheryApiKey}>
 			<SharedSidebar>
 				<Suspense
 					fallback={
