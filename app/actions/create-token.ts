@@ -71,7 +71,7 @@ export async function createSandboxToken(
 				},
 				{
 					namespaces: [namespace],
-					operations: ["read", "write"],
+					operations: ["read", "write", "execute"],
 					resources: ["connections"],
 					metadata: { user_id: userId },
 					ttl,

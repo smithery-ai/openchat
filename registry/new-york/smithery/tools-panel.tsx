@@ -1,12 +1,12 @@
 "use client";
 
-import type { Tool } from "ai";
 import { Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { estimateTokenCount } from "tokenx";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { ToolCard } from "@/registry/new-york/smithery/tool-card";
+import type { Tool } from "@modelcontextprotocol/sdk/types.js";
 
 interface ToolsPanelProps {
 	tools: Record<string, Tool>;
@@ -28,8 +28,7 @@ export function ToolsPanel({ tools, onExecute }: ToolsPanelProps) {
 		return Object.entries(tools).filter(([name, tool]) => {
 			return (
 				name.toLowerCase().includes(query) ||
-				tool.description?.toLowerCase().includes(query) ||
-				tool.type?.toLowerCase().includes(query)
+				tool.description?.toLowerCase().includes(query)
 			);
 		});
 	}, [tools, searchQuery]);

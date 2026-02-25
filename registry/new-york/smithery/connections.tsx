@@ -22,6 +22,8 @@ import { WithQueryClient } from "@/registry/new-york/smithery/query-client-wrapp
 import { ServerSearch } from "@/registry/new-york/smithery/server-search";
 import { useSmitheryContext } from "@/registry/new-york/smithery/smithery-provider";
 import { ToolsPanel } from "@/registry/new-york/smithery/tools-panel";
+import { Client } from "@modelcontextprotocol/sdk/client";
+import { Tool } from "@modelcontextprotocol/sdk/types.js";
 
 // Re-export useConnectionConfig for backward compatibility
 export { useConnectionConfig };
@@ -297,7 +299,8 @@ const ActiveConnection = ({ connectionId }: { connectionId: string }) => {
 				connectionId: connectionId,
 				namespace,
 			});
-			const mcpClient = await createMCPClient({ transport });
+			const mcpClient = new Client({ name: "smithery-cli", version: "1.0.0" })
+			await mcpClient.connect(transport);
 			return mcpClient;
 		},
 		enabled: !!token && !!connectionId && data?.status?.state === "connected",
@@ -310,7 +313,13 @@ const ActiveConnection = ({ connectionId }: { connectionId: string }) => {
 				throw new Error("Client not available");
 			}
 			const client = clientQuery.data;
-			return await client.tools();
+			const { tools } = await client.listTools();
+			const toolMap: Record<string, Tool> = {};
+			for (const tool of tools) {
+				toolMap[tool.name] = tool;
+			}
+			console.log("TOOLS", toolMap);
+			return toolMap;
 		},
 		enabled: !!clientQuery.data && data?.status?.state === "connected",
 	});
@@ -321,17 +330,15 @@ const ActiveConnection = ({ connectionId }: { connectionId: string }) => {
 		if (!toolsQuery.data) {
 			throw new Error("Tools not available");
 		}
-		const tool = toolsQuery.data[toolName];
-		if (!tool) {
-			throw new Error(`Tool ${toolName} not found`);
+		if (!clientQuery.data) {
+			throw new Error("Client not available");
 		}
-		// The execute method from AI SDK tools expects (params, options)
-		// We're executing tools directly, so provide minimal required options
-		const options: ToolExecutionOptions = {
-			toolCallId: `manual-${Date.now()}`,
-			messages: [],
-		};
-		return await tool.execute(params, options);
+		const client = clientQuery.data;
+		const tool = await client.callTool({
+			name: toolName,
+			arguments: params,
+		});
+		return tool;
 	};
 
 	return (

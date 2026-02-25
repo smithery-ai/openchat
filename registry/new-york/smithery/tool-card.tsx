@@ -1,12 +1,12 @@
 "use client";
 
-import type { Tool } from "ai";
 import { ChevronRight } from "lucide-react";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { ToolDetailDialog } from "@/registry/new-york/smithery/tool-detail-dialog";
+import type { Tool } from "@modelcontextprotocol/sdk/types.js";
 
 interface ToolCardProps {
 	name: string;
@@ -39,11 +39,6 @@ export function ToolCard({ name, tool, onExecute }: ToolCardProps) {
 								</p>
 							)}
 						</div>
-						{tool.type && tool.type !== "dynamic" && (
-							<Badge variant="outline" className="shrink-0">
-								{tool.type}
-							</Badge>
-						)}
 					</div>
 				</CardHeader>
 			</Card>

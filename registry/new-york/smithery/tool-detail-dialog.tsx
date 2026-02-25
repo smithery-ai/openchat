@@ -1,6 +1,5 @@
 "use client";
 
-import type { Tool } from "ai";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { estimateTokenCount } from "tokenx";
@@ -40,6 +39,7 @@ import {
 } from "@/registry/new-york/smithery/code-block";
 import { useConnectionConfig } from "@/registry/new-york/smithery/connection-context";
 import { ToolOutputViewer } from "@/registry/new-york/smithery/tool-output-viewer";
+import { Tool } from "@modelcontextprotocol/sdk/types.js";
 
 interface JSONSchema {
 	type?: string;
@@ -84,12 +84,7 @@ export function ToolDetailDialog({
 
 	// Extract schema
 	const inputSchema = tool.inputSchema;
-	const schema: JSONSchema =
-		typeof inputSchema === "object" &&
-		inputSchema &&
-		"jsonSchema" in inputSchema
-			? (inputSchema as { jsonSchema: JSONSchema }).jsonSchema
-			: (inputSchema as JSONSchema) || {};
+	const schema: JSONSchema = inputSchema;
 
 	const properties = schema.properties || {};
 	const requiredFields = schema.required || [];
@@ -231,11 +226,6 @@ export function ToolDetailDialog({
 								</DialogDescription>
 							)}
 						</div>
-						{tool.type && tool.type !== "dynamic" && (
-							<Badge variant="outline" className="shrink-0">
-								{tool.type}
-							</Badge>
-						)}
 					</div>
 				</DialogHeader>
 
