@@ -1,11 +1,11 @@
 "use client";
 
-import { createMCPClient } from "@ai-sdk/mcp";
+import { Client } from "@modelcontextprotocol/sdk/client";
+import type { Tool } from "@modelcontextprotocol/sdk/types.js";
 import Smithery from "@smithery/api";
 import { createConnection } from "@smithery/api/mcp";
 import type { Connection } from "@smithery/api/resources/connections.mjs";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { ToolExecutionOptions } from "ai";
 import { Plus, RefreshCw, Trash2, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -22,8 +22,6 @@ import { WithQueryClient } from "@/registry/new-york/smithery/query-client-wrapp
 import { ServerSearch } from "@/registry/new-york/smithery/server-search";
 import { useSmitheryContext } from "@/registry/new-york/smithery/smithery-provider";
 import { ToolsPanel } from "@/registry/new-york/smithery/tools-panel";
-import { Client } from "@modelcontextprotocol/sdk/client";
-import { Tool } from "@modelcontextprotocol/sdk/types.js";
 
 // Re-export useConnectionConfig for backward compatibility
 export { useConnectionConfig };
@@ -73,7 +71,9 @@ const ConnectionCardInner = ({
 							connection.name}
 						{connection.connectionId && (
 							<span className="ml-2 text-xs font-mono text-muted-foreground bg-muted px-2 py-0.5 rounded">
-								{"•".repeat(Math.min(Math.max(connection.connectionId.length - 10, 0), 4))}
+								{"•".repeat(
+									Math.min(Math.max(connection.connectionId.length - 10, 0), 4),
+								)}
 								{connection.connectionId.slice(-10)}
 							</span>
 						)}
@@ -299,7 +299,7 @@ const ActiveConnection = ({ connectionId }: { connectionId: string }) => {
 				connectionId: connectionId,
 				namespace,
 			});
-			const mcpClient = new Client({ name: "smithery-cli", version: "1.0.0" })
+			const mcpClient = new Client({ name: "smithery-cli", version: "1.0.0" });
 			await mcpClient.connect(transport);
 			return mcpClient;
 		},

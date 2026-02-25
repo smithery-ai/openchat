@@ -1,9 +1,9 @@
 "use client";
 
+import type { Tool } from "@modelcontextprotocol/sdk/types.js";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { estimateTokenCount } from "tokenx";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -39,7 +39,6 @@ import {
 } from "@/registry/new-york/smithery/code-block";
 import { useConnectionConfig } from "@/registry/new-york/smithery/connection-context";
 import { ToolOutputViewer } from "@/registry/new-york/smithery/tool-output-viewer";
-import { Tool } from "@modelcontextprotocol/sdk/types.js";
 
 interface JSONSchema {
 	type?: string;

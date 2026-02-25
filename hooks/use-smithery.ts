@@ -208,7 +208,9 @@ export function useSmithery(
 							});
 							setSelectedToken(result.token);
 							setSandboxMode(true);
-							setSelectedNamespace(process.env.NEXT_PUBLIC_SMITHERY_NAMESPACE ?? "sandbox");
+							setSelectedNamespace(
+								process.env.NEXT_PUBLIC_SMITHERY_NAMESPACE ?? "sandbox",
+							);
 						} else {
 							setTokenError(new Error(result.error));
 						}

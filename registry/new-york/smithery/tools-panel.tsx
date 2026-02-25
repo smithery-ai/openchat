@@ -1,12 +1,12 @@
 "use client";
 
+import type { Tool } from "@modelcontextprotocol/sdk/types.js";
 import { Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { estimateTokenCount } from "tokenx";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { ToolCard } from "@/registry/new-york/smithery/tool-card";
-import type { Tool } from "@modelcontextprotocol/sdk/types.js";
 
 interface ToolsPanelProps {
 	tools: Record<string, Tool>;
